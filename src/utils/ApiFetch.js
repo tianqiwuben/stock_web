@@ -33,3 +33,7 @@ function callAPI(path, method, payload = null) {
 }
 
 export const apiBars = query => callAPI('/bars', 'get', query);
+
+export const apiGetAgg = query => callAPI('/aggs', 'get', query);
+
+export const apiPostAgg = query => callAPI('/aggs', 'post', query);

@@ -19,7 +19,10 @@ import {apiBars} from '../../utils/ApiFetch';
 
 const styles = theme => ({
   chartFixedHeight: {
-    height: '70vh',
+    height: '80vh',
+  },
+  oneChart: {
+    height: '40vh',
   }
 });
 
@@ -56,48 +59,50 @@ class Chart extends React.Component {
     const {classes} = this.props;
     return (
       <Paper className={classes.chartFixedHeight}>
-        <ResponsiveContainer>
-          <LineChart
-            data={data}
-            margin={{
-              top: 16,
-              right: 16,
-              bottom: 0,
-              left: 24,
-            }}
-            syncId="foo"
-          >
-            <XAxis dataKey="ts" />
-            <YAxis yAxisId="left" domain={['dataMin', 'dataMax']} />
-            <YAxis yAxisId="right"
-              orientation="right"
-            />
-            <Tooltip />
-            <Line  yAxisId="left" isAnimationActive={false} type="linear" dataKey="c" dot={false} />
-            <Line yAxisId="left" isAnimationActive={false} stroke="none" dataKey="max" dot={dotStyles.maxDot} />
-            <Line yAxisId="left" isAnimationActive={false} stroke="none" dataKey="min" dot={dotStyles.minDot} />
-            <Line yAxisId="right" isAnimationActive={false} stroke="none" dataKey="strategy_name"  dot={dotStyles.strategy} /> 
-            {data.length > 0 && <Brush dataKey="ts" startIndex={0}/>}
-          </LineChart>
-        </ResponsiveContainer>
-        <ResponsiveContainer>
-          <ComposedChart
-            data={data}
-            margin={{
-              top: 16,
-              right: 16,
-              bottom: 0,
-              left: 24,
-            }}
-            syncId="foo"
-          >
-            <XAxis dataKey="ts" />
-            <YAxis domain={['dataMin', 'dataMax']} />
-            <Tooltip />
-            <Bar dataKey="v" isAnimationActive={false}/>
-            <Line dataKey="vtype" isAnimationActive={false}  dot={false}/>
-          </ComposedChart>
-        </ResponsiveContainer>
+        <div className={classes.oneChart}>
+          <ResponsiveContainer>
+            <LineChart
+              data={data}
+              margin={{
+                top: 16,
+                right: 16,
+                bottom: 0,
+                left: 24,
+              }}
+              syncId="foo"
+            >
+              <XAxis dataKey="ts" />
+              <YAxis yAxisId="left" domain={['dataMin', 'dataMax']} />
+              <YAxis yAxisId="right"
+                orientation="right"
+              />
+              <Tooltip />
+              <Line  yAxisId="left" isAnimationActive={false} type="linear" dataKey="c" dot={false} />
+              <Line yAxisId="left" isAnimationActive={false} stroke="none" dataKey="max" dot={dotStyles.maxDot} />
+              <Line yAxisId="left" isAnimationActive={false} stroke="none" dataKey="min" dot={dotStyles.minDot} />
+              <Line yAxisId="right" isAnimationActive={false} stroke="none" dataKey="strategy_name"  dot={dotStyles.strategy} /> 
+              {data.length > 0 && <Brush dataKey="ts" startIndex={0}/>}
+            </LineChart>
+          </ResponsiveContainer>
+          <ResponsiveContainer>
+            <ComposedChart
+              data={data}
+              margin={{
+                top: 16,
+                right: 16,
+                bottom: 0,
+                left: 24,
+              }}
+              syncId="foo"
+            >
+              <XAxis dataKey="ts" />
+              <YAxis domain={['dataMin', 'dataMax']} />
+              <Tooltip />
+              <Bar dataKey="v" isAnimationActive={false}/>
+              <Line dataKey="vtype" isAnimationActive={false}  dot={false}/>
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
       </Paper>
     );
   }
