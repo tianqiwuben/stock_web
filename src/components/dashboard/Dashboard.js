@@ -179,15 +179,10 @@ export default function Dashboard() {
       <main className={classes.content}>
         <div className={classes.appBarSpacer} />
         <Container maxWidth="lg" className={classes.container}>
-          <Grid container spacing={3}>
-            {/* Chart */}
-            <Grid item xs={12} md={12} lg={12}>
-              <Switch>
-                <Route path={'/charts'} component={Chart} />
-                <Route component={Aggregates} />
-              </Switch>
-            </Grid>
-          </Grid>
+          <Switch>
+            <Route path={'/charts'} component={Chart} />
+            <Route component={Aggregates} />
+          </Switch>
         </Container>
       </main>
     </div>
