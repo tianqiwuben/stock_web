@@ -37,3 +37,9 @@ export const apiBars = query => callAPI('/bars', 'get', query);
 export const apiGetAgg = query => callAPI('/aggs', 'get', query);
 
 export const apiPostAgg = query => callAPI('/aggs', 'post', query);
+
+export const apiAggProgress = query => callAPI('/aggs/progress', 'get', query);
+
+export const apiGetDistribution = query => callAPI('/aggs/distribution', 'get', query);
+
+export const apiPostDistribution = query => callAPI('/aggs/distribution', 'post', query);

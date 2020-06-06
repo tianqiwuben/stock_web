@@ -3,12 +3,16 @@ import compose from 'recompose/compose';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Grid from '@material-ui/core/Grid';
+
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
 
 import Box from '@material-ui/core/Box';
 import LinearProgress from '@material-ui/core/LinearProgress';
@@ -18,11 +22,24 @@ import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListSubheader from '@material-ui/core/ListSubheader';
 
+import {
+  Brush,
+  Bar,
+  ComposedChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  LineChart,
+} from 'recharts';
+
 import Filters from '../common/Filters';
 
 import {
-  apiGetAgg,
-  apiPostAgg,
+  apiGetDistribution,
+  apiPostDistribution,
   apiAggProgress,
 } from '../../utils/ApiFetch';
 
@@ -42,9 +59,26 @@ const useStyles = theme => ({
     paddingBottom: theme.spacing(2),
     display: 'inline',
   },
+  oneChart: {
+    marginTop: '12px',
+    width: '100%',
+    height: '150px',
+  },
 });
 
-class Aggregates extends React.Component {
+const barFields = {
+  c1: 1,
+  c2: 2,
+  c3: 3,
+  p1: 4,
+  p2: 5,
+  p3: 10,
+  s1: 15,
+  s2: 20,
+  s3: 30,
+};
+
+class Distribution extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -74,7 +108,6 @@ class Aggregates extends React.Component {
       volumn_d,
       hourFrame,
       isShort,
-      calcStrategy,
     } = this.state;
     const query = {
       sym,
@@ -83,7 +116,6 @@ class Aggregates extends React.Component {
       volumn_d,
       hour_frame: hourFrame,
       is_short: isShort,
-      calc_strategy: calcStrategy,
     }
     return query;
   }
@@ -91,7 +123,7 @@ class Aggregates extends React.Component {
   startProgress = () => {
     if (!this.interval) {
       this.interval = window.setInterval(() => {
-        apiAggProgress({page: 'agg'}).then(resp => {
+        apiAggProgress({page: 'distribution'}).then(resp => {
           if (resp.data.success) {
             if (resp.data.payload === 0) {
               this.setState({
@@ -116,7 +148,7 @@ class Aggregates extends React.Component {
       return;
     }
     const query = this.getQuery();
-    apiPostAgg(query).then(resp => {
+    apiPostDistribution(query).then(resp => {
       if (resp.data.success) {
         this.setState({
           progress: 10,
@@ -127,16 +159,8 @@ class Aggregates extends React.Component {
   }
 
   onShow = () => {
-    const {status} = this.state;
-    if (status !== 'idle') {
-      return;
-    }
-    this.setState({
-      status: 'loading',
-      error: '',
-    });
     const query = this.getQuery();
-    apiGetAgg(query).then(resp => {
+    apiGetDistribution(query).then(resp => {
       if (resp.data.success) {
         if (!resp.data.payload) {
           this.setState({
@@ -179,7 +203,6 @@ class Aggregates extends React.Component {
       progress,
     } = this.state;
     const {classes} = this.props;
-    const results = data && data.results;
     return (
       <Grid container spacing={3}>
         <Grid item xs={12} md={12} lg={12}>
@@ -233,87 +256,38 @@ class Aggregates extends React.Component {
         }
         {
           data &&
-          <Grid item xs={12} md={5} lg={5}>
-            <Paper>
-              <List subheader={<ListSubheader>Summary</ListSubheader>}>
-                <ListItem>
-                  <ListItemText>Total Trans</ListItemText>
-                  <ListItemSecondaryAction>{results.total_trans}</ListItemSecondaryAction>
-                </ListItem>
-                <ListItem>
-                  <ListItemText>Trans per Day</ListItemText>
-                  <ListItemSecondaryAction>{results.trans_per_day}</ListItemSecondaryAction>
-                </ListItem>
-                <ListItem>
-                  <ListItemText>Muti Total P/L</ListItemText>
-                  <ListItemSecondaryAction>{results.pl}</ListItemSecondaryAction>
-                </ListItem>
-                <ListItem>
-                  <ListItemText>Muti Daily P/L</ListItemText>
-                  <ListItemSecondaryAction>{results.pl_per_day}</ListItemSecondaryAction>
-                </ListItem>
-                <ListItem>
-                  <ListItemText>Avg Total P/L</ListItemText>
-                  <ListItemSecondaryAction>{results.pl_linear}</ListItemSecondaryAction>
-                </ListItem>
-                <ListItem>
-                  <ListItemText>Avg Daily P/L</ListItemText>
-                  <ListItemSecondaryAction>{results.pl_linear_per_day}</ListItemSecondaryAction>
-                </ListItem>
-                <ListItem>
-                  <ListItemText>Start price</ListItemText>
-                  <ListItemSecondaryAction>{results.start_day_c}</ListItemSecondaryAction>
-                </ListItem>
-                <ListItem>
-                  <ListItemText>End Price</ListItemText>
-                  <ListItemSecondaryAction>{results.end_day_c}</ListItemSecondaryAction>
-                </ListItem>
-                <ListItem>
-                  <ListItemText>Hold P/L</ListItemText>
-                  <ListItemSecondaryAction>{results.hold_pl}</ListItemSecondaryAction>
-                </ListItem>
-                <ListItem>
-                  <ListItemText>Updated At</ListItemText>
-                  <ListItemSecondaryAction>{data.updated_at}</ListItemSecondaryAction>
-                </ListItem>
-              </List>
-            </Paper>
-          </Grid>
+          Object.keys(barFields).map(field =>
+            <Grid item xs={12} md={4} lg={4} key={field}>
+              <div className={classes.oneChart}>
+                <Typography variant="body1">
+                  {`${barFields[field]} min: win ${data.win_rate[field]}%`}
+                </Typography>
+                <ResponsiveContainer>
+                  <ComposedChart data={data[field]}>
+                    <XAxis dataKey="k" />
+                    <YAxis yAxisId="l" domain={['dataMin', 'dataMax']}/>
+                    <YAxis yAxisId="r" orientation="right" domain={['dataMin', 'dataMax']} hide/>
+                    <Tooltip />
+                    <Bar
+                      yAxisId="l"
+                      dataKey="v"
+                      isAnimationActive={false}
+                      fill="#8884d8"
+                    />
+                    <Line
+                      yAxisId="r"
+                      dataKey="p"
+                      isAnimationActive={false}
+                      stroke="none"
+                      dot={{stroke: 'green'}}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </Grid>
+          )
         }
-        {
-          data &&
-          <Grid item xs={12} md={3} lg={3}>
-            <Paper>
-              <List subheader={<ListSubheader>Compound</ListSubheader>}>
-                {
-                  Object.keys(results.multis).map(k => (
-                    <ListItem key={k}>
-                      <ListItemText>{k}</ListItemText>
-                      <ListItemSecondaryAction>{results.multis[k]}</ListItemSecondaryAction>
-                    </ListItem>
-                  ))
-                }
-              </List>
-            </Paper>
-          </Grid>
-        }
-        {
-          data &&
-          <Grid item xs={12} md={3} lg={3}>
-            <Paper>
-              <List subheader={<ListSubheader>Simple</ListSubheader>}>
-                {
-                  Object.keys(results.averages).map(k => (
-                    <ListItem key={k}>
-                      <ListItemText>{k}</ListItemText>
-                      <ListItemSecondaryAction>{results.averages[k]}</ListItemSecondaryAction>
-                    </ListItem>
-                  ))
-                }
-              </List>
-            </Paper>
-          </Grid>
-        }
+        
       </Grid>
     );
   }
@@ -322,4 +296,4 @@ class Aggregates extends React.Component {
 
 export default compose(
   withStyles(useStyles),
-)(Aggregates);
+)(Distribution);

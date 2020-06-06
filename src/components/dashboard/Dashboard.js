@@ -24,19 +24,7 @@ import {
   Link,
 } from "react-router-dom";
 import Aggregates from '../aggregates/Aggregates';
-
-function Copyright() {
-  return (
-    <Typography variant="body2" color="textSecondary" align="center">
-      {'Copyright © '}
-      <Link color="inherit" href="https://material-ui.com/">
-        Your Website
-      </Link>{' '}
-      {new Date().getFullYear()}
-      {'.'}
-    </Typography>
-  );
-}
+import Distribution from '../distribution/Distribution';
 
 const drawerWidth = 240;
 
@@ -163,6 +151,11 @@ export default function Dashboard() {
         </div>
         <Divider />
         <List>
+          <Link to="/distribution">
+            <ListItem button>
+              <ListItemText primary="Distribution" />
+            </ListItem>
+          </Link>
           <Link to="/aggregates">
             <ListItem button>
               <ListItemText primary="Aggregates" />
@@ -180,8 +173,10 @@ export default function Dashboard() {
         <div className={classes.appBarSpacer} />
         <Container maxWidth="lg" className={classes.container}>
           <Switch>
-            <Route path={'/charts'} component={Chart} />
-            <Route component={Aggregates} />
+            <Route path="/charts" component={Chart} />
+            <Route path="/distribution" component={Distribution} />
+            <Route path="/aggregates" component={Aggregates} />
+            <Route component={Distribution} />
           </Switch>
         </Container>
       </main>
