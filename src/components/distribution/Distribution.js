@@ -3,27 +3,15 @@ import compose from 'recompose/compose';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
-import TextField from '@material-ui/core/TextField';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Grid from '@material-ui/core/Grid';
-
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-
 import Box from '@material-ui/core/Box';
 import LinearProgress from '@material-ui/core/LinearProgress';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
-import ListSubheader from '@material-ui/core/ListSubheader';
 
 import {
-  Brush,
   Bar,
   ComposedChart,
   Line,
@@ -31,11 +19,10 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  LineChart,
 } from 'recharts';
 
 import Filters from '../common/Filters';
+import TimeFilter from '../common/TimeFilter';
 
 import {
   apiGetDistribution,
@@ -78,6 +65,17 @@ const barFields = {
   s3: 30,
 };
 
+const dataFields = [
+  'total_trans',
+  'trans_per_day',
+  'start_day_c',
+  'end_day_c',
+  'hold_pl',
+  'stop_count',
+  'stop_avg',
+  'stop_multi',
+]
+
 class Distribution extends React.Component {
   constructor(props) {
     super(props);
@@ -91,8 +89,18 @@ class Distribution extends React.Component {
       volumn_d: '0.97',
       hourFrame: 'all',
       isShort: 'all',
-      calcStrategy: false,
+      gen_uv: false,
       data: null,
+      c1_min: '',
+      c1_max: '',
+      c2_min: '',
+      c2_max: '',
+      c3_min: '',
+      c3_max: '',
+      p1_min: '',
+      p1_max: '',
+      p2_min: '',
+      p2_max: '',
     }
   }
 
@@ -108,6 +116,17 @@ class Distribution extends React.Component {
       volumn_d,
       hourFrame,
       isShort,
+      c1_min,
+      c1_max,
+      c2_min,
+      c2_max,
+      c3_min,
+      c3_max,
+      p1_min,
+      p1_max,
+      p2_min,
+      p2_max,
+      gen_uv,
     } = this.state;
     const query = {
       sym,
@@ -116,6 +135,17 @@ class Distribution extends React.Component {
       volumn_d,
       hour_frame: hourFrame,
       is_short: isShort,
+      c1_min,
+      c1_max,
+      c2_min,
+      c2_max,
+      c3_min,
+      c3_max,
+      p1_min,
+      p1_max,
+      p2_min,
+      p2_max,
+      gen_uv,
     }
     return query;
   }
@@ -183,9 +213,9 @@ class Distribution extends React.Component {
     });
   }
 
-  onChangeStrategy = () => {
+  onChangeUV = () => {
     this.setState({
-      calcStrategy: !this.state.calcStrategy,
+      gen_uv: !this.state.gen_uv,
     })
   }
 
@@ -198,9 +228,19 @@ class Distribution extends React.Component {
       volumn_d,
       hourFrame,
       isShort,
-      calcStrategy,
+      gen_uv,
       data,
       progress,
+      c1_min,
+      c1_max,
+      c2_min,
+      c2_max,
+      c3_min,
+      c3_max,
+      p1_min,
+      p1_max,
+      p2_min,
+      p2_max,
     } = this.state;
     const {classes} = this.props;
     return (
@@ -216,16 +256,28 @@ class Distribution extends React.Component {
               isShort={isShort}
               handleChange={this.handleChange}
             />
+            <TimeFilter
+              handleChange={this.handleChange}
+              c1_min={c1_min}
+              c1_max={c1_max}
+              c2_min={c2_min}
+              c2_max={c2_max}
+              c3_min={c3_min}
+              c3_max={c3_max}
+              p1_min={p1_min}
+              p1_max={p1_max}
+              p2_min={p2_min}
+              p2_max={p2_max}
+            />
             <div className={classes.row}>
               <FormControl className={classes.formControl}>
                 <FormControlLabel
                   control={
-                    <Checkbox checked={calcStrategy} onChange={this.onChangeStrategy} />
+                    <Checkbox checked={gen_uv} onChange={this.onChangeUV} />
                   }
-                  label="Calc Strategy"
+                  label="Create UV"
                 />
               </FormControl>
-
               <Button variant="contained" color="default" onClick={this.onGenerate}>
                 Generate
               </Button>
@@ -254,13 +306,25 @@ class Distribution extends React.Component {
             </Box>
           </Grid>
         }
+        <Grid container xs={12} md={12} lg={12}>
+          {
+            data &&
+            dataFields.map(field =>
+              <Grid key={field} item xs={12} md={4} lg={3}>
+                <Typography variant="body1">
+                    {`${field}: ${data[field]}`}
+                  </Typography>
+              </Grid>
+            )
+          }
+        </Grid>
         {
           data &&
           Object.keys(barFields).map(field =>
-            <Grid item xs={12} md={4} lg={4} key={field}>
+            <Grid item xs={12} md={6} lg={4} key={field}>
               <div className={classes.oneChart}>
                 <Typography variant="body1">
-                  {`${barFields[field]} min: win ${data.win_rate[field]}%`}
+                  {`${barFields[field]}m w ${data.win_rate[field]}% sim ${data.avgs[field]}(${data.avgs_adj[field]}) com ${data.multis[field]}(${data.multis_adj[field]})`}
                 </Typography>
                 <ResponsiveContainer>
                   <ComposedChart data={data[field]}>

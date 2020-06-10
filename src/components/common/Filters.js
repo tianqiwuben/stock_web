@@ -11,18 +11,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 const useStyles = theme => ({
   formControl: {
     margin: theme.spacing(1),
-    minWidth: 120,
-  },
-  row: {
-    '& > *': {
-      margin: theme.spacing(1),
-    },
-  },
-  error: {
-    margin: theme.spacing(1),
-    color: 'red',
-    paddingBottom: theme.spacing(2),
-    display: 'inline',
+    minWidth: 180,
   },
 });
 
