@@ -73,14 +73,10 @@ class Chart extends React.Component {
             >
               <XAxis dataKey="ts" />
               <YAxis yAxisId="left" domain={['dataMin', 'dataMax']} />
-              <YAxis yAxisId="right"
-                orientation="right"
-              />
               <Tooltip />
-              <Line  yAxisId="left" isAnimationActive={false} type="linear" dataKey="c" dot={false} />
-              <Line yAxisId="left" isAnimationActive={false} stroke="none" dataKey="max" dot={dotStyles.maxDot} />
-              <Line yAxisId="left" isAnimationActive={false} stroke="none" dataKey="min" dot={dotStyles.minDot} />
-              <Line yAxisId="right" isAnimationActive={false} stroke="none" dataKey="strategy_name"  dot={dotStyles.strategy} /> 
+              <Line yAxisId="left" isAnimationActive={false} type="linear" stroke="blue" dataKey="c" dot={false} />
+              <Line yAxisId="left" isAnimationActive={false} type="linear" stroke="red" dataKey="put_strike" dot={false} />
+              <Line yAxisId="left" isAnimationActive={false} type="linear" stroke="green" dataKey="call_strike" dot={false} />
               {data.length > 0 && <Brush dataKey="ts" startIndex={0}/>}
             </LineChart>
           </ResponsiveContainer>
@@ -96,10 +92,12 @@ class Chart extends React.Component {
               syncId="foo"
             >
               <XAxis dataKey="ts" />
-              <YAxis domain={['dataMin', 'dataMax']} />
+              <YAxis yAxisId="l" domain={['dataMin', 'dataMax']} />
+              <YAxis yAxisId="r" domain={['dataMin', 'dataMax']} orientation="right"/>
               <Tooltip />
-              <Bar dataKey="v" isAnimationActive={false}/>
-              <Line dataKey="vtype" isAnimationActive={false}  dot={false}/>
+              <Bar yAxisId="l" dataKey="v" isAnimationActive={false}/>
+              <Bar yAxisId="r" isAnimationActive={false} type="linear" stroke="red" dataKey="put_v" dot={false} />
+              <Bar yAxisId="r" isAnimationActive={false} type="linear" stroke="green" dataKey="call_v" dot={false} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
