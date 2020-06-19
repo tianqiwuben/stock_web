@@ -43,3 +43,5 @@ export const apiAggProgress = query => callAPI('/aggs/progress', 'get', query);
 export const apiGetDistribution = query => callAPI('/aggs/distribution', 'get', query);
 
 export const apiPostDistribution = query => callAPI('/aggs/distribution', 'post', query);
+
+export const apiGetConfig = sym => callAPI(`/configs/${sym}`, 'get');

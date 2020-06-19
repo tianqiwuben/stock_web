@@ -25,6 +25,7 @@ import {
 } from "react-router-dom";
 import Aggregates from '../aggregates/Aggregates';
 import Distribution from '../distribution/Distribution';
+import Configs from '../configs/Configs';
 
 const drawerWidth = 240;
 
@@ -166,6 +167,11 @@ export default function Dashboard() {
               <ListItemText primary="Charts" />
             </ListItem>
           </Link>
+          <Link to="/configs">
+            <ListItem button>
+              <ListItemText primary="Configs" />
+            </ListItem>
+          </Link>
         </List>
         <Divider />
       </Drawer>
@@ -176,6 +182,7 @@ export default function Dashboard() {
             <Route path="/charts" component={Chart} />
             <Route path="/distribution" component={Distribution} />
             <Route path="/aggregates" component={Aggregates} />
+            <Route path="/configs" component={Configs} />
             <Route component={Distribution} />
           </Switch>
         </Container>
