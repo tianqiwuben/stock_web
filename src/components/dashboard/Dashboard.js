@@ -26,6 +26,7 @@ import {
 import Aggregates from '../aggregates/Aggregates';
 import Distribution from '../distribution/Distribution';
 import Configs from '../configs/Configs';
+import Triggers from '../triggers/Triggers';
 
 const drawerWidth = 240;
 
@@ -172,6 +173,11 @@ export default function Dashboard() {
               <ListItemText primary="Configs" />
             </ListItem>
           </Link>
+          <Link to="/triggers">
+            <ListItem button>
+              <ListItemText primary="Triggers" />
+            </ListItem>
+          </Link>
         </List>
         <Divider />
       </Drawer>
@@ -183,6 +189,7 @@ export default function Dashboard() {
             <Route path="/distribution" component={Distribution} />
             <Route path="/aggregates" component={Aggregates} />
             <Route path="/configs" component={Configs} />
+            <Route path="/triggers" component={Triggers} />
             <Route component={Distribution} />
           </Switch>
         </Container>

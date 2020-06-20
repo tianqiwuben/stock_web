@@ -45,3 +45,7 @@ export const apiGetDistribution = query => callAPI('/aggs/distribution', 'get', 
 export const apiPostDistribution = query => callAPI('/aggs/distribution', 'post', query);
 
 export const apiGetConfig = sym => callAPI(`/configs/${sym}`, 'get');
+
+export const apiPostConfig = (sym, payload) => callAPI(`/configs/${sym}`, 'post', payload);
+
+export const apiGetTriggers = (sym, query) => callAPI(`/triggers/${sym}`, 'get', query);

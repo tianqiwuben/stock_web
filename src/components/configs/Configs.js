@@ -16,9 +16,13 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListSubheader from '@material-ui/core/ListSubheader';
+import Slider from '@material-ui/core/Slider';
+
+import VolTwoStage from './VolTwoStage';
 
 import {
   apiGetConfig,
+  apiPostConfig,
 } from '../../utils/ApiFetch';
 
 const useStyles = theme => ({
@@ -26,10 +30,8 @@ const useStyles = theme => ({
     margin: theme.spacing(1),
     minWidth: 120,
   },
-  row: {
-    '& > *': {
-      margin: theme.spacing(1),
-    },
+  slider: {
+    width: 200,
   },
   error: {
     margin: theme.spacing(1),
@@ -39,18 +41,38 @@ const useStyles = theme => ({
   },
 });
 
+let symStore = 'SPY';
+
 class Configs extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      sym: 'spy',
+      sym: symStore,
+      last_c: 0,
+      last_v: 0,
+      slider: 0.2,
     }
+    this.registeredModules = {};
+  }
+
+  componentDidMount() {
+    this.onFetch();
+  }
+
+  componentWillUnmount() {
+    const {sym} = this.state;
+    symStore = sym;
   }
 
   onFetch = () => {
     const {sym} = this.state;
     apiGetConfig(sym).then(rest => {
-      console.log(rest.data);
+      if (rest.data.success) {
+        this.setState(rest.data.payload);
+        for(let name in this.registeredModules) {
+          this.registeredModules[name].updateData(rest.data.payload);
+        }
+      }
     })
   }
 
@@ -58,47 +80,109 @@ class Configs extends React.Component {
     this.setState({
       [field]: e.target.value,
     });
+    if (field === 'sym') {
+      for(let name in this.registeredModules) {
+        this.registeredModules[name].updateData({});
+      }
+    }
+  }
+
+  numberWithCommas = (x) => {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
+  registerModule = (name, inst) => {
+    this.registeredModules[name] = inst;
+  }
+
+  onChangeSlider = (e, v) => {
+    this.setState({slider: v});
+  }
+
+  onChangeConfig = (payload) => {
+    const {sym} = this.state;
+    apiPostConfig(sym, {configs: payload}).then(rest => {
+      if (rest.data.success) {
+        this.setState(rest.data.payload);
+        for(let name in this.registeredModules) {
+          this.registeredModules[name].updateData(rest.data.payload);
+        }
+      }
+    })
   }
 
   render() {
     const {
       sym,
+      last_c,
+      last_v,
+      slider,
     } = this.state;
     const {classes} = this.props;
     return (
       <Grid container spacing={3}>
-        <Grid item xs={6} md={3} lg={3}>
+        <Grid item xs={6} md={4} lg={4}>
           <Paper>
-            <FormControl className={classes.formControl}>
-              <TextField
-                label="Symbol"
-                value={sym}
-                onChange={e => this.handleChange('sym', e)}
-              />
-            </FormControl>
-            <div>
-              <Button color="primary" onClick={this.onFetch}>
-                Fetch
-              </Button>
-            </div>
+            <List subheader={<ListSubheader>OverView</ListSubheader>}>
+              <ListItem>
+                <ListItemText>Symbol</ListItemText>
+                <ListItemSecondaryAction>
+                  <TextField
+                    value={sym}
+                    onChange={e => this.handleChange('sym', e)}
+                    inputProps={{
+                      style: { textAlign: "right" }
+                    }}
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+              <ListItem>
+                <ListItemText>Latest Price</ListItemText>
+                <ListItemSecondaryAction>{`$${last_c}`}</ListItemSecondaryAction>
+              </ListItem>
+              <ListItem>
+                <ListItemText>Daily Vol</ListItemText>
+                <ListItemSecondaryAction>{`${this.numberWithCommas(last_v)}`}</ListItemSecondaryAction>
+              </ListItem>
+              <ListItem>
+                <ListItemText>{`Price x ${slider}%`}</ListItemText>
+                <ListItemSecondaryAction>{`${(last_c * slider / 100).toFixed(3)}`}</ListItemSecondaryAction>
+              </ListItem>
+              <ListItem>
+                <ListItemText>Price %</ListItemText>
+                <ListItemSecondaryAction>
+                  <div className={classes.slider}>
+                    <Slider
+                      defaultValue={0.2}
+                      step={0.02}
+                      min={0.02}
+                      max={1}
+                      onChange={this.onChangeSlider}
+                    />
+                  </div>
+                </ListItemSecondaryAction>
+              </ListItem>
+              <ListItem>
+                <ListItemText>
+                  <Button color="primary" onClick={this.onFetch}>
+                    Fetch
+                  </Button>
+                </ListItemText>
+              </ListItem>
+            </List>
           </Paper>
         </Grid>
-        <Grid item xs={6} md={3} lg={3}>
-          <Paper>
-            <FormControl className={classes.formControl}>
-              <TextField
-                label="Symbol"
-                value={sym}
-                onChange={e => this.handleChange('sym', e)}
-              />
-            </FormControl>
-            <div>
-              <Button color="primary" onClick={this.onFetch}>
-                Fetch
-              </Button>
-            </div>
-          </Paper>
-        </Grid>
+        <VolTwoStage
+          registerModule={this.registerModule}
+          doFetch={this.onFetch}
+          onChangeConfig={this.onChangeConfig}
+        />
+        <VolTwoStage
+          isTest={true}
+          registerModule={this.registerModule}
+          doFetch={this.onFetch}
+          onChangeConfig={this.onChangeConfig}
+        />
       </Grid>
     );
   }
