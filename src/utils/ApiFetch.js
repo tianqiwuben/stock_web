@@ -48,4 +48,14 @@ export const apiGetConfig = sym => callAPI(`/configs/${sym}`, 'get');
 
 export const apiPostConfig = (sym, payload) => callAPI(`/configs/${sym}`, 'post', payload);
 
+export const apiTestConfig = (sym, payload) => callAPI(`/test/${sym}`, 'post', payload);
+
 export const apiGetTriggers = (sym, query) => callAPI(`/triggers/${sym}`, 'get', query);
+
+export const apiConfigsOptimization = (sym, query) => callAPI(`/optimization/${sym}`, 'post', query);
+
+export const apiGetOptimizationResult = (sym, query) => callAPI(`/optimization/${sym}`, 'get', query);
+
+export const apiOptimizationApply = (id, query) => callAPI(`/optimization_apply/${id}`, 'post', query);
+
+

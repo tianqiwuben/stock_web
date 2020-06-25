@@ -49,6 +49,11 @@ const styles = theme => ({
     margin: theme.spacing(1),
     minWidth: 120,
   },
+  row: {
+    '& > *': {
+      margin: theme.spacing(1),
+    },
+  },
 });
 
 const dotStyles = {
@@ -208,49 +213,51 @@ class Chart extends React.Component {
     const {classes} = this.props;
     return (
       <Paper className={classes.chartFixedHeight}>
-        <FormControl className={classes.formControl}>
-          <TextField
-            label="Symbol"
-            value={sym}
-            onChange={e => this.handleChange('sym', e)}
-          />
-        </FormControl>
-        <FormControl className={classes.formControl}>
-          <InputLabel>Frame</InputLabel>
-          <Select
-            value={frame}
-            onChange={e => this.handleChange('frame', e)}
-          >
-            <MenuItem value={'second'}>Second</MenuItem>
-            <MenuItem value={'minute'}>Minute</MenuItem>
-            <MenuItem value={'day'}>Day</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl className={classes.formControl}>
-          <TextField
-            label="Start Time"
-            type="datetime-local"
-            value={startDate}
-            InputLabelProps={{
-              shrink: true,
-            }}
-            onChange={e => this.handleChange('startDate', e)}
-          />
-        </FormControl>
-        <FormControl className={classes.formControl}>
-          <FormControlLabel
-            control={
-              <Checkbox checked={isTest} onChange={this.onChangeTest} />
-            }
-            label="Testing"
-          />
-        </FormControl>
-        <Button variant="contained" color="primary" onClick={() => this.onFetch()}>
-          Fetch
-        </Button>
-        <Button variant="contained" color="default" onClick={this.onNextTrans}>
-          Next Trans
-        </Button>
+        <div className={classes.row}>
+          <FormControl className={classes.formControl}>
+            <TextField
+              label="Symbol"
+              value={sym}
+              onChange={e => this.handleChange('sym', e)}
+            />
+          </FormControl>
+          <FormControl className={classes.formControl}>
+            <InputLabel>Frame</InputLabel>
+            <Select
+              value={frame}
+              onChange={e => this.handleChange('frame', e)}
+            >
+              <MenuItem value={'second'}>Second</MenuItem>
+              <MenuItem value={'minute'}>Minute</MenuItem>
+              <MenuItem value={'day'}>Day</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl className={classes.formControl}>
+            <TextField
+              label="Start Time"
+              type="datetime-local"
+              value={startDate}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              onChange={e => this.handleChange('startDate', e)}
+            />
+          </FormControl>
+          <FormControl className={classes.formControl}>
+            <FormControlLabel
+              control={
+                <Checkbox checked={isTest} onChange={this.onChangeTest} />
+              }
+              label="Testing"
+            />
+          </FormControl>
+          <Button variant="contained" color="primary" onClick={() => this.onFetch()}>
+            Fetch
+          </Button>
+          <Button variant="contained" color="default" onClick={this.onNextTrans}>
+            Next Trans
+          </Button>
+        </div>
         <div className={classes.oneChart}>
           <ResponsiveContainer>
             <ComposedChart

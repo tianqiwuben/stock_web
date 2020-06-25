@@ -9,6 +9,7 @@ import TextField from '@material-ui/core/TextField';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Grid from '@material-ui/core/Grid';
+import {connect} from 'react-redux';
 
 import LinearProgress from '@material-ui/core/LinearProgress';
 import List from '@material-ui/core/List';
@@ -17,12 +18,24 @@ import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import Slider from '@material-ui/core/Slider';
+import OptimizationResults from './OptimizationResults';
+import Switch from '@material-ui/core/Switch';
 
-import VolTwoStage from './VolTwoStage';
+import {
+  setConfigs,
+  resetConfigs,
+} from '../../redux/configActions';
+
+import {
+  saveOptimizations,
+} from '../../redux/optimizationActions';
+
+import TwoStageTrailing from './twoStagingTrailing/TwoStageTrailing';
 
 import {
   apiGetConfig,
   apiPostConfig,
+  apiGetOptimizationResult,
 } from '../../utils/ApiFetch';
 
 const useStyles = theme => ({
@@ -31,7 +44,7 @@ const useStyles = theme => ({
     minWidth: 120,
   },
   slider: {
-    width: 200,
+    width: '100%',
   },
   error: {
     margin: theme.spacing(1),
@@ -48,15 +61,8 @@ class Configs extends React.Component {
     super(props);
     this.state = {
       sym: symStore,
-      last_c: 0,
-      last_v: 0,
       slider: 0.2,
     }
-    this.registeredModules = {};
-  }
-
-  componentDidMount() {
-    this.onFetch();
   }
 
   componentWillUnmount() {
@@ -66,12 +72,21 @@ class Configs extends React.Component {
 
   onFetch = () => {
     const {sym} = this.state;
+    const {dispatchSetConfigs, dispatchResetConfigs} = this.props;
+    dispatchResetConfigs();
     apiGetConfig(sym).then(rest => {
       if (rest.data.success) {
         this.setState(rest.data.payload);
-        for(let name in this.registeredModules) {
-          this.registeredModules[name].updateData(rest.data.payload);
+        dispatchSetConfigs(rest.data.payload);
+        const query = {
+          strategy: 'two_stage_trailing',
         }
+        apiGetOptimizationResult(sym, query).then(resp => {
+          if (resp.data && resp.data.success) {
+            const {dispatchSaveOptimization} = this.props;
+            dispatchSaveOptimization(resp.data.payload);
+          }
+        })
       }
     })
   }
@@ -80,33 +95,28 @@ class Configs extends React.Component {
     this.setState({
       [field]: e.target.value,
     });
-    if (field === 'sym') {
-      for(let name in this.registeredModules) {
-        this.registeredModules[name].updateData({});
-      }
-    }
   }
 
   numberWithCommas = (x) => {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
 
-  registerModule = (name, inst) => {
-    this.registeredModules[name] = inst;
-  }
-
   onChangeSlider = (e, v) => {
     this.setState({slider: v});
   }
 
+  onTogglePercent = () => {
+    const {isPercent, dispatchSetConfigs} = this.props;
+    dispatchSetConfigs({isPercent: !isPercent});
+  }
+
   onChangeConfig = (payload) => {
     const {sym} = this.state;
-    apiPostConfig(sym, {configs: payload}).then(rest => {
+    apiPostConfig(sym, payload).then(rest => {
       if (rest.data.success) {
         this.setState(rest.data.payload);
-        for(let name in this.registeredModules) {
-          this.registeredModules[name].updateData(rest.data.payload);
-        }
+        const {dispatchSetConfigs} = this.props;
+        dispatchSetConfigs(rest.data.payload);
       }
     })
   }
@@ -114,81 +124,102 @@ class Configs extends React.Component {
   render() {
     const {
       sym,
-      last_c,
-      last_v,
       slider,
     } = this.state;
-    const {classes} = this.props;
+    const {
+      classes,
+      last_c,
+      last_v,
+      isPercent,
+    } = this.props;
     return (
-      <Grid container spacing={3}>
-        <Grid item xs={6} md={4} lg={4}>
-          <Paper>
-            <List subheader={<ListSubheader>OverView</ListSubheader>}>
-              <ListItem>
-                <ListItemText>Symbol</ListItemText>
-                <ListItemSecondaryAction>
-                  <TextField
-                    value={sym}
-                    onChange={e => this.handleChange('sym', e)}
-                    inputProps={{
-                      style: { textAlign: "right" }
-                    }}
-                  />
-                </ListItemSecondaryAction>
-              </ListItem>
-              <ListItem>
-                <ListItemText>Latest Price</ListItemText>
-                <ListItemSecondaryAction>{`$${last_c}`}</ListItemSecondaryAction>
-              </ListItem>
-              <ListItem>
-                <ListItemText>Daily Vol</ListItemText>
-                <ListItemSecondaryAction>{`${this.numberWithCommas(last_v)}`}</ListItemSecondaryAction>
-              </ListItem>
-              <ListItem>
-                <ListItemText>{`Price x ${slider}%`}</ListItemText>
-                <ListItemSecondaryAction>{`${(last_c * slider / 100).toFixed(3)}`}</ListItemSecondaryAction>
-              </ListItem>
-              <ListItem>
-                <ListItemText>Price %</ListItemText>
-                <ListItemSecondaryAction>
-                  <div className={classes.slider}>
-                    <Slider
-                      defaultValue={0.2}
-                      step={0.02}
-                      min={0.02}
-                      max={1}
-                      onChange={this.onChangeSlider}
+      <React.Fragment>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6} lg={4}>
+            <Paper>
+              <List subheader={<ListSubheader>OverView</ListSubheader>}>
+                <ListItem>
+                  <ListItemText>Symbol</ListItemText>
+                  <ListItemSecondaryAction>
+                    <Button color="primary" onClick={this.onFetch}>
+                      Fetch
+                    </Button>
+                    <TextField
+                      value={sym}
+                      onChange={e => this.handleChange('sym', e)}
+                      inputProps={{
+                        style: { textAlign: "right" }
+                      }}
+                      style = {{width: 80}}
                     />
-                  </div>
-                </ListItemSecondaryAction>
-              </ListItem>
-              <ListItem>
-                <ListItemText>
-                  <Button color="primary" onClick={this.onFetch}>
-                    Fetch
-                  </Button>
-                </ListItemText>
-              </ListItem>
-            </List>
-          </Paper>
+                  </ListItemSecondaryAction>
+                </ListItem>
+                <ListItem>
+                  <ListItemText>Latest Price</ListItemText>
+                  <ListItemSecondaryAction>{`$${last_c}`}</ListItemSecondaryAction>
+                </ListItem>
+                <ListItem>
+                  <ListItemText>Daily Vol</ListItemText>
+                  <ListItemSecondaryAction>{`${this.numberWithCommas(last_v)}`}</ListItemSecondaryAction>
+                </ListItem>
+              </List>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={6} lg={3}>
+            <Paper>
+              <List subheader={<ListSubheader>OverView</ListSubheader>}>
+                <ListItem>
+                  <ListItemText>Absolute / Percent</ListItemText>
+                  <ListItemSecondaryAction>
+                    <Switch
+                      color="primary"
+                      checked={isPercent}
+                      onChange={this.onTogglePercent}
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+                <ListItem>
+                  <ListItemText>{`Price x ${slider}%`}</ListItemText>
+                  <ListItemSecondaryAction>{`${(last_c * slider / 100).toFixed(3)}`}</ListItemSecondaryAction>
+                </ListItem>
+                <ListItem>
+                  <ListItemText>
+                    <div className={classes.slider}>
+                      <Slider
+                        defaultValue={0.2}
+                        step={0.02}
+                        min={0.02}
+                        max={1}
+                        onChange={this.onChangeSlider}
+                      />
+                    </div>
+                  </ListItemText>
+                </ListItem>
+              </List>
+            </Paper>
+          </Grid>
         </Grid>
-        <VolTwoStage
-          registerModule={this.registerModule}
-          doFetch={this.onFetch}
+        <TwoStageTrailing
+          sym={this.sym}
           onChangeConfig={this.onChangeConfig}
         />
-        <VolTwoStage
-          isTest={true}
-          registerModule={this.registerModule}
-          doFetch={this.onFetch}
-          onChangeConfig={this.onChangeConfig}
-        />
-      </Grid>
+        <OptimizationResults onFetchConfigs={this.onFetch}/>
+      </React.Fragment>
     );
   }
 }
 
+const mapStateToProps = state => ({
+  last_c: state.configs.last_c,
+  last_v: state.configs.last_v,
+  isPercent: state.configs.isPercent || false,
+})
 
 export default compose(
   withStyles(useStyles),
+  connect(mapStateToProps, {
+    dispatchSetConfigs: setConfigs,
+    dispatchResetConfigs: resetConfigs,
+    dispatchSaveOptimization: saveOptimizations,
+  }),
 )(Configs);

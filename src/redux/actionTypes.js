@@ -1,1 +1,7 @@
 export const RESET_STORE = 'RESET_STORE';
+
+export const SET_CONFIGS = 'SET_CONFIGS';
+
+export const RESET_CONFIGS = 'RESET_CONFIGS';
+
+export const SAVE_OPTIMIZATIONS = 'SAVE_OPTIMIZATIONS';

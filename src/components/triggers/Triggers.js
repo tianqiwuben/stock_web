@@ -8,6 +8,7 @@ import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import querystring from 'querystring';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -70,8 +71,7 @@ const initState = {
   ma_v_data: [],
   c_diff_data: [],
   sym: 'SPY',
-  ma_v_t: 5,
-  c_diff_t: 5,
+  aggs_seconds: 5,
   updated_at: '',
   generate: false,
   c_dis_count: 0,
@@ -88,6 +88,7 @@ class Triggers extends React.Component {
     super(props);
     let st = {
       ...stateStore,
+      loading: false,
     }
     if (props.location && props.location.search) {
       const query = querystring.decode(props.location.search.substring(1))
@@ -111,13 +112,11 @@ class Triggers extends React.Component {
   updateQueryParam = () => {
     const {
       sym,
-      c_diff_t,
-      ma_v_t,
+      aggs_seconds,
     } = this.state;
     const query = querystring.encode({
       sym,
-      c_diff_t,
-      ma_v_t,
+      aggs_seconds,
     });
     const {history, location} = this.props;
     history.push({
@@ -135,16 +134,17 @@ class Triggers extends React.Component {
   onFetch = () => {
     const {
       sym,
-      c_diff_t,
-      ma_v_t,
+      aggs_seconds,
       generate,
     } = this.state;
     const query = {
-      c_diff_t,
-      ma_v_t,
+      aggs_seconds,
       generate: generate ? 1 : 0,
     };
     this.updateQueryParam();
+    this.setState({
+      loading: true,
+    })
     apiGetTriggers(sym, query).then(resp => {
       if (resp && resp.data.success) {
         this.setState({
@@ -155,6 +155,7 @@ class Triggers extends React.Component {
           v_dis_count: resp.data.payload.v_dis_count,
           start_time: resp.data.payload.start_time,
           end_time: resp.data.payload.end_time,
+          loading: false,
         });
       }
     })
@@ -172,14 +173,14 @@ class Triggers extends React.Component {
       c_diff_data,
       ma_v_data,
       sym,
-      ma_v_t,
-      c_diff_t,
+      aggs_seconds,
       generate,
       updated_at,
       c_dis_count,
       v_dis_count,
       start_time,
       end_time,
+      loading,
     } = this.state;
     const {classes} = this.props;
     return (
@@ -194,16 +195,9 @@ class Triggers extends React.Component {
           </FormControl>
           <FormControl className={classes.formControl}>
             <TextField
-              label="MA V Seconds"
-              value={ma_v_t}
-              onChange={e => this.handleChange('ma_v_t', e)}
-            />
-          </FormControl>
-          <FormControl className={classes.formControl}>
-            <TextField
-              label="C diff Seconds"
-              value={c_diff_t}
-              onChange={e => this.handleChange('c_diff_t', e)}
+              label="Aggs Seconds"
+              value={aggs_seconds}
+              onChange={e => this.handleChange('aggs_seconds', e)}
             />
           </FormControl>
           <FormControl className={classes.formControl}>
@@ -217,6 +211,9 @@ class Triggers extends React.Component {
           <Button variant="contained" color="primary" onClick={this.onFetch}>
             Fetch
           </Button>
+          {
+            loading && <CircularProgress size={20}/>
+          }
           <Typography variant="subtitle1" className={classes.updatedAt}>{`Updated at: ${updated_at}`}</Typography>
         </div>
         <div className={classes.oneChart}>
