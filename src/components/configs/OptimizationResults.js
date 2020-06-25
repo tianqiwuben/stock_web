@@ -16,8 +16,6 @@ import {connect} from 'react-redux';
 
 import {apiOptimizationApply} from '../../utils/ApiFetch';
 
-import {setConfigs} from '../../redux/configActions';
-
 const useStyles = theme => ({
   wrapper: {
     position: 'relative',
@@ -31,15 +29,6 @@ const useStyles = theme => ({
     marginLeft: -12,
   },
 });
-
-
-const FIELD_MAP = {
-  aggs_seconds: 'Aggregation seconds',
-  ma_v_threshould: 'MA Vol Trigger',
-  c_diff_threshould: 'Price Diff Trigger %',
-  stop_trailing_diff: 'Stop Trailing %',
-  half_target: 'Half Target %',
-}
 
 class OptimizationResults extends React.Component {
   constructor(props) {
@@ -61,11 +50,12 @@ class OptimizationResults extends React.Component {
   render() {
     const {
       classes,
-      headers,
-      records,
       isPercent,
+      strategy,
+      optimizations,
     } = this.props;
-    if (!headers) {
+    const data = optimizations[strategy];
+    if (!data || !data.headers) {
       return null;
     }
     return (
@@ -79,7 +69,7 @@ class OptimizationResults extends React.Component {
                   <TableCell>Profit %</TableCell>
                   <TableCell>Count</TableCell>
                   {
-                    headers.map(h => (
+                    data.headers.map(h => (
                       <TableCell key={h}>
                         <Tooltip title={h}><span>P</span></Tooltip>
                       </TableCell>
@@ -91,13 +81,13 @@ class OptimizationResults extends React.Component {
               </TableHead>
               <TableBody>
                 {
-                  records.map(row => (
+                  data.records.map(row => (
                     <TableRow key={row.id}>
                       <TableCell>{row.result_type}</TableCell>
                       <TableCell>{row.profit}</TableCell>
                       <TableCell>{row.transaction_count}</TableCell>
                       {
-                        headers.map(h => (
+                        data.headers.map(h => (
                           <TableCell key={h}>
                             {row.configs[`${h}${isPercent ? '_pct' : ''}`]}
                           </TableCell>
@@ -121,10 +111,10 @@ class OptimizationResults extends React.Component {
 }
 
 const mapStateToProps = state => ({
-  headers: state.optimizations.headers,
-  records: state.optimizations.records,
   sym: state.configs.sym,
   isPercent: state.configs.isPercent,
+  optimizations: state.optimizations,
+  strategy: state.configs.strategy,
 })
 
 export default compose(

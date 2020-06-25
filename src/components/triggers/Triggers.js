@@ -26,7 +26,6 @@ import {
   LineChart,
 } from 'recharts';
 import Paper from '@material-ui/core/Paper';
-import Title from '../dashboard/Title';
 import {apiGetTriggers} from '../../utils/ApiFetch';
 import { Typography } from '@material-ui/core';
 

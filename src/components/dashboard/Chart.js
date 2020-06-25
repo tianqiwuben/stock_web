@@ -21,11 +21,8 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  LineChart,
 } from 'recharts';
 import Paper from '@material-ui/core/Paper';
-import Title from './Title';
 import {apiBars} from '../../utils/ApiFetch';
 
 const LABEL = {

@@ -11,7 +11,7 @@ export default (state = initialState, action) => {
     case SAVE_OPTIMIZATIONS: {
       return {
         ...state,
-        ...action.optimizations,
+        [action.strategy]: action.optimizations,
       }
     }
     default:

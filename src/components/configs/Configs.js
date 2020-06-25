@@ -7,7 +7,8 @@ import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Checkbox from '@material-ui/core/Checkbox';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
 import Grid from '@material-ui/core/Grid';
 import {connect} from 'react-redux';
 
@@ -54,39 +55,40 @@ const useStyles = theme => ({
   },
 });
 
-let symStore = 'SPY';
-
 class Configs extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      sym: symStore,
+      sym: props.sym,
       slider: 0.2,
     }
   }
 
-  componentWillUnmount() {
-    const {sym} = this.state;
-    symStore = sym;
-  }
-
   onFetch = () => {
     const {sym} = this.state;
-    const {dispatchSetConfigs, dispatchResetConfigs} = this.props;
+    const {dispatchSetConfigs, dispatchResetConfigs, strategy} = this.props;
     dispatchResetConfigs();
     apiGetConfig(sym).then(rest => {
       if (rest.data.success) {
-        this.setState(rest.data.payload);
-        dispatchSetConfigs(rest.data.payload);
-        const query = {
-          strategy: 'two_stage_trailing',
+        this.setState({sym: rest.data.payload.sym});
+        if (strategy.length === 0) {
+          rest.data.payload.strategy = rest.data.payload.current_strategy.vs;
         }
-        apiGetOptimizationResult(sym, query).then(resp => {
-          if (resp.data && resp.data.success) {
-            const {dispatchSaveOptimization} = this.props;
-            dispatchSaveOptimization(resp.data.payload);
-          }
-        })
+        dispatchSetConfigs(rest.data.payload);
+        this.onFetchOptimization(rest.data.payload.current_strategy.vs);
+      }
+    })
+  }
+
+  onFetchOptimization = (strategy) => {
+    const {sym} = this.props;
+    const query = {
+      strategy,
+    }
+    apiGetOptimizationResult(sym, query).then(resp => {
+      if (resp.data && resp.data.success) {
+        const {dispatchSaveOptimization} = this.props;
+        dispatchSaveOptimization(strategy, resp.data.payload);
       }
     })
   }
@@ -121,6 +123,15 @@ class Configs extends React.Component {
     })
   }
 
+  changeStrategy = (e) => {
+    const {dispatchSetConfigs, strategy} = this.props;
+    const newStra = e.target.value;
+    if (strategy !== newStra) {
+      dispatchSetConfigs({strategy: newStra});
+      this.onFetchOptimization(newStra);
+    }
+  }
+
   render() {
     const {
       sym,
@@ -131,6 +142,7 @@ class Configs extends React.Component {
       last_c,
       last_v,
       isPercent,
+      strategy,
     } = this.props;
     return (
       <React.Fragment>
@@ -198,9 +210,31 @@ class Configs extends React.Component {
               </List>
             </Paper>
           </Grid>
+          <Grid item xs={12} md={6} lg={5}>
+            <Paper>
+              <List subheader={<ListSubheader>Strategy</ListSubheader>}>
+                <ListItem>
+                  <ListItemText>
+                    <Select
+                      value={strategy}
+                      onChange={this.changeStrategy}
+                      autoWidth
+                    >
+                      <MenuItem value={'two_stage_trailing'}>two_stage_trailing</MenuItem>
+                      <MenuItem value={'one_stage_long_limit'}>one_stage_long_limit</MenuItem>
+                    </Select>
+                  </ListItemText>
+                  <ListItemSecondaryAction>
+                    <Button color="primary" onClick={this.onFetch}>
+                      Save
+                    </Button>
+                  </ListItemSecondaryAction>
+                </ListItem>
+              </List>
+            </Paper>
+          </Grid>
         </Grid>
         <TwoStageTrailing
-          sym={this.sym}
           onChangeConfig={this.onChangeConfig}
         />
         <OptimizationResults onFetchConfigs={this.onFetch}/>
@@ -213,6 +247,8 @@ const mapStateToProps = state => ({
   last_c: state.configs.last_c,
   last_v: state.configs.last_v,
   isPercent: state.configs.isPercent || false,
+  sym: state.configs.sym,
+  strategy: state.configs.strategy,
 })
 
 export default compose(
