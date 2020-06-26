@@ -17,9 +17,11 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import {connect} from 'react-redux';
 
-import {apiTestConfig} from '../../../utils/ApiFetch';
+import {apiTestConfig} from '../../utils/ApiFetch';
 
-import {setConfigs} from '../../../redux/configActions';
+import {setConfigs} from '../../redux/configActions';
+
+import StrategyDB from '../common/StrategyDB';
 
 import {
   Link,
@@ -40,15 +42,7 @@ const useStyles = theme => ({
 });
 
 
-const FIELD_MAP = {
-  aggs_seconds: 'Aggregation seconds',
-  ma_v_threshould: 'MA Vol Trigger',
-  c_diff_threshould: 'Price Diff Trigger %',
-  stop_trailing_diff: 'Stop Trailing %',
-  half_target: 'Half Target %',
-}
-
-class TwoStageTrailingValues extends React.Component {
+class StrategyValues extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -58,40 +52,33 @@ class TwoStageTrailingValues extends React.Component {
 
   handleChange = (field, e) => {
     const {
-      two_stage_trailing_test,
-      two_stage_trailing,
       isTest,
       dispatchSetConfigs,
+      strategy,
+      all_configs,
     } = this.props;
     const newConf = {};
-    if (isTest) {
-      const newVs = (two_stage_trailing_test && two_stage_trailing_test.vs) ? JSON.parse(two_stage_trailing_test.vs) : {};
-      newVs[field] = e.target.value;
-      newConf['two_stage_trailing_test'] = {
-        ...two_stage_trailing_test,
-        vs: JSON.stringify(newVs),
-      }
-    } else {
-      const newVs = (two_stage_trailing && two_stage_trailing.vs) ? JSON.parse(two_stage_trailing.vs) : {};
-      newVs[field] = e.target.value;
-      newConf['two_stage_trailing'] = {
-        ...two_stage_trailing,
-        vs: JSON.stringify(newVs),
-      }
+    const strategyName = `${strategy}${isTest ? '_test' : ''}`;
+    const conf = all_configs[strategyName];
+    const newVs = (conf && conf.vs) ? JSON.parse(conf.vs) : {};
+    newVs[field] = e.target.value;
+    newConf[strategyName] = {
+      ...conf,
+      vs: JSON.stringify(newVs),
     }
     dispatchSetConfigs(newConf);
   }
 
   onSave = () => {
     const {
-      two_stage_trailing_test,
-      two_stage_trailing,
+      strategy,
+      all_configs,
       isTest,
     } = this.props;
-    const k = isTest ? 'two_stage_trailing_test' : 'two_stage_trailing';
+    const strategyName = `${strategy}${isTest ? '_test' : ''}`;
     const payload = {
       configs: {
-        [k]: isTest ? two_stage_trailing_test : two_stage_trailing,
+        [strategyName]: all_configs[strategyName],
       },
     };
     const {onChangeConfig} = this.props;
@@ -100,10 +87,11 @@ class TwoStageTrailingValues extends React.Component {
 
   onTest = () => {
     const {
-      sym
+      sym,
+      strategy,
     } = this.props;
     const payload = {
-      strategy: 'two_stage_trailing',
+      strategy: strategy,
     }
     this.setState({testLoading: true});
     apiTestConfig(sym, payload).then(resp => {
@@ -118,29 +106,29 @@ class TwoStageTrailingValues extends React.Component {
       classes,
       last_c,
       isTest,
-      two_stage_trailing_test,
-      two_stage_trailing,
+      all_configs,
+      strategy,
       isPercent,
     } = this.props;
     const {
       testLoading,
     } = this.state;
-    const sc = isTest ? two_stage_trailing_test : two_stage_trailing;
+    const sc = isTest ? all_configs[`${strategy}_test`] : all_configs[strategy];
     const configs = (sc && sc.vs) ? JSON.parse(sc.vs) : {};
-    const title = isTest ? 'Test' : 'Vol Triggers - Two Stage Trailing';
+    const title = isTest ? 'Test' : StrategyDB[strategy].name;
     return (
       <Grid item sm={12} md={6} lg={isTest ? 3 : 4}>
         <Paper>
             <List subheader={<ListSubheader>{title}</ListSubheader>}>
             {
-              Object.keys(FIELD_MAP).map(field => {
-                let title = isTest ? field : FIELD_MAP[field];
-                if (FIELD_MAP[field].substr(-1) === '%') {
-                  title += ` $${(last_c * configs[field] / 100).toFixed(3)}`;
+              StrategyDB[strategy].fields.map(field => {
+                let title = isTest ? field.key : field.name;
+                if (field.name.substr(-1) === '%') {
+                  title += ` $${(last_c * configs[field.key] / 100).toFixed(3)}`;
                 }
-                const pctField = `${field}${isPercent ? '_pct' : ''}`;
+                const pctField = `${field.key}${isPercent ? '_pct' : ''}`;
                 return (
-                  <ListItem key={field}>
+                  <ListItem key={field.key}>
                     <ListItemText>{title}</ListItemText>
                     <ListItemSecondaryAction>
                       <TextField
@@ -191,11 +179,11 @@ class TwoStageTrailingValues extends React.Component {
 }
 
 const mapStateToProps = state => ({
-  two_stage_trailing: state.configs.two_stage_trailing,
-  two_stage_trailing_test: state.configs.two_stage_trailing_test,
   last_c: state.configs.last_c,
   sym: state.configs.sym,
   isPercent: state.configs.isPercent,
+  strategy: state.configs.strategy,
+  all_configs: state.configs,
 })
 
 export default compose(
@@ -203,4 +191,4 @@ export default compose(
   connect(mapStateToProps, {
     dispatchSetConfigs: setConfigs,
   }),
-)(TwoStageTrailingValues);
+)(StrategyValues);

@@ -13,6 +13,7 @@ import Typography from '@material-ui/core/Typography';
 import Tooltip from '@material-ui/core/Tooltip';
 import Grid from '@material-ui/core/Grid';
 import {connect} from 'react-redux';
+import ButtonGroup from '@material-ui/core/ButtonGroup';
 
 import {apiOptimizationApply} from '../../utils/ApiFetch';
 
@@ -39,7 +40,7 @@ class OptimizationResults extends React.Component {
   }
 
   saveConfig = (id, env) => {
-    apiOptimizationApply(id, {save_to: env}).then(resp => {
+    apiOptimizationApply(id, {button_action: env}).then(resp => {
       if(resp.data.success) {
         const {onFetchConfigs} = this.props;
         onFetchConfigs();
@@ -62,12 +63,13 @@ class OptimizationResults extends React.Component {
       <Grid container spacing={3}>
         <Grid item sm={12} md={12} lg={12}>
           <TableContainer component={Paper}>
-            <Table className={classes.table}>
+            <Table className={classes.table} size="small">
               <TableHead>
                 <TableRow>
                   <TableCell>Type</TableCell>
                   <TableCell>Profit %</TableCell>
                   <TableCell>Count</TableCell>
+                  <TableCell>Hold(min)</TableCell>
                   {
                     data.headers.map(h => (
                       <TableCell key={h}>
@@ -86,6 +88,7 @@ class OptimizationResults extends React.Component {
                       <TableCell>{row.result_type}</TableCell>
                       <TableCell>{row.profit}</TableCell>
                       <TableCell>{row.transaction_count}</TableCell>
+                      <TableCell>{(row.hold_seconds / 60).toFixed(1)}</TableCell>
                       {
                         data.headers.map(h => (
                           <TableCell key={h}>
@@ -95,8 +98,17 @@ class OptimizationResults extends React.Component {
                       }
                       <TableCell>{row.updated_at}</TableCell>
                       <TableCell>
-                        <Button onClick={() => {this.saveConfig(row.id, 'test')}}>TEST</Button>
-                        <Button onClick={() => {this.saveConfig(row.id, 'prod')}}>PROD</Button>
+                        <ButtonGroup variant="text" color="primary" >
+                          <Button onClick={() => {this.saveConfig(row.id, 'test')}}>TEST</Button>
+                          <Button onClick={() => {this.saveConfig(row.id, 'prod')}}>PROD</Button>
+                          {
+                            row.persist ?
+                              <Button onClick={() => {this.saveConfig(row.id, 'unpersist')}}>DISC</Button>
+                            :
+                              <Button onClick={() => {this.saveConfig(row.id, 'persist')}}>KEEP</Button>
+                          }
+                          <Button onClick={() => {this.saveConfig(row.id, 'delete')}}>DEL</Button>
+                        </ButtonGroup>
                       </TableCell>
                     </TableRow>
                   ))

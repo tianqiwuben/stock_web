@@ -18,9 +18,10 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListSubheader from '@material-ui/core/ListSubheader';
-import Slider from '@material-ui/core/Slider';
 import OptimizationResults from './OptimizationResults';
 import Switch from '@material-ui/core/Switch';
+import StrategyDB from '../common/StrategyDB';
+
 
 import {
   setConfigs,
@@ -31,7 +32,7 @@ import {
   saveOptimizations,
 } from '../../redux/optimizationActions';
 
-import TwoStageTrailing from './twoStagingTrailing/TwoStageTrailing';
+import StrategyPanel from './StrategyPanel';
 
 import {
   apiGetConfig,
@@ -43,9 +44,6 @@ const useStyles = theme => ({
   formControl: {
     margin: theme.spacing(1),
     minWidth: 120,
-  },
-  slider: {
-    width: '100%',
   },
   error: {
     margin: theme.spacing(1),
@@ -60,7 +58,6 @@ class Configs extends React.Component {
     super(props);
     this.state = {
       sym: props.sym,
-      slider: 0.2,
     }
   }
 
@@ -103,9 +100,6 @@ class Configs extends React.Component {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
 
-  onChangeSlider = (e, v) => {
-    this.setState({slider: v});
-  }
 
   onTogglePercent = () => {
     const {isPercent, dispatchSetConfigs} = this.props;
@@ -132,10 +126,21 @@ class Configs extends React.Component {
     }
   }
 
+  onSaveStrategy = () => {
+    const {strategy} = this.props;
+    const payload = {
+      configs: {
+        current_strategy: {
+          vs: strategy,
+        }
+      }
+    }
+    this.onChangeConfig(payload);
+  }
+
   render() {
     const {
       sym,
-      slider,
     } = this.state;
     const {
       classes,
@@ -174,12 +179,6 @@ class Configs extends React.Component {
                   <ListItemText>Daily Vol</ListItemText>
                   <ListItemSecondaryAction>{`${this.numberWithCommas(last_v)}`}</ListItemSecondaryAction>
                 </ListItem>
-              </List>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} md={6} lg={3}>
-            <Paper>
-              <List subheader={<ListSubheader>OverView</ListSubheader>}>
                 <ListItem>
                   <ListItemText>Absolute / Percent</ListItemText>
                   <ListItemSecondaryAction>
@@ -189,23 +188,6 @@ class Configs extends React.Component {
                       onChange={this.onTogglePercent}
                     />
                   </ListItemSecondaryAction>
-                </ListItem>
-                <ListItem>
-                  <ListItemText>{`Price x ${slider}%`}</ListItemText>
-                  <ListItemSecondaryAction>{`${(last_c * slider / 100).toFixed(3)}`}</ListItemSecondaryAction>
-                </ListItem>
-                <ListItem>
-                  <ListItemText>
-                    <div className={classes.slider}>
-                      <Slider
-                        defaultValue={0.2}
-                        step={0.02}
-                        min={0.02}
-                        max={1}
-                        onChange={this.onChangeSlider}
-                      />
-                    </div>
-                  </ListItemText>
                 </ListItem>
               </List>
             </Paper>
@@ -220,12 +202,15 @@ class Configs extends React.Component {
                       onChange={this.changeStrategy}
                       autoWidth
                     >
-                      <MenuItem value={'two_stage_trailing'}>two_stage_trailing</MenuItem>
-                      <MenuItem value={'one_stage_long_limit'}>one_stage_long_limit</MenuItem>
+                      {
+                        Object.keys(StrategyDB).map(key => (
+                          <MenuItem key={key} value={key}>{key}</MenuItem>
+                        ))
+                      }
                     </Select>
                   </ListItemText>
                   <ListItemSecondaryAction>
-                    <Button color="primary" onClick={this.onFetch}>
+                    <Button color="primary" onClick={this.onSaveStrategy}>
                       Save
                     </Button>
                   </ListItemSecondaryAction>
@@ -234,10 +219,16 @@ class Configs extends React.Component {
             </Paper>
           </Grid>
         </Grid>
-        <TwoStageTrailing
-          onChangeConfig={this.onChangeConfig}
-        />
-        <OptimizationResults onFetchConfigs={this.onFetch}/>
+        {
+          strategy.length > 0 &&
+          <StrategyPanel
+            onChangeConfig={this.onChangeConfig}
+          />
+        }
+        {
+          strategy.length > 0 &&
+          <OptimizationResults onFetchConfigs={this.onFetch}/>
+        }
       </React.Fragment>
     );
   }

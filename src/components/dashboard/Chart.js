@@ -11,6 +11,7 @@ import querystring from 'querystring';
 
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
+import StrategyDB from '../common/StrategyDB';
 
 import {
   Brush,
@@ -44,7 +45,7 @@ const styles = theme => ({
   },
   formControl: {
     margin: theme.spacing(1),
-    minWidth: 120,
+    minWidth: 60,
   },
   row: {
     '& > *': {
@@ -87,8 +88,10 @@ const initState = {
   sym: 'SPY',
   startDate: '',
   frame: 'second',
+  strategy: 'two_stage_trailing',
   isTest: false,
   nextTrans: null,
+  agg_seconds: 5,
 }
 
 
@@ -167,13 +170,17 @@ class Chart extends React.Component {
       startDate,
       nextTrans,
       isTest,
+      strategy,
+      agg_seconds,
     } = this.state;
     const query = {
       sym,
       frame,
+      strategy,
       start_time: startDate,
       next_trans: nextTrans,
       find_next_trans: findNextTrans,
+      agg_seconds,
       is_test: isTest ? 1 : 0,
     };
     this.updateQueryParam();
@@ -206,6 +213,8 @@ class Chart extends React.Component {
       startDate,
       frame,
       isTest,
+      strategy,
+      agg_seconds,
     } = this.state;
     const {classes} = this.props;
     return (
@@ -216,6 +225,13 @@ class Chart extends React.Component {
               label="Symbol"
               value={sym}
               onChange={e => this.handleChange('sym', e)}
+            />
+          </FormControl>
+          <FormControl className={classes.formControl}>
+            <TextField
+              label="Aggs Seconds"
+              value={agg_seconds}
+              onChange={e => this.handleChange('agg_seconds', e)}
             />
           </FormControl>
           <FormControl className={classes.formControl}>
@@ -239,6 +255,20 @@ class Chart extends React.Component {
               }}
               onChange={e => this.handleChange('startDate', e)}
             />
+          </FormControl>
+          <FormControl className={classes.formControl}>
+            <InputLabel>Strategy</InputLabel>
+            <Select
+              value={strategy}
+              onChange={e => this.handleChange('strategy', e)}
+              autoWidth
+            >
+              {
+                Object.keys(StrategyDB).map(key => (
+                  <MenuItem key={key} value={key}>{key}</MenuItem>
+                ))
+              }
+            </Select>
           </FormControl>
           <FormControl className={classes.formControl}>
             <FormControlLabel
@@ -272,13 +302,11 @@ class Chart extends React.Component {
               <YAxis yAxisId="r" orientation="right" domain={['dataMin', 'dataMax']} />
               <Tooltip />
               <Line yAxisId="l" isAnimationActive={false} type="linear" stroke="blue" dataKey="c" dot={false} />
-              <Line yAxisId="l" isAnimationActive={false} type="linear" stroke="purple" dataKey="ma_c" dot={false} />
               <Line yAxisId="r" isAnimationActive={false} type="linear" stroke="orange" dataKey="c_diff" dot={false} />
               <Line yAxisId="l" isAnimationActive={false} type="linear" stroke="none"
                 dataKey="action_price"
                 dot={CustomizedDot}
               />
-              
               {data.length > 0 && <Brush dataKey="ts" startIndex={0}/>}
             </ComposedChart>
           </ResponsiveContainer>
@@ -304,6 +332,8 @@ class Chart extends React.Component {
               {/*<Line yAxisId="r" isAnimationActive={false} type="linear" stroke="blue" dataKey="v_agg" dot={false} />*/}
             </ComposedChart>
           </ResponsiveContainer>
+          {
+            /*
           <ResponsiveContainer>
             <ComposedChart
               data={data}
@@ -322,6 +352,8 @@ class Chart extends React.Component {
               <Line yAxisId="l" isAnimationActive={false} type="linear" stroke="green" dataKey="call_v" dot={false} />
             </ComposedChart>
           </ResponsiveContainer>
+            */
+            }
         </div>
       </Paper>
     );
