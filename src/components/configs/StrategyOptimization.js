@@ -12,6 +12,7 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListSubheader from '@material-ui/core/ListSubheader';
+import { withSnackbar } from 'notistack';
 import {connect} from 'react-redux';
 
 import {setConfigs} from '../../redux/configActions';
@@ -26,6 +27,7 @@ const useStyles = theme => ({
 
 
 class StrategyOptimization extends React.Component {
+
   onLoadDefault = () => {
     const {
       dispatchSetConfigs,
@@ -69,14 +71,18 @@ class StrategyOptimization extends React.Component {
     const {
       all_configs,
       strategy,
+      enqueueSnackbar,
     } = this.props;
     const optimization = all_configs[`${strategy}_optimization`];
     const payload = {
-      id: optimization.id
+      sym_config_id: optimization.id,
+      process_action: 'start',
     }
     apiOptimizationProcessStart(payload).then(resp => {
       if (resp.data.success) {
-        
+        enqueueSnackbar('Optimization Process Started')
+      } else {
+        enqueueSnackbar(resp.data.error, {variant: 'error'})
       }
     })
   }
@@ -85,14 +91,18 @@ class StrategyOptimization extends React.Component {
     const {
       all_configs,
       strategy,
+      enqueueSnackbar,
     } = this.props;
     const optimization = all_configs[`${strategy}_optimization`];
     const payload = {
-      id: optimization.id
+      sym_config_id: optimization.id,
+      process_action: 'stop',
     }
     apiOptimizationProcessStart(payload).then(resp => {
       if (resp.data.success) {
-        
+        enqueueSnackbar('Stopped')
+      } else {
+        enqueueSnackbar(resp.data.error, {variant: 'error'})
       }
     })
   }
@@ -233,4 +243,5 @@ export default compose(
   connect(mapStateToProps, {
     dispatchSetConfigs: setConfigs,
   }),
+  withSnackbar,
 )(StrategyOptimization);
