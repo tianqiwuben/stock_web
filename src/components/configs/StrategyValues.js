@@ -2,12 +2,8 @@ import React from 'react';
 import compose from 'recompose/compose';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
-import FormControl from '@material-ui/core/FormControl';
 import Button from '@material-ui/core/Button';
-import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
-import Checkbox from '@material-ui/core/Checkbox';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import List from '@material-ui/core/List';
@@ -16,8 +12,9 @@ import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import {connect} from 'react-redux';
-
+import { withSnackbar } from 'notistack';
 import {apiTestConfig} from '../../utils/ApiFetch';
+import ButtonGroup from '@material-ui/core/ButtonGroup';
 
 import {setConfigs} from '../../redux/configActions';
 
@@ -28,17 +25,6 @@ import {
 } from "react-router-dom";
 
 const useStyles = theme => ({
-  wrapper: {
-    position: 'relative',
-    display: 'inline',
-  },
-  buttonProgress: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    marginTop: -12,
-    marginLeft: -12,
-  },
 });
 
 
@@ -89,14 +75,18 @@ class StrategyValues extends React.Component {
     const {
       sym,
       strategy,
+      enqueueSnackbar,
     } = this.props;
     const payload = {
       strategy: strategy,
     }
     this.setState({testLoading: true});
     apiTestConfig(sym, payload).then(resp => {
+      this.setState({testLoading: false});
       if(resp.data && resp.data.success) {
-        this.setState({testLoading: false});
+        enqueueSnackbar(`${sym} Test Complete`, {variant: 'success'})
+      } else {
+        enqueueSnackbar(resp.data.error, {variant: 'error'})
       }
     })
   }
@@ -109,6 +99,7 @@ class StrategyValues extends React.Component {
       all_configs,
       strategy,
       isPercent,
+      sym,
     } = this.props;
     const {
       testLoading,
@@ -146,30 +137,32 @@ class StrategyValues extends React.Component {
             }
             <ListItem>
               <ListItemText>
-                <Button color="primary" onClick={this.onSave}>
-                  Save
-                </Button>
-                {
-                  isTest ?
-                  <div className={classes.wrapper}>
+                <ButtonGroup variant="text" color="primary" >
+                  <Button onClick={this.onSave}>
+                    Save
+                  </Button>
+                  {
+                    isTest ?
                     <Button onClick={this.onTest}>
                       Test
                     </Button>
-                    {testLoading && <CircularProgress size={24} className={classes.buttonProgress} />}
-                  </div>
-                  :
-                  <Link to={`/triggers?sym=${this.sym}&aggs_seconds=${configs.aggs_seconds}`} >
+                    :
+                    <Link to={`/triggers?sym=${sym}&aggs_seconds=${configs.aggs_seconds}`} >
+                      <Button>
+                        Triggers
+                      </Button>
+                    </Link>
+                  }
+                  <Link to={`/charts?sym=${sym}&frame=second&strategy=${strategy}&isTest=${isTest ? 1 : 0}`} >
                     <Button>
-                      Triggers
+                      Charts
                     </Button>
                   </Link>
-                }
-                <Link to={`/charts?sym=${this.sym}&frame=seconds&strategy=vol_two_stage_trailing${isTest ? '_test' : ''}`} >
-                  <Button>
-                    Charts
-                  </Button>
-                </Link>
+                </ButtonGroup>
               </ListItemText>
+              <ListItemSecondaryAction>
+                {testLoading && <CircularProgress size={24} />}
+              </ListItemSecondaryAction>
             </ListItem>
           </List>
         </Paper>
@@ -191,4 +184,5 @@ export default compose(
   connect(mapStateToProps, {
     dispatchSetConfigs: setConfigs,
   }),
+  withSnackbar,
 )(StrategyValues);

@@ -13,7 +13,6 @@ import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
 import Badge from '@material-ui/core/Badge';
 import Container from '@material-ui/core/Container';
-import Grid from '@material-ui/core/Grid';
 import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import NotificationsIcon from '@material-ui/icons/Notifications';
@@ -23,10 +22,9 @@ import {
   Route,
   Link,
 } from "react-router-dom";
-import Aggregates from '../aggregates/Aggregates';
-import Distribution from '../distribution/Distribution';
 import Configs from '../configs/Configs';
 import Triggers from '../triggers/Triggers';
+import Process from '../process/Process';
 
 const drawerWidth = 240;
 
@@ -153,14 +151,9 @@ export default function Dashboard() {
         </div>
         <Divider />
         <List>
-          <Link to="/distribution">
+          <Link to="/configs">
             <ListItem button>
-              <ListItemText primary="Distribution" />
-            </ListItem>
-          </Link>
-          <Link to="/aggregates">
-            <ListItem button>
-              <ListItemText primary="Aggregates" />
+              <ListItemText primary="Configs" />
             </ListItem>
           </Link>
           <Link to="/charts">
@@ -168,14 +161,14 @@ export default function Dashboard() {
               <ListItemText primary="Charts" />
             </ListItem>
           </Link>
-          <Link to="/configs">
-            <ListItem button>
-              <ListItemText primary="Configs" />
-            </ListItem>
-          </Link>
           <Link to="/triggers">
             <ListItem button>
               <ListItemText primary="Triggers" />
+            </ListItem>
+          </Link>
+          <Link to="/process">
+            <ListItem button>
+              <ListItemText primary="Process" />
             </ListItem>
           </Link>
         </List>
@@ -185,12 +178,11 @@ export default function Dashboard() {
         <div className={classes.appBarSpacer} />
         <Container maxWidth="lg" className={classes.container}>
           <Switch>
+            <Route path="/configs/:id?" component={Configs} />
             <Route path="/charts" component={Chart} />
-            <Route path="/distribution" component={Distribution} />
-            <Route path="/aggregates" component={Aggregates} />
-            <Route path="/configs" component={Configs} />
             <Route path="/triggers" component={Triggers} />
-            <Route component={Distribution} />
+            <Route path="/process" component={Process} />
+            <Route component={Configs} />
           </Switch>
         </Container>
       </main>

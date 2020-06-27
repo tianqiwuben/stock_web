@@ -9,7 +9,6 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Button from '@material-ui/core/Button';
-import Typography from '@material-ui/core/Typography';
 import Tooltip from '@material-ui/core/Tooltip';
 import Grid from '@material-ui/core/Grid';
 import {connect} from 'react-redux';
@@ -55,6 +54,9 @@ class OptimizationResults extends React.Component {
       strategy,
       optimizations,
     } = this.props;
+    if (!optimizations) {
+      return null;
+    }
     const data = optimizations[strategy];
     if (!data || !data.headers) {
       return null;
@@ -125,7 +127,7 @@ class OptimizationResults extends React.Component {
 const mapStateToProps = state => ({
   sym: state.configs.sym,
   isPercent: state.configs.isPercent,
-  optimizations: state.optimizations,
+  optimizations: state.configs.optimization_results,
   strategy: state.configs.strategy,
 })
 

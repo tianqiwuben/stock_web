@@ -3,7 +3,6 @@ import compose from 'recompose/compose';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import FormControl from '@material-ui/core/FormControl';
-import moment from 'moment';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import Grid from '@material-ui/core/Grid';
@@ -14,9 +13,10 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import { withSnackbar } from 'notistack';
 import {connect} from 'react-redux';
+import ButtonGroup from '@material-ui/core/ButtonGroup';
 
 import {setConfigs} from '../../redux/configActions';
-import {apiOptimizationProcessStart} from '../../utils/ApiFetch';
+import {apiOptimizationProcessAction} from '../../utils/ApiFetch';
 import StrategyDB from '../common/StrategyDB';
 
 const useStyles = theme => ({
@@ -78,7 +78,7 @@ class StrategyOptimization extends React.Component {
       sym_config_id: optimization.id,
       process_action: 'start',
     }
-    apiOptimizationProcessStart(payload).then(resp => {
+    apiOptimizationProcessAction(payload).then(resp => {
       if (resp.data.success) {
         enqueueSnackbar('Optimization Process Started')
       } else {
@@ -98,7 +98,7 @@ class StrategyOptimization extends React.Component {
       sym_config_id: optimization.id,
       process_action: 'stop',
     }
-    apiOptimizationProcessStart(payload).then(resp => {
+    apiOptimizationProcessAction(payload).then(resp => {
       if (resp.data.success) {
         enqueueSnackbar('Stopped')
       } else {
@@ -130,16 +130,10 @@ class StrategyOptimization extends React.Component {
     } = this.props;
     const optimization = all_configs[`${strategy}_optimization`];
     const configs = (optimization && optimization.vs) ? JSON.parse(optimization.vs) : {};
+    
     let progressStr = '-';
-    if (optimization && optimization.vf) {
-      if (optimization.vf > 1) {
-        progressStr = `Processing Time too long (${optimization.vf.toFixed(1)}h)`;
-      } else if (optimization.vi > 0) {
-        const ts = moment(optimization.vi * 1000).format('lll');
-        progressStr = `${(optimization.vf * 100).toFixed(1)}% ${ts}`;
-      } else if (optimization.vi < 0) {
-        progressStr = 'Stopped';
-      }
+    if (optimization && optimization.optimization_process) {
+      progressStr = `${optimization.optimization_process.status} ${optimization.optimization_process.completed_percent}% ${optimization.optimization_process.expected_finish_time_str}`;
     }
     return (
       <Grid item sm={12} md={6} lg={5}>
@@ -208,18 +202,20 @@ class StrategyOptimization extends React.Component {
             }
             <ListItem>
               <ListItemText>
-                <Button color="primary" onClick={this.onSave}>
-                  Save
-                </Button>
-                <Button color="default" onClick={this.onLoadDefault}>
-                  Default
-                </Button>
-                <Button onClick={this.onRun}>
-                  Run
-                </Button>
-                <Button color="secondary" onClick={this.onStop}>
-                  Stop
-                </Button>
+                <ButtonGroup color="primary" variant="text">
+                  <Button onClick={this.onSave}>
+                    Save
+                  </Button>
+                  <Button onClick={this.onLoadDefault}>
+                    Default
+                  </Button>
+                  <Button onClick={this.onRun}>
+                    Run
+                  </Button>
+                  <Button onClick={this.onStop}>
+                    Stop
+                  </Button>
+                </ButtonGroup>
               </ListItemText>
               <ListItemSecondaryAction>
                 {progressStr}

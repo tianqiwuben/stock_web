@@ -82,79 +82,35 @@ const CustomizedDot = (props) => {
   );
 };
 
-const initState = {
-  data: [],
-  trans: [],
-  sym: 'SPY',
-  startDate: '',
-  frame: 'second',
-  strategy: 'two_stage_trailing',
-  isTest: false,
-  nextTrans: null,
-  agg_seconds: 5,
-}
-
-
-let stateStore = initState;
-
 class Chart extends React.Component {
   constructor(props) {
     super(props);
-    let st = {
-      ...stateStore,
-    }
-    if (props.location && props.location.search) {
-      const query = querystring.decode(props.location.search.substring(1))
-      if (query.sym && query.sym !== st.sym) {
-        st = {...initState, ...query};
-      }
-    }
-    this.state = st;
-  }
-
-  componentDidMount() {
-    this.onFetch();
-  }
-
-  componentWillUnmount() {
-    const {
-      sym,
-      frame,
-      trans,
-      startDate,
-      nextTrans,
-      isTest,
-      data,
-    } = this.state;
-    stateStore = {
-      sym,
-      frame,
-      trans,
-      startDate,
-      nextTrans,
-      isTest,
-      data,
+    this.state = {
+      data: [],
+      trans: [],
+      sym: 'SPY',
+      startDate: '',
+      frame: 'second',
+      strategy: 'two_stage_trailing',
+      isTest: false,
+      nextTrans: null,
+      agg_seconds: 5,
     };
   }
 
-  updateQueryParam = () => {
-    const {
-      sym,
-      frame,
-      startDate,
-      isTest,
-    } = this.state;
-    const query = querystring.encode({
-      sym,
-      frame,
-      startDate,
-      isTest,
-    });
-    const {history, location} = this.props;
-    history.push({
-      pathname: location.pathname,
-      search: '?' + query,
-    });
+  componentDidMount() {
+    const {location} = this.props;
+    if (location && location.search) {
+      const query = querystring.decode(location.search.substring(1));
+      if (query.sym) {
+        if (query.isTest === '1') {
+          query.isTest = true;
+        } else if (query.isTest === '0') {
+          query.isTest = false;
+        }
+        this.setState(query, () => this.onFetch())
+      }
+    }
   }
 
   handleChange = (field, e) => {
@@ -183,7 +139,6 @@ class Chart extends React.Component {
       agg_seconds,
       is_test: isTest ? 1 : 0,
     };
-    this.updateQueryParam();
     apiBars(query).then(resp => {
       if (resp && resp.data.success && resp.data.payload.bars && resp.data.payload.bars.length > 0) {
         this.setState({
@@ -270,6 +225,8 @@ class Chart extends React.Component {
               }
             </Select>
           </FormControl>
+        </div>
+        <div className={classes.row}>
           <FormControl className={classes.formControl}>
             <FormControlLabel
               control={

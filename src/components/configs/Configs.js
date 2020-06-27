@@ -11,7 +11,7 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import Grid from '@material-ui/core/Grid';
 import {connect} from 'react-redux';
-
+import querystring from 'querystring';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -28,16 +28,12 @@ import {
   resetConfigs,
 } from '../../redux/configActions';
 
-import {
-  saveOptimizations,
-} from '../../redux/optimizationActions';
 
 import StrategyPanel from './StrategyPanel';
 
 import {
   apiGetConfig,
   apiPostConfig,
-  apiGetOptimizationResult,
 } from '../../utils/ApiFetch';
 
 const useStyles = theme => ({
@@ -61,6 +57,29 @@ class Configs extends React.Component {
     }
   }
 
+  componentDidMount() {
+    const {
+      sym,
+    } = this.state;
+    const {
+      match,
+      location,
+      strategy,
+      dispatchSetConfigs,
+    } = this.props;
+    const st = {sym};
+    if (match.params.id && match.params.id !== sym) {
+      st.sym = match.params.id;
+    }
+    if (location && location.search) {
+      const query = querystring.decode(location.search.substring(1))
+      if (query.strategy && query.strategy !== strategy && StrategyDB[query.strategy]) {
+        dispatchSetConfigs({strategy: query.strategy});
+      }
+    }
+    this.setState(st, this.onFetch);
+  }
+
   onFetch = () => {
     const {sym} = this.state;
     const {dispatchSetConfigs, dispatchResetConfigs, strategy} = this.props;
@@ -72,20 +91,6 @@ class Configs extends React.Component {
           rest.data.payload.strategy = rest.data.payload.current_strategy.vs;
         }
         dispatchSetConfigs(rest.data.payload);
-        this.onFetchOptimization(rest.data.payload.current_strategy.vs);
-      }
-    })
-  }
-
-  onFetchOptimization = (strategy) => {
-    const {sym} = this.props;
-    const query = {
-      strategy,
-    }
-    apiGetOptimizationResult(sym, query).then(resp => {
-      if (resp.data && resp.data.success) {
-        const {dispatchSaveOptimization} = this.props;
-        dispatchSaveOptimization(strategy, resp.data.payload);
       }
     })
   }
@@ -122,7 +127,6 @@ class Configs extends React.Component {
     const newStra = e.target.value;
     if (strategy !== newStra) {
       dispatchSetConfigs({strategy: newStra});
-      this.onFetchOptimization(newStra);
     }
   }
 
@@ -247,6 +251,5 @@ export default compose(
   connect(mapStateToProps, {
     dispatchSetConfigs: setConfigs,
     dispatchResetConfigs: resetConfigs,
-    dispatchSaveOptimization: saveOptimizations,
   }),
 )(Configs);

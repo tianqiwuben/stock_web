@@ -66,62 +66,32 @@ const dotStyles = {
   },
 }
 
-const initState = {
-  ma_v_data: [],
-  c_diff_data: [],
-  sym: 'SPY',
-  aggs_seconds: 5,
-  updated_at: '',
-  generate: false,
-  c_dis_count: 0,
-  v_dis_count: 0,
-  start_time: '',
-  end_time: '',
-}
-
-
-let stateStore = initState;
-
 class Triggers extends React.Component {
   constructor(props) {
     super(props);
-    let st = {
-      ...stateStore,
+    this.state = {
+      ma_v_data: [],
+      c_diff_data: [],
+      sym: 'SPY',
+      aggs_seconds: 5,
+      updated_at: '',
+      generate: false,
+      c_dis_count: 0,
+      v_dis_count: 0,
+      start_time: '',
+      end_time: '',
       loading: false,
-    }
-    if (props.location && props.location.search) {
-      const query = querystring.decode(props.location.search.substring(1))
-      if (query.sym) {
-        st = {...initState, ...query};
-      }
-    }
-    this.state = st;
+    };
   }
 
   componentDidMount() {
-    this.onFetch();
-  }
-
-  componentWillUnmount() {
-    for(let k in initState) {
-      stateStore[k] = this.state[k];
+    const {location} = this.props;
+    if (location && location.search) {
+      const query = querystring.decode(location.search.substring(1));
+      if (query.sym) {
+        this.setState(query, this.onFetch)
+      }
     }
-  }
-
-  updateQueryParam = () => {
-    const {
-      sym,
-      aggs_seconds,
-    } = this.state;
-    const query = querystring.encode({
-      sym,
-      aggs_seconds,
-    });
-    const {history, location} = this.props;
-    history.push({
-      pathname: location.pathname,
-      search: '?' + query,
-    });
   }
 
   handleChange = (field, e) => {
@@ -140,7 +110,6 @@ class Triggers extends React.Component {
       aggs_seconds,
       generate: generate ? 1 : 0,
     };
-    this.updateQueryParam();
     this.setState({
       loading: true,
     })
