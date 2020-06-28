@@ -2,17 +2,13 @@ import React from 'react';
 import compose from 'recompose/compose';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
-import FormControl from '@material-ui/core/FormControl';
 import Button from '@material-ui/core/Button';
-import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
-import Checkbox from '@material-ui/core/Checkbox';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import Grid from '@material-ui/core/Grid';
 import {connect} from 'react-redux';
 import querystring from 'querystring';
-import LinearProgress from '@material-ui/core/LinearProgress';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -83,9 +79,9 @@ class Configs extends React.Component {
   onFetch = () => {
     const {sym} = this.state;
     const {dispatchSetConfigs, dispatchResetConfigs, strategy} = this.props;
-    dispatchResetConfigs();
     apiGetConfig(sym).then(rest => {
       if (rest.data.success) {
+        dispatchResetConfigs();
         this.setState({sym: rest.data.payload.sym});
         if (strategy.length === 0) {
           rest.data.payload.strategy = rest.data.payload.current_strategy.vs;
@@ -147,7 +143,6 @@ class Configs extends React.Component {
       sym,
     } = this.state;
     const {
-      classes,
       last_c,
       last_v,
       isPercent,

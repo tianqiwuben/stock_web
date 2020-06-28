@@ -2,6 +2,7 @@ import React from 'react';
 import compose from 'recompose/compose';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
+import TextField from '@material-ui/core/TextField';
 
 import ButtonGroup from '@material-ui/core/ButtonGroup';
 import Table from '@material-ui/core/Table';
@@ -10,6 +11,8 @@ import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
+import Dialog from '@material-ui/core/Dialog';
+import DialogContent from '@material-ui/core/DialogContent';
 import Paper from '@material-ui/core/Paper';
 import {apiGetProcesses, apiOptimizationProcessAction} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
@@ -27,6 +30,7 @@ const COLOR = {
   running: 'green',
   stopping: 'red',
   stopped: 'red',
+  error: 'red',
   finished: '',
 }
 
@@ -37,6 +41,8 @@ class Process extends React.Component {
       data: [],
       total_pages: 1,
       current_page: 1,
+      errorOpen: false,
+      errorTrace: '',
     }
   }
 
@@ -81,63 +87,104 @@ class Process extends React.Component {
     })
   }
 
+  onClickStatus = (id) => {
+    const {data} = this.state;
+    for (let i in data) {
+      if (data[i].id === id) {
+        if (data[i].status === 'error') {
+          this.setState({
+            errorOpen: true,
+            errorTrace: data[i].error_msg,
+          })
+        }
+      }
+    }
+  }
+
+  closeError = () => {
+    this.setState({
+      errorOpen: false,
+    });
+  }
+
   render() {
     const {classes} = this.props;
     const {
       data,
       total_pages,
       current_page,
+      errorOpen,
+      errorTrace,
     } = this.state;
     return (
-      <TableContainer component={Paper}>
-        <Table className={classes.table}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Sym</TableCell>
-              <TableCell>Strategy</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Max PL</TableCell>
-              <TableCell>Hold</TableCell>
-              <TableCell>Progress</TableCell>
-              <TableCell>HeartbeAt</TableCell>
-              <TableCell>StartedAt</TableCell>
-              <TableCell>FinishAt</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>
-                  <Link to={`/configs/${row.sym}?strategy=${row.strategy}`}>
-                    {row.sym}
-                  </Link>
-                </TableCell>
-                <TableCell>{row.strategy}</TableCell>
-                <TableCell>
-                  <span style={{color: COLOR[row.status]}}>{row.status}</span>
-                </TableCell>
-                <TableCell>{row.max_profit}</TableCell>
-                <TableCell>{row.hold_minutes}</TableCell>
-                <TableCell>
-                  {`${row.completed_percent}%`}<br/>
-                  {`${row.completed_iterations}/${row.total_iterations}`}
-                </TableCell>
-                <TableCell>{row.heartbeat_str}<br/>{row.heartbeat}</TableCell>
-                <TableCell>{row.started_at_str}<br/>{row.started_at}</TableCell>
-                <TableCell>{row.expected_finish_time_str}<br/>{row.expected_finish_time}</TableCell>
-                <TableCell>
-                  <ButtonGroup variant="text">
-                    <Button onClick={() => {this.doAction(row.id, 'stop')}}>STOP</Button>
-                    <Button onClick={() => {this.doAction(row.id, 'start')}}>RUN</Button>
-                    <Button onClick={() => {this.doAction(row.id, 'delete')}}>DEL</Button>
-                  </ButtonGroup>
-                </TableCell>
+      <div>
+          
+        <TableContainer component={Paper}>
+          <Table className={classes.table}>
+            <TableHead>
+              <TableRow>
+                <TableCell>Sym</TableCell>
+                <TableCell>Strategy</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Max PL</TableCell>
+                <TableCell>Hold</TableCell>
+                <TableCell>Progress</TableCell>
+                <TableCell>Heartbeat</TableCell>
+                <TableCell>StartedAt</TableCell>
+                <TableCell>FinishAt</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {data.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell>
+                    <Link to={`/configs/${row.sym}?strategy=${row.strategy}`}>
+                      {row.sym}
+                    </Link>
+                  </TableCell>
+                  <TableCell>{row.strategy}</TableCell>
+                  <TableCell>
+                    <span style={{color: COLOR[row.status]}} onClick={() => {this.onClickStatus(row.id)}}>
+                      {row.status}
+                    </span>
+                  </TableCell>
+                  <TableCell>{row.max_profit}</TableCell>
+                  <TableCell>{row.hold_minutes}</TableCell>
+                  <TableCell>
+                    {`${row.completed_percent}%`}<br/>
+                    {`${row.completed_iterations}/${row.total_iterations}`}
+                  </TableCell>
+                  <TableCell>{row.heartbeat_str}<br/>{row.heartbeat}</TableCell>
+                  <TableCell>{row.started_at_str}<br/>{row.started_at}</TableCell>
+                  <TableCell>{row.expected_finish_time_str}<br/>{row.expected_finish_time}</TableCell>
+                  <TableCell>
+                    <ButtonGroup variant="text">
+                      <Button onClick={() => {this.doAction(row.id, 'stop')}}>STOP</Button>
+                      <Button onClick={() => {this.doAction(row.id, 'start')}}>RUN</Button>
+                      <Button onClick={() => {this.doAction(row.id, 'delete')}}>DEL</Button>
+                    </ButtonGroup>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <Dialog
+          open={errorOpen}
+          onClose={this.closeError}
+          fullWidth
+          maxWidth="lg"
+        >
+          <DialogContent>
+            <TextField
+              multiline
+              value={errorTrace}
+              fullWidth
+            />
+          </DialogContent>
+        </Dialog>
+      </div>
     );
   }
 }

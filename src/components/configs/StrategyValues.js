@@ -93,7 +93,6 @@ class StrategyValues extends React.Component {
 
   render() {
     const {
-      classes,
       last_c,
       isTest,
       all_configs,

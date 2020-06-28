@@ -2,7 +2,6 @@ import React from 'react';
 import compose from 'recompose/compose';
 import { withStyles } from '@material-ui/core/styles';
 import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
@@ -10,20 +9,14 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import querystring from 'querystring';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-
 import {
   Brush,
-  Bar,
   ComposedChart,
   Line,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  LineChart,
 } from 'recharts';
 import Paper from '@material-ui/core/Paper';
 import {apiGetTriggers} from '../../utils/ApiFetch';
@@ -53,18 +46,6 @@ const styles = theme => ({
   },
 });
 
-const dotStyles = {
-  actionDot: {
-    stroke: 'green',
-    strokeWidth: 2,
-  },
-  minDot: {
-    stroke: 'red',
-  },
-  strategy: {
-    stroke: 'blue',
-  },
-}
 
 class Triggers extends React.Component {
   constructor(props) {

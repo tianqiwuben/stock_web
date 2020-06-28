@@ -54,18 +54,6 @@ const styles = theme => ({
   },
 });
 
-const dotStyles = {
-  actionDot: {
-    stroke: 'green',
-    strokeWidth: 2,
-  },
-  minDot: {
-    stroke: 'red',
-  },
-  strategy: {
-    stroke: 'blue',
-  },
-}
 
 const CustomizedDot = (props) => {
   const {
