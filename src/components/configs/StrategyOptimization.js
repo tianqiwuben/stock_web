@@ -35,8 +35,8 @@ class StrategyOptimization extends React.Component {
     } = this.props;
     const newConf = {};
     const newVs = {};
-    StrategyDB[strategy].fields.forEach(field => {
-      if (field.optimization_type === 'range') {
+    StrategyDB[strategy].forEach(field => {
+      if (field.mode === 'range') {
         for (let t in field.optimization_default) {
           newVs[`${field.key}_${t}`] = field.optimization_default[t];
         }
@@ -140,14 +140,14 @@ class StrategyOptimization extends React.Component {
         <Paper>
             <List subheader={<ListSubheader>Optimization Min Max Step</ListSubheader>}>
             {
-              StrategyDB[strategy].fields.map(field => {
+              StrategyDB[strategy].map(field => {
                 return (
                   <ListItem key={field.key}>
                     <ListItemText>{field.optimization_name}
                     </ListItemText>
                     <ListItemSecondaryAction>
                       {
-                        field.optimization_type === 'split'
+                        field.mode === 'split'
                         &&
                         <FormControl className={classes.formControl}>
                           <TextField
@@ -160,7 +160,7 @@ class StrategyOptimization extends React.Component {
                         </FormControl>
                       }
                       {
-                        field.optimization_type === 'range'
+                        field.mode === 'range'
                         &&
                         <React.Fragment>
                           <FormControl className={classes.formControl}>

@@ -32,13 +32,9 @@ function callAPI(path, method, payload = null) {
   });
 }
 
+export const apiStrategyConstants = () => callAPI('/strategy_constants', 'get');
+
 export const apiBars = query => callAPI('/bars', 'get', query);
-
-export const apiGetAgg = query => callAPI('/aggs', 'get', query);
-
-export const apiPostAgg = query => callAPI('/aggs', 'post', query);
-
-export const apiAggProgress = query => callAPI('/aggs/progress', 'get', query);
 
 export const apiGetDistribution = query => callAPI('/aggs/distribution', 'get', query);
 

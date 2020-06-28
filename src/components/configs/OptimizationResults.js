@@ -13,6 +13,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import Grid from '@material-ui/core/Grid';
 import {connect} from 'react-redux';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
+import StrategyDB from '../common/StrategyDB';
 
 import {apiOptimizationApply} from '../../utils/ApiFetch';
 
@@ -58,7 +59,7 @@ class OptimizationResults extends React.Component {
       return null;
     }
     const data = optimizations[strategy];
-    if (!data || !data.headers) {
+    if (!data) {
       return null;
     }
     return (
@@ -73,9 +74,9 @@ class OptimizationResults extends React.Component {
                   <TableCell>Count</TableCell>
                   <TableCell>Hold(min)</TableCell>
                   {
-                    data.headers.map(h => (
-                      <TableCell key={h}>
-                        <Tooltip title={h}><span>P</span></Tooltip>
+                    StrategyDB[strategy].map(f => (
+                      <TableCell key={f.key}>
+                        <Tooltip title={f.key}><span>P</span></Tooltip>
                       </TableCell>
                     ))
                   }
@@ -85,18 +86,24 @@ class OptimizationResults extends React.Component {
               </TableHead>
               <TableBody>
                 {
-                  data.records.map(row => (
+                  data.map(row => (
                     <TableRow key={row.id}>
                       <TableCell>{row.result_type}</TableCell>
                       <TableCell>{row.profit}</TableCell>
                       <TableCell>{row.transaction_count}</TableCell>
                       <TableCell>{(row.hold_seconds / 60).toFixed(1)}</TableCell>
                       {
-                        data.headers.map(h => (
-                          <TableCell key={h}>
-                            {row.configs[`${h}${isPercent ? '_pct' : ''}`]}
-                          </TableCell>
-                        ))
+                        StrategyDB[strategy].map(f => {
+                          let c = row.configs[f.key];
+                          if (isPercent && row.configs[f.key + '_pct']) {
+                            c = row.configs[f.key + '_pct'];
+                          }
+                          return (
+                            <TableCell key={f.key}>
+                              {c}
+                            </TableCell>
+                          )
+                        })
                       }
                       <TableCell>{row.updated_at}</TableCell>
                       <TableCell>

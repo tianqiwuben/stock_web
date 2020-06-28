@@ -105,13 +105,13 @@ class StrategyValues extends React.Component {
     } = this.state;
     const sc = isTest ? all_configs[`${strategy}_test`] : all_configs[strategy];
     const configs = (sc && sc.vs) ? JSON.parse(sc.vs) : {};
-    const title = isTest ? 'Test' : StrategyDB[strategy].name;
+    const title = isTest ? 'Test' : strategy;
     return (
       <Grid item sm={12} md={6} lg={isTest ? 3 : 4}>
         <Paper>
             <List subheader={<ListSubheader>{title}</ListSubheader>}>
             {
-              StrategyDB[strategy].fields.map(field => {
+              StrategyDB[strategy].map(field => {
                 let title = isTest ? field.key : field.name;
                 if (field.name.substr(-1) === '%') {
                   title += ` $${(last_c * configs[field.key] / 100).toFixed(3)}`;

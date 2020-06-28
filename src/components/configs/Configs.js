@@ -4,8 +4,8 @@ import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
-import Select from '@material-ui/core/Select';
-import MenuItem from '@material-ui/core/MenuItem';
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import Grid from '@material-ui/core/Grid';
 import {connect} from 'react-redux';
 import querystring from 'querystring';
@@ -17,6 +17,7 @@ import ListSubheader from '@material-ui/core/ListSubheader';
 import OptimizationResults from './OptimizationResults';
 import Switch from '@material-ui/core/Switch';
 import StrategyDB from '../common/StrategyDB';
+import StrategyTable from './StrategyTable';
 
 
 import {
@@ -84,7 +85,7 @@ class Configs extends React.Component {
         dispatchResetConfigs();
         this.setState({sym: rest.data.payload.sym});
         if (strategy.length === 0) {
-          rest.data.payload.strategy = rest.data.payload.current_strategy.vs;
+          rest.data.payload.strategy = rest.data.payload.current_strategy;
         }
         dispatchSetConfigs(rest.data.payload);
       }
@@ -118,24 +119,18 @@ class Configs extends React.Component {
     })
   }
 
-  changeStrategy = (e) => {
+  changeStrategy = (newStra) => {
     const {dispatchSetConfigs, strategy} = this.props;
-    const newStra = e.target.value;
     if (strategy !== newStra) {
       dispatchSetConfigs({strategy: newStra});
     }
   }
 
-  onSaveStrategy = () => {
-    const {strategy} = this.props;
-    const payload = {
-      configs: {
-        current_strategy: {
-          vs: strategy,
-        }
-      }
+  changeSortBy = (e, v) => {
+    if (v) {
+      const {dispatchSetConfigs} = this.props;
+      dispatchSetConfigs({sortStrategy: v});
     }
-    this.onChangeConfig(payload);
   }
 
   render() {
@@ -147,6 +142,7 @@ class Configs extends React.Component {
       last_v,
       isPercent,
       strategy,
+      sortStrategy,
     } = this.props;
     return (
       <React.Fragment>
@@ -179,6 +175,26 @@ class Configs extends React.Component {
                   <ListItemSecondaryAction>{`${this.numberWithCommas(last_v)}`}</ListItemSecondaryAction>
                 </ListItem>
                 <ListItem>
+                  <ListItemText>
+                    Sort Strategy
+                  </ListItemText>
+                  <ListItemSecondaryAction>
+                    <ToggleButtonGroup
+                      size="small"
+                      value={sortStrategy}
+                      exclusive
+                      onChange={this.changeSortBy}
+                    >
+                      <ToggleButton value="prod">
+                        PROD
+                      </ToggleButton>
+                      <ToggleButton value="test">
+                        TEST
+                      </ToggleButton>
+                    </ToggleButtonGroup>
+                  </ListItemSecondaryAction>
+                </ListItem>
+                <ListItem>
                   <ListItemText>Absolute / Percent</ListItemText>
                   <ListItemSecondaryAction>
                     <Switch
@@ -191,32 +207,13 @@ class Configs extends React.Component {
               </List>
             </Paper>
           </Grid>
-          <Grid item xs={12} md={6} lg={5}>
-            <Paper>
-              <List subheader={<ListSubheader>Strategy</ListSubheader>}>
-                <ListItem>
-                  <ListItemText>
-                    <Select
-                      value={strategy}
-                      onChange={this.changeStrategy}
-                      autoWidth
-                    >
-                      {
-                        Object.keys(StrategyDB).map(key => (
-                          <MenuItem key={key} value={key}>{key}</MenuItem>
-                        ))
-                      }
-                    </Select>
-                  </ListItemText>
-                  <ListItemSecondaryAction>
-                    <Button color="primary" onClick={this.onSaveStrategy}>
-                      Save
-                    </Button>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              </List>
-            </Paper>
-          </Grid>
+          {
+            strategy.length > 0 &&
+            <StrategyTable
+              changeStrategy={this.changeStrategy}
+              onChangeConfig={this.onChangeConfig}
+            />
+          }
         </Grid>
         {
           strategy.length > 0 &&
@@ -236,9 +233,10 @@ class Configs extends React.Component {
 const mapStateToProps = state => ({
   last_c: state.configs.last_c,
   last_v: state.configs.last_v,
-  isPercent: state.configs.isPercent || false,
+  isPercent: state.configs.isPercent,
   sym: state.configs.sym,
   strategy: state.configs.strategy,
+  sortStrategy: state.configs.sortStrategy,
 })
 
 export default compose(

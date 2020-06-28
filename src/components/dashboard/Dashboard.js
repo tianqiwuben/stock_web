@@ -1,6 +1,7 @@
 import React from 'react';
+import compose from 'recompose/compose';
 import clsx from 'clsx';
-import { makeStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Drawer from '@material-ui/core/Drawer';
 import ListItem from '@material-ui/core/ListItem';
@@ -25,10 +26,12 @@ import {
 import Configs from '../configs/Configs';
 import Triggers from '../triggers/Triggers';
 import Process from '../process/Process';
+import {apiStrategyConstants} from '../../utils/ApiFetch';
+import {setDB} from '../common/StrategyDB';
 
 const drawerWidth = 240;
 
-const useStyles = makeStyles((theme) => ({
+const styles = theme => ({
   root: {
     display: 'flex',
   },
@@ -102,90 +105,108 @@ const useStyles = makeStyles((theme) => ({
     overflow: 'auto',
     flexDirection: 'column',
   },
-}));
+});
 
-export default function Dashboard() {
-  const classes = useStyles();
-  const [open, setOpen] = React.useState(true);
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
-  return (
-    <div className={classes.root}>
-      <CssBaseline />
-      <AppBar position="absolute" className={clsx(classes.appBar, open && classes.appBarShift)}>
-        <Toolbar className={classes.toolbar}>
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="open drawer"
-            onClick={handleDrawerOpen}
-            className={clsx(classes.menuButton, open && classes.menuButtonHidden)}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
-            Dashboard
-          </Typography>
-          <IconButton color="inherit">
-            <Badge badgeContent={4} color="secondary">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-      <Drawer
-        variant="permanent"
-        classes={{
-          paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),
-        }}
-        open={open}
-      >
-        <div className={classes.toolbarIcon}>
-          <IconButton onClick={handleDrawerClose}>
-            <ChevronLeftIcon />
-          </IconButton>
-        </div>
-        <Divider />
-        <List>
-          <Link to="/configs">
-            <ListItem button>
-              <ListItemText primary="Configs" />
-            </ListItem>
-          </Link>
-          <Link to="/charts">
-            <ListItem button>
-              <ListItemText primary="Charts" />
-            </ListItem>
-          </Link>
-          <Link to="/triggers">
-            <ListItem button>
-              <ListItemText primary="Triggers" />
-            </ListItem>
-          </Link>
-          <Link to="/process">
-            <ListItem button>
-              <ListItemText primary="Process" />
-            </ListItem>
-          </Link>
-        </List>
-        <Divider />
-      </Drawer>
-      <main className={classes.content}>
-        <div className={classes.appBarSpacer} />
-        <Container maxWidth="lg" className={classes.container}>
-          <Switch>
-            <Route path="/configs/:id?" component={Configs} />
-            <Route path="/charts" component={Chart} />
-            <Route path="/triggers" component={Triggers} />
-            <Route path="/process" component={Process} />
-            <Route component={Configs} />
-          </Switch>
-        </Container>
-      </main>
-    </div>
-  );
+class Dashboard extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      open: true,
+    }
+  }
+
+  componentDidMount() {
+    apiStrategyConstants().then(resp => {
+      setDB(resp.data.payload)
+    })
+  }
+
+  handleDrawerOpen = () => {
+    this.setState({open: !this.state.open});
+  }
+
+  render() {
+    const {classes} = this.props;
+    const {open} = this.state;
+    return (
+      <div className={classes.root}>
+        <CssBaseline />
+        <AppBar position="absolute" className={clsx(classes.appBar, open && classes.appBarShift)}>
+          <Toolbar className={classes.toolbar}>
+            <IconButton
+              edge="start"
+              color="inherit"
+              aria-label="open drawer"
+              onClick={this.handleDrawerOpen}
+              className={clsx(classes.menuButton, open && classes.menuButtonHidden)}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
+              Dashboard
+            </Typography>
+            <IconButton color="inherit">
+              <Badge badgeContent={4} color="secondary">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+        <Drawer
+          variant="permanent"
+          classes={{
+            paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),
+          }}
+          open={open}
+        >
+          <div className={classes.toolbarIcon}>
+            <IconButton onClick={this.handleDrawerOpen}>
+              <ChevronLeftIcon />
+            </IconButton>
+          </div>
+          <Divider />
+          <List>
+            <Link to="/configs">
+              <ListItem button>
+                <ListItemText primary="Configs" />
+              </ListItem>
+            </Link>
+            <Link to="/charts">
+              <ListItem button>
+                <ListItemText primary="Charts" />
+              </ListItem>
+            </Link>
+            <Link to="/triggers">
+              <ListItem button>
+                <ListItemText primary="Triggers" />
+              </ListItem>
+            </Link>
+            <Link to="/process">
+              <ListItem button>
+                <ListItemText primary="Process" />
+              </ListItem>
+            </Link>
+          </List>
+          <Divider />
+        </Drawer>
+        <main className={classes.content}>
+          <div className={classes.appBarSpacer} />
+          <Container maxWidth="lg" className={classes.container}>
+            <Switch>
+              <Route path="/configs/:id?" component={Configs} />
+              <Route path="/charts" component={Chart} />
+              <Route path="/triggers" component={Triggers} />
+              <Route path="/process" component={Process} />
+              <Route component={Configs} />
+            </Switch>
+          </Container>
+        </main>
+      </div>
+    );
+  }
 }
+
+
+export default compose(
+  withStyles(styles),
+)(Dashboard);
