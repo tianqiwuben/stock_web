@@ -1,8 +1,14 @@
 import {combineReducers} from 'redux';
-import charts from './charts';
+import sideChart from './sideChart';
 import configs from './configs';
+import remarks from './remarks';
+import progress from './progress';
+import process from './process';
 
 export default combineReducers({
-  charts,
+  sideChart,
   configs,
+  remarks,
+  progress,
+  process,
 });

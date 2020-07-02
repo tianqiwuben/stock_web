@@ -17,10 +17,18 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import { withSnackbar } from 'notistack';
-
+import Remark from '../common/Remark';
+import FormControl from '@material-ui/core/FormControl';
+import Box from '@material-ui/core/Box';
 import TextField from '@material-ui/core/TextField';
+import {updateProgress} from '../../redux/progressActions';
+import ProgressWithLabel from '../common/ProgressWithLabel';
 
-import {apiOptimizationApply} from '../../utils/ApiFetch';
+import {
+  Link,
+} from "react-router-dom";
+
+import {apiOptimizationApply, apiTestConfig} from '../../utils/ApiFetch';
 
 const useStyles = theme => ({
   wrapper: {
@@ -33,6 +41,10 @@ const useStyles = theme => ({
     left: '50%',
     marginTop: -12,
     marginLeft: -12,
+  },
+  formControl: {
+    margin: theme.spacing(1),
+    width: '480px',
   },
 });
 
@@ -60,11 +72,11 @@ class StrategyTable extends React.Component {
     const data = [];
     for(let key in StrategyDB) {
       const item = {key, prod: '-', test: '-', pl: '', hold: ''};
-      if (allConfigs[key] && allConfigs[key].vi === 1) {
-        item.prod = allConfigs[key].vf.toString() || '-';
+      if (allConfigs[key] && allConfigs[key].vi === 1 && typeof allConfigs[key].vf === 'number') {
+        item.prod = allConfigs[key].vf;
       }
-      if (allConfigs[key + '_test'] && allConfigs[key + '_test'].vi === 1) {
-        item.test = allConfigs[key + '_test'].vf.toString() || '-';
+      if (allConfigs[key + '_test'] && allConfigs[key + '_test'].vi === 1 && typeof allConfigs[key + '_test'].vf === 'number') {
+        item.test = allConfigs[key + '_test'].vf;
       }
       if (allConfigs[key + '_optimization']) {
         const profit = allConfigs[key + '_optimization'].vf;
@@ -156,11 +168,30 @@ class StrategyTable extends React.Component {
     })
   }
 
+  onSimulate = () => {
+    const {
+      sym,
+      enqueueSnackbar,      
+      dispatchUpdateProgress,
+    } = this.props;
+    dispatchUpdateProgress(`test_${sym}_`, 1);
+    apiTestConfig(sym, {activity: 'simulate'}).then(resp => {
+      if(resp.data && resp.data.success) {
+        enqueueSnackbar(`${sym} Simulation Complete (${resp.data.payload.duration}s)`, {variant: 'success'})
+      } else {
+        enqueueSnackbar(resp.data.error, {variant: 'error'})
+      }
+      dispatchUpdateProgress(`test_${sym}_`, null);
+    })
+  }
+
   render() {
     const {
       classes,
       changeStrategy,
       strategy,
+      sym,
+      progress,
     } = this.props;
     const {
       openDialog,
@@ -168,13 +199,15 @@ class StrategyTable extends React.Component {
       editStrategy,
     } = this.state;
     const data = this.prepareData();
+    const progressValue = progress[`test_${sym}_`];
+
     return (
       <Grid item sm={12} md={6} lg={8}>
         <TableContainer component={Paper}>
           <Table className={classes.table} size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Name</TableCell>
+                <TableCell>Strategy</TableCell>
                 <TableCell>Prod Priority</TableCell>
                 <TableCell>Test Priority</TableCell>
                 <TableCell>P/L %</TableCell>
@@ -201,6 +234,22 @@ class StrategyTable extends React.Component {
               }
             </TableBody>
           </Table>
+          <Box display="flex" flexDirection="row" alignItems="flex-start" justifyContent="space-between">
+            <FormControl className={classes.formControl}>
+              <Remark sym={sym} remarkKey="strategyTable" />
+            </FormControl>
+            <Box display="flex" flexDirection="row" alignItems="center" style={{margin: 10}} justifyContent="flex-end">
+              {progressValue && <ProgressWithLabel value={progressValue} />}
+              <Button color="primary" onClick={this.onSimulate}>
+                Simulate
+              </Button>
+              <Link to={`/transactions?sym=${sym}&strategy=all&isTest=1`} >
+                <Button>
+                  Transactions
+                </Button>
+              </Link>
+            </Box>
+          </Box>
         </TableContainer>
         <Dialog open={openDialog} onClose={this.closeDialog}>
           <DialogTitle >{editStrategy}</DialogTitle>
@@ -235,10 +284,13 @@ const mapStateToProps = state => ({
   strategy: state.configs.strategy,
   sortStrategy: state.configs.sortStrategy,
   allConfigs: state.configs,
+  progress: state.progress,
 })
 
 export default compose(
   withStyles(useStyles),
-  connect(mapStateToProps),
+  connect(mapStateToProps, {
+    dispatchUpdateProgress: updateProgress
+  }),
   withSnackbar,
 )(StrategyTable);

@@ -18,19 +18,24 @@ import OptimizationResults from './OptimizationResults';
 import Switch from '@material-ui/core/Switch';
 import StrategyDB from '../common/StrategyDB';
 import StrategyTable from './StrategyTable';
+import { withSnackbar } from 'notistack';
+import Remark from '../common/Remark';
 
+import {
+  saveRemarks,
+} from '../../redux/remarkActions';
 
 import {
   setConfigs,
   resetConfigs,
 } from '../../redux/configActions';
 
-
 import StrategyPanel from './StrategyPanel';
 
 import {
   apiGetConfig,
   apiPostConfig,
+  apiGetRemarks,
 } from '../../utils/ApiFetch';
 
 const useStyles = theme => ({
@@ -74,7 +79,22 @@ class Configs extends React.Component {
         dispatchSetConfigs({strategy: query.strategy});
       }
     }
-    this.setState(st, this.onFetch);
+    this.setState(st, () => {
+      this.fetchRemarks();
+      this.onFetch();
+    });
+  }
+
+  fetchRemarks = () => {
+    const {enqueueSnackbar, dispatchSaveRemarks} = this.props;
+    const {sym} = this.state;
+    apiGetRemarks({sym}).then(resp => {
+      if (resp.data.success) {
+        dispatchSaveRemarks(sym, resp.data.payload);
+      } else {
+        enqueueSnackbar(`GetRemarks Error: ${resp.data.error}`, {variant: 'error'});
+      }
+    })
   }
 
   onFetch = () => {
@@ -115,6 +135,9 @@ class Configs extends React.Component {
         this.setState(rest.data.payload);
         const {dispatchSetConfigs} = this.props;
         dispatchSetConfigs(rest.data.payload);
+      } else {
+        const {enqueueSnackbar} = this.props;
+        enqueueSnackbar(rest.data.error, {variant: 'error'});
       }
     })
   }
@@ -133,6 +156,32 @@ class Configs extends React.Component {
     }
   }
 
+  onChangeQuota = (field, e) => {
+    const {dispatchSetConfigs, allConfigs} = this.props;
+    const conf = allConfigs.quota;
+    const newConf = {...conf};
+    if (field === 'quota') {
+      newConf.vi = e.target.value;
+    } else if (field === 'priority') {
+      newConf.vf = e.target.value;
+    }
+    dispatchSetConfigs({
+      quota: newConf,
+    });
+  }
+
+  onCompleteQuota = () => {
+    const {allConfigs} = this.props;
+    if (allConfigs.quota) {
+      const payload = {
+        configs: {
+          quota: allConfigs.quota,
+        }
+      }
+      this.onChangeConfig(payload);
+    }
+  }
+
   render() {
     const {
       sym,
@@ -143,7 +192,10 @@ class Configs extends React.Component {
       isPercent,
       strategy,
       sortStrategy,
+      allConfigs,
     } = this.props;
+    const quota = allConfigs.quota ? allConfigs.quota.vi : '';
+    const priority = allConfigs.quota ? allConfigs.quota.vf : '';
     return (
       <React.Fragment>
         <Grid container spacing={3}>
@@ -159,6 +211,34 @@ class Configs extends React.Component {
                     <TextField
                       value={sym}
                       onChange={e => this.handleChange('sym', e)}
+                      inputProps={{
+                        style: { textAlign: "right" }
+                      }}
+                      style = {{width: 80}}
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+                <ListItem>
+                  <ListItemText>Quota</ListItemText>
+                  <ListItemSecondaryAction>
+                    <TextField
+                      value={quota}
+                      onChange={e => this.onChangeQuota('quota', e)}
+                      onBlur={this.onCompleteQuota}
+                      inputProps={{
+                        style: { textAlign: "right" }
+                      }}
+                      style = {{width: 80}}
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+                <ListItem>
+                  <ListItemText>Priority</ListItemText>
+                  <ListItemSecondaryAction>
+                    <TextField
+                      value={priority}
+                      onChange={e => this.onChangeQuota('priority', e)}
+                      onBlur={this.onCompleteQuota}
                       inputProps={{
                         style: { textAlign: "right" }
                       }}
@@ -204,6 +284,12 @@ class Configs extends React.Component {
                     />
                   </ListItemSecondaryAction>
                 </ListItem>
+                <ListItem>
+                  <Remark
+                    sym={this.props.sym}
+                    remarkKey={this.props.sym}
+                  />
+                </ListItem>
               </List>
             </Paper>
           </Grid>
@@ -237,6 +323,7 @@ const mapStateToProps = state => ({
   sym: state.configs.sym,
   strategy: state.configs.strategy,
   sortStrategy: state.configs.sortStrategy,
+  allConfigs: state.configs,
 })
 
 export default compose(
@@ -244,5 +331,7 @@ export default compose(
   connect(mapStateToProps, {
     dispatchSetConfigs: setConfigs,
     dispatchResetConfigs: resetConfigs,
+    dispatchSaveRemarks: saveRemarks,
   }),
+  withSnackbar,
 )(Configs);

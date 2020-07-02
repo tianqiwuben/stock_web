@@ -53,3 +53,11 @@ export const apiGetTriggers = (sym, query) => callAPI(`/triggers/${sym}`, 'get',
 export const apiOptimizationApply = (id, query) => callAPI(`/optimization_result_apply/${id}`, 'post', query);
 
 export const apiGetProcesses = (query)  => callAPI(`/optimization_process`, 'get', query);
+
+export const apiRemarkCreate = (payload)  => callAPI(`/remark`, 'post', payload);
+
+export const apiDeleteRemark = (id)  => callAPI(`/remark/${id}`, 'delete');
+
+export const apiGetRemarks = (query)  => callAPI(`/remark`, 'get', query);
+
+export const apiGetTransactions = (query) => callAPI('/transactions', 'get', query);

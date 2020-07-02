@@ -79,7 +79,7 @@ class Chart extends React.Component {
       sym: 'SPY',
       startDate: '',
       frame: 'second',
-      strategy: 'two_stage_trailing',
+      strategy: 'all',
       isTest: false,
       nextTrans: null,
       agg_seconds: 5,
@@ -206,6 +206,7 @@ class Chart extends React.Component {
               onChange={e => this.handleChange('strategy', e)}
               autoWidth
             >
+              <MenuItem value="all">All</MenuItem>
               {
                 Object.keys(StrategyDB).map(key => (
                   <MenuItem key={key} value={key}>{key}</MenuItem>

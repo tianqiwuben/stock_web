@@ -5,7 +5,6 @@ import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import Grid from '@material-ui/core/Grid';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -15,8 +14,10 @@ import {connect} from 'react-redux';
 import { withSnackbar } from 'notistack';
 import {apiTestConfig} from '../../utils/ApiFetch';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
-
+import ProgressWithLabel from '../common/ProgressWithLabel';
+import Remark from '../common/Remark';
 import {setConfigs} from '../../redux/configActions';
+import {updateProgress} from '../../redux/progressActions';
 
 import StrategyDB from '../common/StrategyDB';
 
@@ -29,12 +30,6 @@ const useStyles = theme => ({
 
 
 class StrategyValues extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      testLoading: false,
-    }
-  }
 
   handleChange = (field, e) => {
     const {
@@ -76,18 +71,20 @@ class StrategyValues extends React.Component {
       sym,
       strategy,
       enqueueSnackbar,
+      dispatchUpdateProgress,
     } = this.props;
     const payload = {
       strategy: strategy,
+      activity: 'test',
     }
-    this.setState({testLoading: true});
+    dispatchUpdateProgress(`test_${sym}_${strategy}`, 1);
     apiTestConfig(sym, payload).then(resp => {
-      this.setState({testLoading: false});
       if(resp.data && resp.data.success) {
-        enqueueSnackbar(`${sym} Test Complete`, {variant: 'success'})
+        enqueueSnackbar(`${sym} Test Complete (${resp.data.payload.duration}s)`, {variant: 'success'})
       } else {
         enqueueSnackbar(resp.data.error, {variant: 'error'})
       }
+      dispatchUpdateProgress(`test_${sym}_${strategy}`, null);
     })
   }
 
@@ -99,13 +96,14 @@ class StrategyValues extends React.Component {
       strategy,
       isPercent,
       sym,
+      progress,
     } = this.props;
-    const {
-      testLoading,
-    } = this.state;
-    const sc = isTest ? all_configs[`${strategy}_test`] : all_configs[strategy];
+    const strategyKey = isTest ? `${strategy}_test` : strategy;
+    const sc = all_configs[strategyKey];
     const configs = (sc && sc.vs) ? JSON.parse(sc.vs) : {};
     const title = isTest ? 'Test' : strategy;
+    const progressValue = isTest ? progress[`test_${sym}_${strategy}`] : null;
+
     return (
       <Grid item sm={12} md={6} lg={isTest ? 3 : 4}>
         <Paper>
@@ -143,7 +141,7 @@ class StrategyValues extends React.Component {
                   {
                     isTest ?
                     <Button onClick={this.onTest}>
-                      Test
+                      Run
                     </Button>
                     :
                     <Link to={`/triggers?sym=${sym}&aggs_seconds=${configs.aggs_seconds}`} >
@@ -152,16 +150,21 @@ class StrategyValues extends React.Component {
                       </Button>
                     </Link>
                   }
-                  <Link to={`/charts?sym=${sym}&frame=second&strategy=${strategy}&isTest=${isTest ? 1 : 0}`} >
+                  <Link to={`/transactions?sym=${sym}&strategy=${strategy}&isTest=${isTest ? 1 : 0}`} >
                     <Button>
-                      Charts
+                      Trans
                     </Button>
                   </Link>
                 </ButtonGroup>
               </ListItemText>
               <ListItemSecondaryAction>
-                {testLoading && <CircularProgress size={24} />}
+                {progressValue && <ProgressWithLabel value={progressValue} />}
               </ListItemSecondaryAction>
+            </ListItem>
+            <ListItem>
+              <ListItemText>
+                <Remark sym={sym} remarkKey={strategyKey} />
+              </ListItemText>
             </ListItem>
           </List>
         </Paper>
@@ -176,12 +179,14 @@ const mapStateToProps = state => ({
   isPercent: state.configs.isPercent,
   strategy: state.configs.strategy,
   all_configs: state.configs,
+  progress: state.progress,
 })
 
 export default compose(
   withStyles(useStyles),
   connect(mapStateToProps, {
     dispatchSetConfigs: setConfigs,
+    dispatchUpdateProgress: updateProgress,
   }),
   withSnackbar,
 )(StrategyValues);

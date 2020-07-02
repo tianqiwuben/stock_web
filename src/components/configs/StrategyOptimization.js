@@ -18,6 +18,7 @@ import ButtonGroup from '@material-ui/core/ButtonGroup';
 import {setConfigs} from '../../redux/configActions';
 import {apiOptimizationProcessAction} from '../../utils/ApiFetch';
 import StrategyDB from '../common/StrategyDB';
+import Remark from '../common/Remark';
 
 const useStyles = theme => ({
   formControl: {
@@ -127,6 +128,7 @@ class StrategyOptimization extends React.Component {
       classes,
       all_configs,
       strategy,
+      sym,
     } = this.props;
     const optimization = all_configs[`${strategy}_optimization`];
     const configs = (optimization && optimization.vs) ? JSON.parse(optimization.vs) : {};
@@ -220,6 +222,11 @@ class StrategyOptimization extends React.Component {
               <ListItemSecondaryAction>
                 {progressStr}
               </ListItemSecondaryAction>
+            </ListItem>
+            <ListItem>
+              <ListItemText>
+                <Remark sym={sym} remarkKey={`${strategy}_optimization`} />
+              </ListItemText>
             </ListItem>
           </List>
         </Paper>

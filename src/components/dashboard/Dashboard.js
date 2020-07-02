@@ -28,8 +28,11 @@ import Triggers from '../triggers/Triggers';
 import Process from '../process/Process';
 import {apiStrategyConstants} from '../../utils/ApiFetch';
 import {setDB} from '../common/StrategyDB';
+import Transactions from '../transaction/Transactions';
+import SideChart from '../charts/SideChart';
+import WSocket from '../common/WSocket';
 
-const drawerWidth = 240;
+const drawerWidth = 320;
 
 const styles = theme => ({
   root: {
@@ -171,6 +174,11 @@ class Dashboard extends React.Component {
                 <ListItemText primary="Configs" />
               </ListItem>
             </Link>
+            <Link to="/transactions">
+              <ListItem button>
+                <ListItemText primary="Transactions" />
+              </ListItem>
+            </Link>
             <Link to="/charts">
               <ListItem button>
                 <ListItemText primary="Charts" />
@@ -188,12 +196,14 @@ class Dashboard extends React.Component {
             </Link>
           </List>
           <Divider />
+          <SideChart />
         </Drawer>
         <main className={classes.content}>
           <div className={classes.appBarSpacer} />
           <Container maxWidth="lg" className={classes.container}>
             <Switch>
               <Route path="/configs/:id?" component={Configs} />
+              <Route path="/transactions" component={Transactions} />
               <Route path="/charts" component={Chart} />
               <Route path="/triggers" component={Triggers} />
               <Route path="/process" component={Process} />
@@ -201,6 +211,7 @@ class Dashboard extends React.Component {
             </Switch>
           </Container>
         </main>
+        <WSocket />
       </div>
     );
   }
