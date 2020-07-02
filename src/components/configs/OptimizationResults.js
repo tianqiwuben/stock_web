@@ -13,7 +13,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import Grid from '@material-ui/core/Grid';
 import {connect} from 'react-redux';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
-import StrategyDB from '../common/StrategyDB';
+import {StrategyDB} from '../common/Constants';
 
 import {apiOptimizationApply} from '../../utils/ApiFetch';
 

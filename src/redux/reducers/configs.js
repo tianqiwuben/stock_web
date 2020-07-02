@@ -6,7 +6,7 @@ export const initialState = {
   sym: 'SPY',
   strategy: '',
   isPercent: true,
-  sortStrategy: 'prod',
+  displayEnv: 'prod',
 };
 
 export default (state = initialState, action) => {
@@ -20,7 +20,7 @@ export default (state = initialState, action) => {
         sym: state.sym,
         isPercent: state.isPercent,
         strategy: state.strategy,
-        sortStrategy: state.sortStrategy,
+        displayEnv: state.displayEnv,
       };
     }
     case SET_CONFIGS: {

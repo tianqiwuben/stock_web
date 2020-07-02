@@ -11,7 +11,7 @@ import querystring from 'querystring';
 
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
-import StrategyDB from '../common/StrategyDB';
+import {StrategyDB} from '../common/Constants';
 
 import {
   Brush,

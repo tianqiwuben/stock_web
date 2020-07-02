@@ -17,6 +17,8 @@ import Container from '@material-ui/core/Container';
 import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import NotificationsIcon from '@material-ui/icons/Notifications';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import Box from '@material-ui/core/Box';
 import Chart from './Chart';
 import {
   Switch,
@@ -26,11 +28,12 @@ import {
 import Configs from '../configs/Configs';
 import Triggers from '../triggers/Triggers';
 import Process from '../process/Process';
-import {apiStrategyConstants} from '../../utils/ApiFetch';
-import {setDB} from '../common/StrategyDB';
+import {apiConstants} from '../../utils/ApiFetch';
+import {setDB} from '../common/Constants';
 import Transactions from '../transaction/Transactions';
 import SideChart from '../charts/SideChart';
 import WSocket from '../common/WSocket';
+import BulkPanel from '../bulk/BulkPanel';
 
 const drawerWidth = 320;
 
@@ -115,12 +118,14 @@ class Dashboard extends React.Component {
     super(props)
     this.state = {
       open: true,
+      loading: true,
     }
   }
 
   componentDidMount() {
-    apiStrategyConstants().then(resp => {
-      setDB(resp.data.payload)
+    apiConstants().then(resp => {
+      setDB(resp.data.payload);
+      this.setState({loading: false});
     })
   }
 
@@ -130,7 +135,7 @@ class Dashboard extends React.Component {
 
   render() {
     const {classes} = this.props;
-    const {open} = this.state;
+    const {open, loading} = this.state;
     return (
       <div className={classes.root}>
         <CssBaseline />
@@ -194,23 +199,37 @@ class Dashboard extends React.Component {
                 <ListItemText primary="Process" />
               </ListItem>
             </Link>
+            <Link to="/bulk">
+              <ListItem button>
+                <ListItemText primary="Bulk Opts" />
+              </ListItem>
+            </Link>
           </List>
           <Divider />
           <SideChart />
         </Drawer>
         <main className={classes.content}>
           <div className={classes.appBarSpacer} />
-          <Container maxWidth="lg" className={classes.container}>
-            <Switch>
-              <Route path="/configs/:id?" component={Configs} />
-              <Route path="/transactions" component={Transactions} />
-              <Route path="/charts" component={Chart} />
-              <Route path="/triggers" component={Triggers} />
-              <Route path="/process" component={Process} />
-              <Route component={Configs} />
-            </Switch>
-          </Container>
-        </main>
+          {
+            loading ?
+            <Box display="flex" flexDirection="column" justifyContent="space-around" alignItems="center" height="100%">
+              <CircularProgress size={48}/>
+              <div></div>
+            </Box>
+            :
+            <Container maxWidth="lg" className={classes.container}>
+              <Switch>
+                <Route path="/configs/:id?" component={Configs} />
+                <Route path="/transactions" component={Transactions} />
+                <Route path="/charts" component={Chart} />
+                <Route path="/triggers" component={Triggers} />
+                <Route path="/process" component={Process} />
+                <Route path="/bulk" component={BulkPanel} />
+                <Route component={Configs} />
+              </Switch>
+            </Container>
+          }
+          </main>
         <WSocket />
       </div>
     );

@@ -19,7 +19,7 @@ import Remark from '../common/Remark';
 import {setConfigs} from '../../redux/configActions';
 import {updateProgress} from '../../redux/progressActions';
 
-import StrategyDB from '../common/StrategyDB';
+import {StrategyDB} from '../common/Constants';
 
 import {
   Link,

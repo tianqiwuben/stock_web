@@ -12,7 +12,6 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Select from '@material-ui/core/Select';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import {apiGetTransactions, apiBars} from '../../utils/ApiFetch';
@@ -22,10 +21,10 @@ import FormControl from '@material-ui/core/FormControl';
 import Checkbox from '@material-ui/core/Checkbox';
 import {connect} from 'react-redux';
 
-
+import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
-import StrategyDB, {getStrategyColor} from '../common/StrategyDB';
+import {StrategyDB, getStrategyColor} from '../common/Constants';
 import {saveSideChart} from '../../redux/sideChartActions';
 
 

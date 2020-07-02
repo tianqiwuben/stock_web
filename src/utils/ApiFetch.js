@@ -32,7 +32,7 @@ function callAPI(path, method, payload = null) {
   });
 }
 
-export const apiStrategyConstants = () => callAPI('/strategy_constants', 'get');
+export const apiConstants = () => callAPI('/constants', 'get');
 
 export const apiBars = query => callAPI('/bars', 'get', query);
 
@@ -61,3 +61,9 @@ export const apiDeleteRemark = (id)  => callAPI(`/remark/${id}`, 'delete');
 export const apiGetRemarks = (query)  => callAPI(`/remark`, 'get', query);
 
 export const apiGetTransactions = (query) => callAPI('/transactions', 'get', query);
+
+export const apiBulkOptimizations = payload => callAPI('/bulk/optimizations', 'post', payload);
+
+export const apiBulkAssignOptimizations = payload => callAPI('/bulk/assign_optimization_result', 'post', payload);
+
+export const apiBulkAssignQuota = payload => callAPI('/bulk/assign_quota', 'post', payload);

@@ -11,7 +11,7 @@ export default (state = initialState, action) => {
     case SAVE_PROCESS: {
       return {
         ...state,
-        [action.id]: action.data,
+        ...action.data,
       };
     }
     default:

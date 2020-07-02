@@ -16,7 +16,7 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import OptimizationResults from './OptimizationResults';
 import Switch from '@material-ui/core/Switch';
-import StrategyDB from '../common/StrategyDB';
+import {StrategyDB} from '../common/Constants';
 import StrategyTable from './StrategyTable';
 import { withSnackbar } from 'notistack';
 import Remark from '../common/Remark';
@@ -152,13 +152,14 @@ class Configs extends React.Component {
   changeSortBy = (e, v) => {
     if (v) {
       const {dispatchSetConfigs} = this.props;
-      dispatchSetConfigs({sortStrategy: v});
+      dispatchSetConfigs({displayEnv: v});
     }
   }
 
   onChangeQuota = (field, e) => {
-    const {dispatchSetConfigs, allConfigs} = this.props;
-    const conf = allConfigs.quota;
+    const {dispatchSetConfigs, allConfigs, displayEnv} = this.props;
+    const quotaKey = displayEnv === 'prod' ? 'quota' : 'quota_test';
+    const conf = allConfigs[quotaKey];
     const newConf = {...conf};
     if (field === 'quota') {
       newConf.vi = e.target.value;
@@ -166,7 +167,7 @@ class Configs extends React.Component {
       newConf.vf = e.target.value;
     }
     dispatchSetConfigs({
-      quota: newConf,
+      [quotaKey]: newConf,
     });
   }
 
@@ -191,11 +192,12 @@ class Configs extends React.Component {
       last_v,
       isPercent,
       strategy,
-      sortStrategy,
+      displayEnv,
       allConfigs,
     } = this.props;
-    const quota = allConfigs.quota ? allConfigs.quota.vi : '';
-    const priority = allConfigs.quota ? allConfigs.quota.vf : '';
+    const quotaKey = displayEnv === 'prod' ? 'quota' : 'quota_test';
+    const quota = allConfigs[quotaKey] ? allConfigs[quotaKey].vi : '';
+    const priority = allConfigs[quotaKey] ? allConfigs[quotaKey].vf : '';
     return (
       <React.Fragment>
         <Grid container spacing={3}>
@@ -256,12 +258,12 @@ class Configs extends React.Component {
                 </ListItem>
                 <ListItem>
                   <ListItemText>
-                    Sort Strategy
+                    Display Env
                   </ListItemText>
                   <ListItemSecondaryAction>
                     <ToggleButtonGroup
                       size="small"
-                      value={sortStrategy}
+                      value={displayEnv}
                       exclusive
                       onChange={this.changeSortBy}
                     >
@@ -322,7 +324,7 @@ const mapStateToProps = state => ({
   isPercent: state.configs.isPercent,
   sym: state.configs.sym,
   strategy: state.configs.strategy,
-  sortStrategy: state.configs.sortStrategy,
+  displayEnv: state.configs.displayEnv,
   allConfigs: state.configs,
 })
 

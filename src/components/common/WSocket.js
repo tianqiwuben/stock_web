@@ -34,7 +34,7 @@ class WSocket extends React.Component {
           break;
         }
         case 'process': {
-          dispatchSaveProcess(msg.id, msg.data);
+          dispatchSaveProcess({[msg.id]: msg.data});
           break;
         }
         case 'notification': {

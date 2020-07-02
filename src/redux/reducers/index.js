@@ -4,6 +4,7 @@ import configs from './configs';
 import remarks from './remarks';
 import progress from './progress';
 import process from './process';
+import processPage from './processPage';
 
 export default combineReducers({
   sideChart,
@@ -11,4 +12,5 @@ export default combineReducers({
   remarks,
   progress,
   process,
+  processPage,
 });

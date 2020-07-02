@@ -17,7 +17,7 @@ import ButtonGroup from '@material-ui/core/ButtonGroup';
 
 import {setConfigs} from '../../redux/configActions';
 import {apiOptimizationProcessAction} from '../../utils/ApiFetch';
-import StrategyDB from '../common/StrategyDB';
+import {StrategyDB} from '../common/Constants';
 import Remark from '../common/Remark';
 
 const useStyles = theme => ({

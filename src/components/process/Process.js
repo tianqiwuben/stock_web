@@ -10,6 +10,7 @@ import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
+import TablePagination from '@material-ui/core/TablePagination';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Dialog from '@material-ui/core/Dialog';
@@ -18,12 +19,17 @@ import Paper from '@material-ui/core/Paper';
 import FormControl from '@material-ui/core/FormControl';
 import Grid from '@material-ui/core/Grid';
 import Select from '@material-ui/core/Select';
-import StrategyDB from '../common/StrategyDB';
+import {StrategyDB} from '../common/Constants';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
+import IconButton from '@material-ui/core/IconButton';
+import PlayCircleOutlineIcon from '@material-ui/icons/PlayCircleOutline';
+import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
+import PauseCircleOutlineIcon from '@material-ui/icons/PauseCircleOutline';
+
 import {apiGetProcesses, apiOptimizationProcessAction} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
-import {saveProcess} from '../../redux/processActions';
+import {saveProcess, resetProcessPage, updateProcessPage} from '../../redux/processActions';
 
 import {
   Link,
@@ -63,14 +69,8 @@ class Process extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      ids: [],
-      total_pages: 1,
-      current_page: 1,
       errorOpen: false,
       errorTrace: '',
-      sym: '',
-      strategy: 'all',
-      status: 'all',
     }
   }
 
@@ -78,27 +78,33 @@ class Process extends React.Component {
     this.onFetch();
   }
 
-  onFetch = (page = 1) => {
-    if (page <= 0) {
+  onFetch = (newPage = null) => {
+    if (typeof newPage == Number && newPage <= 0) {
       return;
     }
+    const {processPage, dispatchUpdateProcessPage} = this.props;
     const {
       sym,
       strategy,
       status,
-    }  =this.state;
-    apiGetProcesses({page, sym, strategy, status}).then(resp => {
+      page,
+    } = processPage;
+    const fetchPage = newPage || page;
+    apiGetProcesses({page: fetchPage, sym, strategy, status}).then(resp => {
       if (resp.data.success) {
         const {dispatchSaveProcess} = this.props;
         const ids = [];
+        const processPayload = {};
         resp.data.payload.records.forEach(record => {
           ids.push(record.id);
-          dispatchSaveProcess(record.id, record);
+          processPayload[record.id] = record;
         })
-        this.setState({
+        dispatchSaveProcess(processPayload);
+        dispatchUpdateProcessPage({
           ids,
-          total_pages: resp.data.payload.total_pages,
-          current_page: page,
+          page: fetchPage,
+          totalPage: resp.data.payload.total_pages,
+          totalEntries: resp.data.payload.total_entries,
         })
       } else {
         const {enqueueSnackbar} = this.props;
@@ -116,10 +122,7 @@ class Process extends React.Component {
     apiOptimizationProcessAction(payload).then(resp => {
       if (resp.data.success) {
         enqueueSnackbar('Success')
-        const {
-          current_page,
-        } = this.state;
-        this.onFetch(current_page);
+        this.onFetch();
       } else {
         enqueueSnackbar(resp.data.error, {variant: 'error'})
       }
@@ -127,16 +130,12 @@ class Process extends React.Component {
   }
 
   onClickStatus = (id) => {
-    const {data} = this.state;
-    for (let i in data) {
-      if (data[i].id === id) {
-        if (data[i].status === 'error') {
-          this.setState({
-            errorOpen: true,
-            errorTrace: data[i].error_msg,
-          })
-        }
-      }
+    const {process} = this.props;
+    if (process[id].status === 'error') {
+      this.setState({
+        errorOpen: true,
+        errorTrace: process[id].error_msg,
+      })
     }
   }
 
@@ -147,21 +146,35 @@ class Process extends React.Component {
   }
 
   handleChange = (field, e) => {
-    this.setState({
-      [field]: e.target.value,
-    });
+    const {dispatchUpdateProcessPage} = this.props;
+    dispatchUpdateProcessPage({[field]: e.target.value});
+  }
+
+  onReset = () => {
+    const {dispatchResetProcessPage} = this.props;
+    dispatchResetProcessPage();
+  }
+
+  handleChangePage = (e, p) => {
+    console.log('wqt handleChangePage', p);
+    this.onFetch(p + 1);
+    
   }
 
   render() {
-    const {classes, process} = this.props;
+    const {classes, process, processPage} = this.props;
     const {
-      ids,
       errorOpen,
       errorTrace,
+    } = this.state;
+    const {
+      ids,
       sym,
       status,
       strategy,
-    } = this.state;
+      page,
+      totalEntries,
+    } = processPage;
     const data = ids.map((id) => process[id]);
     return (
       <Grid container spacing={3}>
@@ -204,14 +217,17 @@ class Process extends React.Component {
                   }
                 </Select>
               </FormControl>
-              <Button variant="contained" color="primary" onClick={() => this.onFetch()}>
+              <Button variant="contained" color="primary" onClick={() => this.onFetch(1)}>
                 Fetch
+              </Button>
+              <Button variant="contained" onClick={() => this.onReset()}>
+                Reset
               </Button>
           </Paper>
         </Grid>
         <Grid item xs={12} md={12} lg={12}>
           <TableContainer component={Paper}>
-            <Table className={classes.table}>
+            <Table className={classes.table} size="small">
               <TableHead>
                 <TableRow>
                   <TableCell>{'Sym & Strategy'}</TableCell>
@@ -248,16 +264,21 @@ class Process extends React.Component {
                     <TableCell>{row.started_at_str}<br/>{row.started_at}</TableCell>
                     <TableCell>{row.expected_finish_time_str}<br/>{row.expected_finish_time}</TableCell>
                     <TableCell>
-                      <ButtonGroup variant="text">
-                        <Button onClick={() => {this.doAction(row.id, 'stop')}}>STOP</Button>
-                        <Button onClick={() => {this.doAction(row.id, 'start')}}>RUN</Button>
-                        <Button onClick={() => {this.doAction(row.id, 'delete')}}>DEL</Button>
-                      </ButtonGroup>
+                      <IconButton onClick={() => {this.doAction(row.id, 'stop')}}><PauseCircleOutlineIcon /></IconButton>
+                      <IconButton onClick={() => {this.doAction(row.id, 'start')}}><PlayCircleOutlineIcon /></IconButton>
+                      <IconButton onClick={() => {this.doAction(row.id, 'delete')}}><DeleteOutlineIcon /></IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            <TablePagination
+              rowsPerPageOptions={[12]}
+              count={totalEntries}
+              rowsPerPage={12}
+              page={page - 1}
+              onChangePage={this.handleChangePage}
+            />
           </TableContainer>
           <Dialog
             open={errorOpen}
@@ -281,6 +302,7 @@ class Process extends React.Component {
 
 const mapStateToProps = state => ({
   process: state.process,
+  processPage: state.processPage,
 })
 
 
@@ -288,6 +310,8 @@ export default compose(
   withStyles(styles),
   connect(mapStateToProps, {
     dispatchSaveProcess: saveProcess,
+    dispatchResetProcessPage: resetProcessPage,
+    dispatchUpdateProcessPage: updateProcessPage
   }),
   withSnackbar
 )(Process);

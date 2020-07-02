@@ -2,7 +2,7 @@ import React from 'react';
 import compose from 'recompose/compose';
 import { withStyles } from '@material-ui/core/styles';
 import {connect} from 'react-redux';
-import {getStrategyColor} from '../common/StrategyDB';
+import {getStrategyColor} from '../common/Constants';
 
 import {
   Brush,

@@ -11,7 +11,7 @@ import TableRow from '@material-ui/core/TableRow';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import {connect} from 'react-redux';
-import StrategyDB from '../common/StrategyDB';
+import {StrategyDB} from '../common/Constants';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -68,7 +68,7 @@ class StrategyTable extends React.Component {
   }
 
   prepareData = () => {
-    const {allConfigs, sortStrategy} = this.props;
+    const {allConfigs, displayEnv} = this.props;
     const data = [];
     for(let key in StrategyDB) {
       const item = {key, prod: '-', test: '-', pl: '', hold: ''};
@@ -93,7 +93,7 @@ class StrategyTable extends React.Component {
     data.sort((a, b) => {
       let aP = a.test;
       let bP = b.test;
-      if (sortStrategy === 'prod') {
+      if (displayEnv === 'prod') {
         aP = a.prod;
         bP = b.prod;
       }
@@ -282,7 +282,7 @@ class StrategyTable extends React.Component {
 const mapStateToProps = state => ({
   sym: state.configs.sym,
   strategy: state.configs.strategy,
-  sortStrategy: state.configs.sortStrategy,
+  displayEnv: state.configs.displayEnv,
   allConfigs: state.configs,
   progress: state.progress,
 })

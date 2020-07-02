@@ -1,12 +1,32 @@
-const allData = {};
+
+export const StrategyDB = {};
+
+export const SymList = [];
 
 const COLORS = ['black', 'teal', 'purple', 'orange', 'maroon', 'pink', 'olive', 'red'];
 
 const colorMap = {idx: 0};
 
+function copyHash(src, dst) {
+  for (let k in src) {
+    dst[k] = src[k];
+  }
+}
+
 export const setDB = (data) => {
   for (let key in data) {
-    allData[key] = data[key];
+    switch(key) {
+      case 'strategies': {
+        copyHash(data.strategies, StrategyDB);
+        break; 
+      }
+      case 'sym_list': {
+        SymList.splice(0, SymList.length);
+        SymList.push(...data.sym_list)
+        break;
+      }
+      default:
+    }
   }
 }
 
@@ -20,5 +40,3 @@ export const getStrategyColor = (strategy) => {
   }
   return colorMap[strategy];
 }
-
-export default allData;
