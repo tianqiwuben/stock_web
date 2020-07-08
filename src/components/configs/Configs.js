@@ -172,11 +172,12 @@ class Configs extends React.Component {
   }
 
   onCompleteQuota = () => {
-    const {allConfigs} = this.props;
-    if (allConfigs.quota) {
+    const {allConfigs, displayEnv} = this.props;
+    const quotaKey = displayEnv === 'prod' ? 'quota' : 'quota_test';
+    if (allConfigs[quotaKey]) {
       const payload = {
         configs: {
-          quota: allConfigs.quota,
+          [quotaKey]: allConfigs[quotaKey],
         }
       }
       this.onChangeConfig(payload);

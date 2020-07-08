@@ -150,7 +150,7 @@ class StrategyValues extends React.Component {
                       </Button>
                     </Link>
                   }
-                  <Link to={`/transactions?sym=${sym}&strategy=${strategy}&isTest=${isTest ? 1 : 0}`} >
+                  <Link to={`/transactions?sym=${sym}&strategy=${strategy}&trade_env=${isTest ? 'test' : 'paper'}`} >
                     <Button>
                       Trans
                     </Button>

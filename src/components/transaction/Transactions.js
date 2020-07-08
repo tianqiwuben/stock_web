@@ -11,14 +11,12 @@ import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import {apiGetTransactions, apiBars} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
 import querystring from 'querystring';
 import FormControl from '@material-ui/core/FormControl';
-import Checkbox from '@material-ui/core/Checkbox';
 import {connect} from 'react-redux';
 
 import Select from '@material-ui/core/Select';
@@ -35,7 +33,7 @@ import {
 const styles = theme => ({
   formControl: {
     margin: theme.spacing(1),
-    minWidth: 60,
+    minWidth: 120,
   },
   row: {
     '& > *': {
@@ -51,7 +49,7 @@ class Transactions extends React.Component {
     this.state = {
       sym: '',
       strategy: 'all',
-      isTest: true,
+      trade_env: 'test',
       summary: [],
       records: [],
     }
@@ -62,22 +60,17 @@ class Transactions extends React.Component {
     if (location && location.search) {
       const query = querystring.decode(location.search.substring(1));
       if (query.sym) {
-        if (query.isTest === '1') {
-          query.isTest = true;
-        } else if (query.isTest === '0') {
-          query.isTest = false;
-        }
         this.setState(query, this.onFetch)
       }
     }
   }
 
   onFetch = () => {
-    const {sym, strategy, isTest} = this.state;
+    const {sym, strategy, trade_env} = this.state;
     const query = {
       sym,
       strategy,
-      is_test: isTest ? 1 : 0,
+      trade_env,
     }
     apiGetTransactions(query).then(resp => {
       if (resp.data.success) {
@@ -96,10 +89,6 @@ class Transactions extends React.Component {
     this.setState({
       [field]: e.target.value,
     });
-  }
-
-  onChangeTest = () => {
-    this.setState({isTest: !this.state.isTest});
   }
 
   onShowChart = (trans_id) => {
@@ -121,7 +110,7 @@ class Transactions extends React.Component {
     const {
       summary,
       records,
-      isTest,
+      trade_env,
       sym,
       strategy,
     } = this.state;
@@ -152,12 +141,16 @@ class Transactions extends React.Component {
                 </Select>
               </FormControl>
               <FormControl className={classes.formControl}>
-                <FormControlLabel
-                  control={
-                    <Checkbox checked={isTest} onChange={this.onChangeTest} />
-                  }
-                  label="Testing"
-                />
+                <InputLabel>Trade Env</InputLabel>
+                <Select
+                  value={trade_env}
+                  onChange={e => this.handleChange('trade_env', e)}
+                  autoWidth
+                >
+                  <MenuItem value="test">Test</MenuItem>
+                  <MenuItem value="paper">Paper</MenuItem>
+                  <MenuItem value="prod">Prod</MenuItem>
+                </Select>
               </FormControl>
               <Button variant="contained" color="primary" onClick={this.onFetch}>
                 Fetch

@@ -67,3 +67,5 @@ export const apiBulkOptimizations = payload => callAPI('/bulk/optimizations', 'p
 export const apiBulkAssignOptimizations = payload => callAPI('/bulk/assign_optimization_result', 'post', payload);
 
 export const apiBulkAssignQuota = payload => callAPI('/bulk/assign_quota', 'post', payload);
+
+export const apiGetMessages = query => callAPI('/messages', 'get', query);
