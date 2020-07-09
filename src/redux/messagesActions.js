@@ -1,4 +1,4 @@
-import {SAVE_MESSAGE, UPDATE_MESSAGE_PAGE} from './actionTypes';
+import {SAVE_MESSAGE, UPDATE_MESSAGE_PAGE, INSERT_MESSAGE} from './actionTypes';
 
 export const saveMessages = (records) => {
   const data = {};
@@ -40,5 +40,12 @@ export const updateMessagesPage = (payload) => {
   })
 };
 
+export const updateMessagesPageContent = (data) => ({
+  type: UPDATE_MESSAGE_PAGE,
+  data,
+});
 
-
+export const insertMessage = (message) => ({
+  type: INSERT_MESSAGE,
+  message,
+});

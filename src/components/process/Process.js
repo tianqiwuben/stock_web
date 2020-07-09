@@ -156,7 +156,6 @@ class Process extends React.Component {
   }
 
   handleChangePage = (e, p) => {
-    console.log('wqt handleChangePage', p);
     this.onFetch(p + 1);
     
   }

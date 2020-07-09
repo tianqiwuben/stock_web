@@ -1,4 +1,4 @@
-import {RESET_STORE, SAVE_MESSAGE} from '../actionTypes';
+import {RESET_STORE, SAVE_MESSAGE, INSERT_MESSAGE} from '../actionTypes';
 
 export const initialState = {
 };
@@ -13,6 +13,12 @@ export default (state = initialState, action) => {
         ...state,
         ...action.data,
       };
+    }
+    case INSERT_MESSAGE: {
+      return {
+        ...state,
+        [action.message.id]: action.message,
+      }
     }
     default:
       return state;

@@ -4,6 +4,7 @@ import { withSnackbar } from 'notistack';
 import {connect} from 'react-redux';
 import {updateProgress} from '../../redux/progressActions';
 import {saveProcess} from '../../redux/processActions';
+import {insertMessage} from '../../redux/messagesActions';
 
 class WSocket extends React.Component {
   componentDidMount() {
@@ -26,6 +27,7 @@ class WSocket extends React.Component {
         dispatchUpdateProgress,
         dispatchSaveProcess,
         enqueueSnackbar,
+        dispatchInsertMessage,
       } = this.props;
       const msg = JSON.parse(e.data);
       switch(msg.type) {
@@ -41,6 +43,15 @@ class WSocket extends React.Component {
           enqueueSnackbar(msg.msg, msg.options);
           break;
         }
+        case 'message': {
+          const message = msg.msg;
+          dispatchInsertMessage(message);
+          enqueueSnackbar(message.message, {
+            variant: message.variant_str,
+            anchorOrigin: {horizontal: 'right', vertical: 'top'},
+          });
+          break;
+        }
         default:
       }
     };
@@ -51,10 +62,15 @@ class WSocket extends React.Component {
   }
 }
 
+const mapStateToProps = state => ({
+  messagesPage: state.messagesPage,
+})
+
 export default compose(
-  connect(null, {
+  connect(mapStateToProps, {
     dispatchUpdateProgress: updateProgress,
     dispatchSaveProcess: saveProcess,
+    dispatchInsertMessage: insertMessage,
   }),
   withSnackbar,
 )(WSocket);

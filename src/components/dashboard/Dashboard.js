@@ -33,6 +33,7 @@ import SideChart from '../charts/SideChart';
 import WSocket from '../common/WSocket';
 import BulkPanel from '../bulk/BulkPanel';
 import MsgBar from '../messages/MsgBar';
+import Messages from '../messages/Messages';
 
 const drawerWidth = 320;
 
@@ -220,6 +221,7 @@ class Dashboard extends React.Component {
                 <Route path="/triggers" component={Triggers} />
                 <Route path="/process" component={Process} />
                 <Route path="/bulk" component={BulkPanel} />
+                <Route path="/messages" component={Messages} />
                 <Route component={Configs} />
               </Switch>
             </Container>

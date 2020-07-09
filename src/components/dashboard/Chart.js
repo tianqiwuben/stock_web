@@ -45,7 +45,7 @@ const styles = theme => ({
   },
   formControl: {
     margin: theme.spacing(1),
-    minWidth: 60,
+    minWidth: 120,
   },
   row: {
     '& > *': {
@@ -80,7 +80,7 @@ class Chart extends React.Component {
       startDate: '',
       frame: 'second',
       strategy: 'all',
-      isTest: false,
+      trade_env: 'test',
       nextTrans: null,
       agg_seconds: 5,
     };
@@ -91,11 +91,6 @@ class Chart extends React.Component {
     if (location && location.search) {
       const query = querystring.decode(location.search.substring(1));
       if (query.sym) {
-        if (query.isTest === '1') {
-          query.isTest = true;
-        } else if (query.isTest === '0') {
-          query.isTest = false;
-        }
         this.setState(query, () => this.onFetch())
       }
     }
@@ -113,7 +108,7 @@ class Chart extends React.Component {
       frame,
       startDate,
       nextTrans,
-      isTest,
+      trade_env,
       strategy,
       agg_seconds,
     } = this.state;
@@ -125,7 +120,7 @@ class Chart extends React.Component {
       next_trans: nextTrans,
       find_next_trans: findNextTrans,
       agg_seconds,
-      is_test: isTest ? 1 : 0,
+      trade_env,
     };
     apiBars(query).then(resp => {
       if (resp && resp.data.success && resp.data.payload.bars && resp.data.payload.bars.length > 0) {
@@ -143,19 +138,13 @@ class Chart extends React.Component {
     this.onFetch(1);
   }
 
-  onChangeTest = () => {
-    this.setState({
-      isTest: !this.state.isTest,
-    })
-  }
-
   render() {
     const {
       data,
       sym,
       startDate,
       frame,
-      isTest,
+      trade_env,
       strategy,
       agg_seconds,
     } = this.state;
@@ -214,16 +203,20 @@ class Chart extends React.Component {
               }
             </Select>
           </FormControl>
+          <FormControl className={classes.formControl}>
+            <InputLabel>Trade Env</InputLabel>
+            <Select
+              value={trade_env}
+              onChange={e => this.handleChange('trade_env', e)}
+              autoWidth
+            >
+              <MenuItem value="test">Test</MenuItem>
+              <MenuItem value="paper">Paper</MenuItem>
+              <MenuItem value="prod">Prod</MenuItem>
+            </Select>
+          </FormControl>
         </div>
         <div className={classes.row}>
-          <FormControl className={classes.formControl}>
-            <FormControlLabel
-              control={
-                <Checkbox checked={isTest} onChange={this.onChangeTest} />
-              }
-              label="Testing"
-            />
-          </FormControl>
           <Button variant="contained" color="primary" onClick={() => this.onFetch()}>
             Fetch
           </Button>

@@ -1,22 +1,21 @@
 import React from 'react';
 import compose from 'recompose/compose';
 import { withStyles } from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import Badge from '@material-ui/core/Badge';
 import NotificationsIcon from '@material-ui/icons/Notifications';
-import ErrorIcon from '@material-ui/icons/Error';
+import ErrorOutlineIcon from '@material-ui/icons/ErrorOutline';
+import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import EmailIcon from '@material-ui/icons/Email';
 import DoneAllIcon from '@material-ui/icons/DoneAll';
-import ListItem from '@material-ui/core/ListItem';
+import CancelOutlinedIcon from '@material-ui/icons/CancelOutlined';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
 
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 
-import {apiGetMessages} from '../../utils/ApiFetch';
+import {apiGetMessages, apiMarkRead} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
 import {connect} from 'react-redux';
 
@@ -49,14 +48,11 @@ class NsgBar extends React.Component {
         dispatchSaveMessages(resp.data.payload.records);
         dispatchUpdateMessagesPage(resp.data.payload);
       } else {
-        enqueueSnackbar(`Fetch Messages Error: ${resp.data.error}`);
+        enqueueSnackbar(`Fetch Messages Error: ${resp.data.error}`, {variant: 'error'});
       }
     })
   }
 
-  onClickMessage = (id) => {
-
-  }
 
   onClickIcon = (e) => {
     this.setState({dropDownOpen: true, anchorEl: e.currentTarget})
@@ -67,7 +63,18 @@ class NsgBar extends React.Component {
   }
 
   onClickReadAll = () => {
-    this.handleClose();
+    const {enqueueSnackbar, messagesPage} = this.props;
+    const payload = {
+      message_id: messagesPage.barIds,
+    }
+    apiMarkRead(payload).then(resp => {
+      if (resp.data.success) {
+        enqueueSnackbar('Success')
+        this.fetchMessage();
+      } else {
+        enqueueSnackbar(resp.data.error, {variant: 'error'})
+      }
+    })
   }
 
   render() {
@@ -94,9 +101,22 @@ class NsgBar extends React.Component {
         >
           {
             data.map(row => (
-              <MenuItem key={row.id} onClick={() => this.onClickMessage(row.id)}>
-                <ListItemText primary={row.message} secondary={row.created_at} />
-              </MenuItem>
+              <Link key={row.id} to={row.url || "/messages"} onClick={this.handleClose}>
+                <MenuItem >
+                  <ListItemIcon>
+                    {
+                      row.variant_str === 'warning' ?
+                      <ErrorOutlineIcon style={{color: "#ff9966"}}/>
+                      : row.variant_str === 'success' ?
+                      <CheckCircleOutlineIcon style={{color: "#339900"}}/>
+                      : row.variant_str === 'error' ?
+                      <CancelOutlinedIcon style={{color: "red"}}/>
+                      : null
+                    }
+                  </ListItemIcon>
+                  <ListItemText primary={row.message} secondary={row.created_at} />
+                </MenuItem>
+              </Link>
             ))
           }
           <MenuItem onClick={this.onClickReadAll}>
