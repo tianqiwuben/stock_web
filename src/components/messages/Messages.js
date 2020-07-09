@@ -24,8 +24,10 @@ import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import IconButton from '@material-ui/core/IconButton';
 import DoneIcon from '@material-ui/icons/Done';
+import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
 
-import {apiGetMessages, apiMarkRead} from '../../utils/ApiFetch';
+
+import {apiGetMessages, apiMarkRead, apiDeleteMessage} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
 import {updateMessagesPage, saveMessages, updateMessagesPageContent} from '../../redux/messagesActions';
 
@@ -146,6 +148,18 @@ class Messages extends React.Component {
     this.closeMarkAllDialog();
   }
 
+  onDeleteMessage = (id) => {
+    const {enqueueSnackbar} = this.props;
+    apiDeleteMessage(id).then(resp => {
+      if (resp.data.success) {
+        enqueueSnackbar('Success')
+        this.onFetch();
+      } else {
+        enqueueSnackbar(resp.data.error, {variant: 'error'})
+      }
+    })
+  }
+
   render() {
     const {classes, messages, messagesPage} = this.props;
     const {
@@ -209,7 +223,7 @@ class Messages extends React.Component {
                   <TableCell>Payload</TableCell>
                   <TableCell>URL</TableCell>
                   <TableCell>ReadAt<br/>CreatedAt</TableCell>
-                  <TableCell>Mark as Read</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -251,6 +265,7 @@ class Messages extends React.Component {
                         !row.is_read &&
                         <IconButton onClick={() => {this.markRead({message_id: row.id})}}><DoneIcon /></IconButton>
                       }
+                      <IconButton onClick={() => this.onDeleteMessage(row.id)}><DeleteOutlineIcon /></IconButton>
                     </TableCell>
                   </TableRow>
                 ))}

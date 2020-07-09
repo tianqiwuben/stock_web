@@ -72,3 +72,4 @@ export const apiGetMessages = query => callAPI('/messages', 'get', query);
 
 export const apiMarkRead = payload => callAPI('/messages/mark_read', 'post', payload);
 
+export const apiDeleteMessage = id => callAPI(`/messages/${id}`, 'DELETE');
