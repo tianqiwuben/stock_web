@@ -5,7 +5,6 @@ import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 
 import {connect} from 'react-redux';
-import ButtonGroup from '@material-ui/core/ButtonGroup';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -27,7 +26,7 @@ import PlayCircleOutlineIcon from '@material-ui/icons/PlayCircleOutline';
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
 import PauseCircleOutlineIcon from '@material-ui/icons/PauseCircleOutline';
 
-import {apiGetProcesses, apiOptimizationProcessAction} from '../../utils/ApiFetch';
+import {apiGetProcesses, apiOptimizationProcessAction, apiOptimizationProcessCancelAll} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
 import {saveProcess, resetProcessPage, updateProcessPage} from '../../redux/processActions';
 
@@ -51,6 +50,7 @@ const COLOR = {
   ready_to_run: 'green',
   running: 'green',
   stopping: 'red',
+  cancel_run: 'red',
   stopped: 'red',
   error: 'red',
   finished: '',
@@ -157,7 +157,18 @@ class Process extends React.Component {
 
   handleChangePage = (e, p) => {
     this.onFetch(p + 1);
-    
+  }
+
+  cancelRun = () => {
+    const {enqueueSnackbar} = this.props;
+    apiOptimizationProcessCancelAll().then(resp => {
+      if (resp.data.success) {
+        enqueueSnackbar(`Success ${resp.data.payload.updated_count} updated`, {variant: 'success'})
+        this.onFetch();
+      } else {
+        enqueueSnackbar(resp.data.error, {variant: 'error'})
+      }
+    })
   }
 
   render() {
@@ -221,6 +232,9 @@ class Process extends React.Component {
               </Button>
               <Button variant="contained" onClick={() => this.onReset()}>
                 Reset
+              </Button>
+              <Button variant="contained" onClick={() => this.cancelRun()}>
+                Cancel All
               </Button>
           </Paper>
         </Grid>

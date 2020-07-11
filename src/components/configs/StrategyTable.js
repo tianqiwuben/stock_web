@@ -177,9 +177,9 @@ class StrategyTable extends React.Component {
     dispatchUpdateProgress(`test_${sym}_`, 1);
     apiTestConfig(sym, {activity: 'simulate'}).then(resp => {
       if(resp.data && resp.data.success) {
-        enqueueSnackbar(`${sym} Simulation Complete (${resp.data.payload.duration}s)`, {variant: 'success'})
+        enqueueSnackbar(`${sym} Simulation Start`);
       } else {
-        enqueueSnackbar(resp.data.error, {variant: 'error'})
+        enqueueSnackbar(resp.data.error, {variant: 'error'});
       }
       dispatchUpdateProgress(`test_${sym}_`, null);
     })

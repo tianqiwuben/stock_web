@@ -20,6 +20,9 @@ import {StrategyDB} from '../common/Constants';
 import StrategyTable from './StrategyTable';
 import { withSnackbar } from 'notistack';
 import Remark from '../common/Remark';
+import {
+  Link,
+} from "react-router-dom";
 
 import {
   saveRemarks,
@@ -184,6 +187,30 @@ class Configs extends React.Component {
     }
   }
 
+  onChangeTrend = (e) => {
+    const {dispatchSetConfigs, allConfigs, displayEnv} = this.props;
+    const trendKey = displayEnv === 'prod' ? 'trend' : 'trend_test';
+    const conf = allConfigs[trendKey];
+    const newConf = {...conf};
+    newConf.vf = e.target.value;
+    dispatchSetConfigs({
+      [trendKey]: newConf,
+    });
+  }
+
+  onCompleteTrend = () => {
+    const {allConfigs, displayEnv} = this.props;
+    const trendKey = displayEnv === 'prod' ? 'trend' : 'trend_test';
+    if (allConfigs[trendKey]) {
+      const payload = {
+        configs: {
+          [trendKey]: allConfigs[trendKey],
+        }
+      }
+      this.onChangeConfig(payload);
+    }
+  }
+
   render() {
     const {
       sym,
@@ -199,6 +226,8 @@ class Configs extends React.Component {
     const quotaKey = displayEnv === 'prod' ? 'quota' : 'quota_test';
     const quota = allConfigs[quotaKey] ? allConfigs[quotaKey].vi : '';
     const priority = allConfigs[quotaKey] ? allConfigs[quotaKey].vf : '';
+    const trendKey = displayEnv === 'prod' ? 'trend' : 'trend_test';
+    const trend = allConfigs[trendKey] ? allConfigs[trendKey].vf : 0;
     return (
       <React.Fragment>
         <Grid container spacing={3}>
@@ -222,11 +251,20 @@ class Configs extends React.Component {
                   </ListItemSecondaryAction>
                 </ListItem>
                 <ListItem>
-                  <ListItemText>Quota</ListItemText>
+                  <ListItemText>{'Quota & Priority'}</ListItemText>
                   <ListItemSecondaryAction>
                     <TextField
                       value={quota}
                       onChange={e => this.onChangeQuota('quota', e)}
+                      onBlur={this.onCompleteQuota}
+                      inputProps={{
+                        style: { textAlign: "right" }
+                      }}
+                      style = {{width: 80, marginRight: 12}}
+                    />
+                    <TextField
+                      value={priority}
+                      onChange={e => this.onChangeQuota('priority', e)}
                       onBlur={this.onCompleteQuota}
                       inputProps={{
                         style: { textAlign: "right" }
@@ -236,12 +274,16 @@ class Configs extends React.Component {
                   </ListItemSecondaryAction>
                 </ListItem>
                 <ListItem>
-                  <ListItemText>Priority</ListItemText>
+                  <Link to={`/trend?sym=${sym}&trade_env=${displayEnv}`}>
+                    <ListItemText>
+                      {`Trend Threshould % $${(last_c * trend / 100).toFixed(2)}`}
+                    </ListItemText>
+                  </Link>
                   <ListItemSecondaryAction>
                     <TextField
-                      value={priority}
-                      onChange={e => this.onChangeQuota('priority', e)}
-                      onBlur={this.onCompleteQuota}
+                      value={trend}
+                      onChange={this.onChangeTrend}
+                      onBlur={this.onCompleteTrend}
                       inputProps={{
                         style: { textAlign: "right" }
                       }}

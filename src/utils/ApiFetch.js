@@ -36,6 +36,8 @@ export const apiConstants = () => callAPI('/constants', 'get');
 
 export const apiBars = query => callAPI('/bars', 'get', query);
 
+export const apiGetTrend = query => callAPI('/bar_trend', 'get', query);
+
 export const apiGetDistribution = query => callAPI('/aggs/distribution', 'get', query);
 
 export const apiPostDistribution = query => callAPI('/aggs/distribution', 'post', query);
@@ -47,6 +49,8 @@ export const apiPostConfig = (sym, payload) => callAPI(`/configs/${sym}`, 'post'
 export const apiTestConfig = (sym, payload) => callAPI(`/test/${sym}`, 'post', payload);
 
 export const apiOptimizationProcessAction = payload => callAPI(`/optimization_process`, 'post', payload);
+
+export const apiOptimizationProcessCancelAll = () => callAPI(`/optimization_process/cancel_all`, 'post');
 
 export const apiGetTriggers = (sym, query) => callAPI(`/triggers/${sym}`, 'get', query);
 
@@ -73,3 +77,9 @@ export const apiGetMessages = query => callAPI('/messages', 'get', query);
 export const apiMarkRead = payload => callAPI('/messages/mark_read', 'post', payload);
 
 export const apiDeleteMessage = id => callAPI(`/messages/${id}`, 'DELETE');
+
+export const apiCalcTrend = payload => callAPI('/bar_trend', 'post', payload);
+
+export const apiGetList = query => callAPI('/watch_list', 'get', query);
+
+export const apiUpdateList = payload => callAPI('/watch_list', 'post', payload);

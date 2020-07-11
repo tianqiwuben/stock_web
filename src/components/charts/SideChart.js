@@ -70,7 +70,6 @@ class SideChart extends React.Component {
                 bottom: 0,
                 left: 24,
               }}
-              syncId="foo"
             >
               <XAxis dataKey="ts"/>
               <YAxis yAxisId="l" domain={['dataMin', 'dataMax']} hide/>

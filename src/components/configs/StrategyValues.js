@@ -77,12 +77,11 @@ class StrategyValues extends React.Component {
       strategy: strategy,
       activity: 'test',
     }
-    dispatchUpdateProgress(`test_${sym}_${strategy}`, 1);
     apiTestConfig(sym, payload).then(resp => {
       if(resp.data && resp.data.success) {
-        enqueueSnackbar(`${sym} Test Complete (${resp.data.payload.duration}s)`, {variant: 'success'})
+        enqueueSnackbar(`${sym} Test Start`);
       } else {
-        enqueueSnackbar(resp.data.error, {variant: 'error'})
+        enqueueSnackbar(resp.data.error, {variant: 'error'});
       }
       dispatchUpdateProgress(`test_${sym}_${strategy}`, null);
     })
@@ -103,7 +102,6 @@ class StrategyValues extends React.Component {
     const configs = (sc && sc.vs) ? JSON.parse(sc.vs) : {};
     const title = isTest ? 'Test' : strategy;
     const progressValue = isTest ? progress[`test_${sym}_${strategy}`] : null;
-
     return (
       <Grid item sm={12} md={6} lg={isTest ? 3 : 4}>
         <Paper>

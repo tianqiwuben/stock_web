@@ -17,7 +17,7 @@ import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Box from '@material-ui/core/Box';
-import Chart from './Chart';
+import Trend from '../trend/Trend';
 import {
   Switch,
   Route,
@@ -34,6 +34,8 @@ import WSocket from '../common/WSocket';
 import BulkPanel from '../bulk/BulkPanel';
 import MsgBar from '../messages/MsgBar';
 import Messages from '../messages/Messages';
+import TrendOnly from '../trend/TrendOnly';
+import WatchList from '../watchList/WatchList';
 
 const drawerWidth = 320;
 
@@ -180,9 +182,14 @@ class Dashboard extends React.Component {
                 <ListItemText primary="Transactions" />
               </ListItem>
             </Link>
-            <Link to="/charts">
+            <Link to="/trend">
               <ListItem button>
-                <ListItemText primary="Charts" />
+                <ListItemText primary="Trend" />
+              </ListItem>
+            </Link>
+            <Link to="/trend_only">
+              <ListItem button>
+                <ListItemText primary="Trend Only" />
               </ListItem>
             </Link>
             <Link to="/triggers">
@@ -198,6 +205,11 @@ class Dashboard extends React.Component {
             <Link to="/bulk">
               <ListItem button>
                 <ListItemText primary="Bulk Opts" />
+              </ListItem>
+            </Link>
+            <Link to="/watch_list">
+              <ListItem button>
+                <ListItemText primary="Watch List" />
               </ListItem>
             </Link>
           </List>
@@ -217,11 +229,13 @@ class Dashboard extends React.Component {
               <Switch>
                 <Route path="/configs/:id?" component={Configs} />
                 <Route path="/transactions" component={Transactions} />
-                <Route path="/charts" component={Chart} />
+                <Route path="/trend" component={Trend} />
+                <Route path="/trend_only" component={TrendOnly} />
                 <Route path="/triggers" component={Triggers} />
                 <Route path="/process" component={Process} />
                 <Route path="/bulk" component={BulkPanel} />
                 <Route path="/messages" component={Messages} />
+                <Route path="/watch_list" component={WatchList} />
                 <Route component={Configs} />
               </Switch>
             </Container>

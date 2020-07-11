@@ -5,13 +5,13 @@ import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
-import Checkbox from '@material-ui/core/Checkbox';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 import querystring from 'querystring';
-
+import { withSnackbar } from 'notistack';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import {StrategyDB} from '../common/Constants';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import Box from '@material-ui/core/Box';
 
 import {
   Brush,
@@ -24,7 +24,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import Paper from '@material-ui/core/Paper';
-import {apiBars} from '../../utils/ApiFetch';
+import {apiBars, apiCalcTrend} from '../../utils/ApiFetch';
 
 const LABEL = {
   buy_long: 'BL',
@@ -70,19 +70,20 @@ const CustomizedDot = (props) => {
   );
 };
 
-class Chart extends React.Component {
+class Trend extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       data: [],
       trans: [],
-      sym: 'SPY',
+      sym: 'AMD',
       startDate: '',
       frame: 'second',
       strategy: 'all',
       trade_env: 'test',
       nextTrans: null,
       agg_seconds: 5,
+      loading: false,
     };
   }
 
@@ -122,6 +123,10 @@ class Chart extends React.Component {
       agg_seconds,
       trade_env,
     };
+    this.setState({
+      loading: true,
+    });
+    const {enqueueSnackbar} = this.props;
     apiBars(query).then(resp => {
       if (resp && resp.data.success && resp.data.payload.bars && resp.data.payload.bars.length > 0) {
         this.setState({
@@ -129,13 +134,36 @@ class Chart extends React.Component {
           trans: resp.data.payload.trans,
           startDate: resp.data.payload.start_ts,
           nextTrans: resp.data.payload.next_trans_id,
+          loading: false,
         });
+      } else {
+        enqueueSnackbar("No bars loaded", {variant: 'error'});
+        this.setState({loading: false});
       }
     })
   }
 
   onNextTrans = () => {
     this.onFetch(1);
+  }
+
+  calcTrend = () => {
+    const {
+      sym,
+      trade_env,
+    } = this.state;
+    const payload = {
+      sym,
+      trade_env,
+    }
+    const {enqueueSnackbar} = this.props;
+    apiCalcTrend(payload).then(resp => {
+      if (resp.data.success) {
+        enqueueSnackbar('Trend Calculation Started');
+      } else {
+        enqueueSnackbar(resp.data.error, {variant: 'error'})
+      }
+    })
   }
 
   render() {
@@ -147,6 +175,7 @@ class Chart extends React.Component {
       trade_env,
       strategy,
       agg_seconds,
+      loading,
     } = this.state;
     const {classes} = this.props;
     return (
@@ -216,14 +245,18 @@ class Chart extends React.Component {
             </Select>
           </FormControl>
         </div>
-        <div className={classes.row}>
+        <Box className={classes.row} display="flex" flexDirection="row" alignItems="center">
           <Button variant="contained" color="primary" onClick={() => this.onFetch()}>
             Fetch
           </Button>
           <Button variant="contained" color="default" onClick={this.onNextTrans}>
             Next Trans
           </Button>
-        </div>
+          <Button variant="contained" color="default" onClick={this.calcTrend}>
+            Calc Trend
+          </Button>
+          {loading && <CircularProgress size={24}/>}
+        </Box>
         <div className={classes.oneChart}>
           <ResponsiveContainer>
             <ComposedChart
@@ -246,6 +279,15 @@ class Chart extends React.Component {
                 dataKey="action_price"
                 dot={CustomizedDot}
               />
+              <Line yAxisId="l"
+                isAnimationActive={false}
+                type="linear"
+                stroke="green"
+                dataKey="trend_price"
+                connectNulls
+                dot={{stroke: 'green'}}
+              />
+              <Line yAxisId="l" isAnimationActive={false} type="linear" stroke="nont" dataKey="trend" dot={false} />
               {data.length > 0 && <Brush dataKey="ts" startIndex={0}/>}
             </ComposedChart>
           </ResponsiveContainer>
@@ -302,4 +344,5 @@ class Chart extends React.Component {
 
 export default compose(
   withStyles(styles),
-)(Chart);
+  withSnackbar,
+)(Trend);
