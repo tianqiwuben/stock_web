@@ -114,7 +114,11 @@ class NsgBar extends React.Component {
                       : null
                     }
                   </ListItemIcon>
-                  <ListItemText primary={row.message} secondary={row.created_at} />
+                  <ListItemText
+                    primaryTypographyProps={row.is_read ? null : {style: {fontWeight: 'bold'}}}
+                    primary={row.message}
+                    secondary={row.created_at}
+                  />
                 </MenuItem>
               </Link>
             ))

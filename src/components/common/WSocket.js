@@ -5,14 +5,25 @@ import {connect} from 'react-redux';
 import {updateProgress} from '../../redux/progressActions';
 import {saveProcess} from '../../redux/processActions';
 import {insertMessage} from '../../redux/messagesActions';
-
+import {registerComponent, getComponent} from '../common/Constants';
 class WSocket extends React.Component {
   componentDidMount() {
     this.connectWs();
+    registerComponent('websocket', this);
+  }
+
+  componentWillUnmount() {
+    registerComponent('websocket', null);
+  }
+
+  subscribeStock = (sym) => {
+    const msg = {type: 'listen', sym};
+    this.subStock = sym;
+    this.ws.send(JSON.stringify(msg));
   }
 
   connectWs = () => {
-    this.ws = new WebSocket('ws://localhost:3002');
+    this.ws = new WebSocket('ws://192.168.86.101:3002');
     this.ws.onopen = () => {
       if (this.interval) {
         clearInterval(this.interval);
@@ -20,6 +31,9 @@ class WSocket extends React.Component {
       }
       this.ws.onclose = (e) => {
         this.interval = setInterval(this.connectWs, 10000);
+      }
+      if (this.subStock) {
+        this.subscribeStock(this.subStock);
       }
     }
     this.ws.onmessage = (e) => {
@@ -50,6 +64,21 @@ class WSocket extends React.Component {
             variant: message.variant_str,
             anchorOrigin: {horizontal: 'right', vertical: 'top'},
           });
+          break;
+        }
+        case 'stock': {
+          const sg = getComponent('suggestions');
+          if (sg) {
+            sg.onFeedBar(msg);
+          }
+          break;
+        }
+        case 'suggestion': {
+          const sg = getComponent('suggestions');
+          if (sg) {
+            sg.onFeedSuggestion(msg.data);
+          }
+          enqueueSnackbar(`Suggestion: ${msg.data.action_str} ${msg.data.sym}`, {variant: 'info'});
           break;
         }
         default:

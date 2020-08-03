@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_PREFIX = 'http://localhost:3001';
+const API_PREFIX = 'http://192.168.86.101:3001';
 
 function getAPIHeaders() {
   return ({
@@ -35,6 +35,8 @@ function callAPI(path, method, payload = null) {
 export const apiConstants = () => callAPI('/constants', 'get');
 
 export const apiBars = query => callAPI('/bars', 'get', query);
+
+export const apiLiveBars = query => callAPI('/live_bars', 'get', query);
 
 export const apiGetTrend = query => callAPI('/bar_trend', 'get', query);
 
@@ -83,3 +85,7 @@ export const apiCalcTrend = payload => callAPI('/bar_trend', 'post', payload);
 export const apiGetList = query => callAPI('/watch_list', 'get', query);
 
 export const apiUpdateList = payload => callAPI('/watch_list', 'post', payload);
+
+export const apiGetSuggestions = query => callAPI('/suggestions', 'get', query);
+
+

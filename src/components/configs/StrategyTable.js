@@ -44,7 +44,7 @@ const useStyles = theme => ({
   },
   formControl: {
     margin: theme.spacing(1),
-    width: '480px',
+    width: '360px',
   },
 });
 
@@ -168,16 +168,16 @@ class StrategyTable extends React.Component {
     })
   }
 
-  onSimulate = () => {
+  onSimulate = (activity) => {
     const {
       sym,
       enqueueSnackbar,      
       dispatchUpdateProgress,
     } = this.props;
     dispatchUpdateProgress(`test_${sym}_`, 1);
-    apiTestConfig(sym, {activity: 'simulate'}).then(resp => {
+    apiTestConfig(sym, {activity}).then(resp => {
       if(resp.data && resp.data.success) {
-        enqueueSnackbar(`${sym} Simulation Start`);
+        enqueueSnackbar(`${sym} ${activity} Start`);
       } else {
         enqueueSnackbar(resp.data.error, {variant: 'error'});
       }
@@ -240,12 +240,15 @@ class StrategyTable extends React.Component {
             </FormControl>
             <Box display="flex" flexDirection="row" alignItems="center" style={{margin: 10}} justifyContent="flex-end">
               {progressValue && <ProgressWithLabel value={progressValue} />}
-              <Button color="primary" onClick={this.onSimulate}>
+              <Button color="primary" onClick={() => this.onSimulate('simulate')}>
                 Simulate
               </Button>
-              <Link to={`/transactions?sym=${sym}&strategy=all&isTest=1`} >
+              <Button color="primary" onClick={() => this.onSimulate('notifier')}>
+                Notifier
+              </Button>
+              <Link to={`/transactions?sym=${sym}&strategy=all&trade_env=test`} >
                 <Button>
-                  Transactions
+                  Trans
                 </Button>
               </Link>
             </Box>
@@ -270,7 +273,7 @@ class StrategyTable extends React.Component {
               Cancel
             </Button>
             <Button onClick={this.saveDialog} color="primary">
-              Save
+              SAVE
             </Button>
           </DialogActions>
         </Dialog>

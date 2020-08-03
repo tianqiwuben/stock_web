@@ -36,6 +36,7 @@ import MsgBar from '../messages/MsgBar';
 import Messages from '../messages/Messages';
 import TrendOnly from '../trend/TrendOnly';
 import WatchList from '../watchList/WatchList';
+import Suggestions from '../suggestions/Suggestions';
 
 const drawerWidth = 320;
 
@@ -126,7 +127,7 @@ class Dashboard extends React.Component {
 
   componentDidMount() {
     apiConstants().then(resp => {
-      setDB(resp.data.payload);
+     setDB(resp.data.payload);
       this.setState({loading: false});
     })
   }
@@ -172,6 +173,11 @@ class Dashboard extends React.Component {
           </div>
           <Divider />
           <List>
+            <Link to="/suggestions">
+              <ListItem button>
+                <ListItemText primary="Suggestions" />
+              </ListItem>
+            </Link>
             <Link to="/configs">
               <ListItem button>
                 <ListItemText primary="Configs" />
@@ -227,6 +233,7 @@ class Dashboard extends React.Component {
             :
             <Container maxWidth="lg" className={classes.container}>
               <Switch>
+                <Route path="/suggestions" component={Suggestions} />
                 <Route path="/configs/:id?" component={Configs} />
                 <Route path="/transactions" component={Transactions} />
                 <Route path="/trend" component={Trend} />

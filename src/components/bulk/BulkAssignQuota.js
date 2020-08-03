@@ -30,6 +30,7 @@ class BulkAssignQuota extends React.Component {
       priority: '100',
       quota: '1000',
       updateCount: null,
+      is_prod: false,
     })
   }
 
@@ -38,8 +39,8 @@ class BulkAssignQuota extends React.Component {
   }
 
   onUpdate = () => {
-    const {list, priority, quota, new_only} = this.state;
-    const payload = {list, quota, priority, new_only};
+    const {list, priority, quota, new_only, is_prod} = this.state;
+    const payload = {list, quota, priority, new_only, is_prod};
     this.setState({
       updateCount: null,
     })
@@ -62,6 +63,7 @@ class BulkAssignQuota extends React.Component {
       priority,
       new_only,
       updateCount,
+      is_prod,
     } = this.state;
     return (
       <Grid item sm={12} md={6} lg={4}>
@@ -127,6 +129,21 @@ class BulkAssignQuota extends React.Component {
                 >
                   <MenuItem value={true}>YES</MenuItem>
                   <MenuItem value={false}>NO</MenuItem>
+                </Select>
+              </ListItemSecondaryAction>
+            </ListItem>
+            <ListItem>
+              <ListItemText>
+                Production
+              </ListItemText>
+              <ListItemSecondaryAction>
+                <Select
+                  value={is_prod}
+                  onChange={e => this.handleChange('is_prod', e)}
+                  autoWidth
+                >
+                  <MenuItem value={true}>TRUE</MenuItem>
+                  <MenuItem value={false}>FALSE</MenuItem>
                 </Select>
               </ListItemSecondaryAction>
             </ListItem>
