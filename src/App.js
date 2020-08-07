@@ -15,9 +15,20 @@ import {
 import './App.css';
 
 const theme = createMuiTheme({
+  overrides: {
+    MuiAppBar: {
+      colorPrimary: {
+        backgroundColor: "default",
+        color: "default",
+      },
+    },
+  },
   palette: {
-    type: "dark"
-  }
+    type: "dark",
+    primary: {
+      main: '#00e5ff',
+    },
+  },
 });
 
 function App() {

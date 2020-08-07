@@ -35,6 +35,7 @@ import BulkPanel from '../bulk/BulkPanel';
 import MsgBar from '../messages/MsgBar';
 import Messages from '../messages/Messages';
 import TrendOnly from '../trend/TrendOnly';
+import TrendAmp from '../trend/TrendAmp';
 import WatchList from '../watchList/WatchList';
 import Suggestions from '../suggestions/Suggestions';
 
@@ -127,7 +128,7 @@ class Dashboard extends React.Component {
 
   componentDidMount() {
     apiConstants().then(resp => {
-     setDB(resp.data.payload);
+      setDB(resp.data.payload);
       this.setState({loading: false});
     })
   }
@@ -153,7 +154,7 @@ class Dashboard extends React.Component {
             >
               <MenuIcon />
             </IconButton>
-            <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
+            <Typography component="h1" variant="h6" noWrap className={classes.title}>
               Dashboard
             </Typography>
             <MsgBar />
@@ -196,6 +197,11 @@ class Dashboard extends React.Component {
             <Link to="/trend_only">
               <ListItem button>
                 <ListItemText primary="Trend Only" />
+              </ListItem>
+            </Link>
+            <Link to="/trend_amp">
+              <ListItem button>
+                <ListItemText primary="Trend Amp" />
               </ListItem>
             </Link>
             <Link to="/triggers">
@@ -242,6 +248,7 @@ class Dashboard extends React.Component {
                 <Route path="/process" component={Process} />
                 <Route path="/bulk" component={BulkPanel} />
                 <Route path="/messages" component={Messages} />
+                <Route path="/trend_amp/:id?" component={TrendAmp} />
                 <Route path="/watch_list" component={WatchList} />
                 <Route component={Configs} />
               </Switch>

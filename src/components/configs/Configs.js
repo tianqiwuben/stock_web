@@ -247,6 +247,12 @@ class Configs extends React.Component {
                         style: { textAlign: "right" }
                       }}
                       style = {{width: 80}}
+                      onKeyPress={(ev) => {
+                        if (ev.key === 'Enter') {
+                          this.onFetch();
+                          ev.preventDefault();
+                        }
+                      }}
                     />
                   </ListItemSecondaryAction>
                 </ListItem>
