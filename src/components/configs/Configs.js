@@ -159,58 +159,6 @@ class Configs extends React.Component {
     }
   }
 
-  onChangeQuota = (field, e) => {
-    const {dispatchSetConfigs, allConfigs, displayEnv} = this.props;
-    const quotaKey = displayEnv === 'prod' ? 'quota' : 'quota_test';
-    const conf = allConfigs[quotaKey];
-    const newConf = {...conf};
-    if (field === 'quota') {
-      newConf.vi = e.target.value;
-    } else if (field === 'priority') {
-      newConf.vf = e.target.value;
-    }
-    dispatchSetConfigs({
-      [quotaKey]: newConf,
-    });
-  }
-
-  onCompleteQuota = () => {
-    const {allConfigs, displayEnv} = this.props;
-    const quotaKey = displayEnv === 'prod' ? 'quota' : 'quota_test';
-    if (allConfigs[quotaKey]) {
-      const payload = {
-        configs: {
-          [quotaKey]: allConfigs[quotaKey],
-        }
-      }
-      this.onChangeConfig(payload);
-    }
-  }
-
-  onChangeTrend = (e) => {
-    const {dispatchSetConfigs, allConfigs, displayEnv} = this.props;
-    const trendKey = displayEnv === 'prod' ? 'trend' : 'trend_test';
-    const conf = allConfigs[trendKey];
-    const newConf = {...conf};
-    newConf.vf = e.target.value;
-    dispatchSetConfigs({
-      [trendKey]: newConf,
-    });
-  }
-
-  onCompleteTrend = () => {
-    const {allConfigs, displayEnv} = this.props;
-    const trendKey = displayEnv === 'prod' ? 'trend' : 'trend_test';
-    if (allConfigs[trendKey]) {
-      const payload = {
-        configs: {
-          [trendKey]: allConfigs[trendKey],
-        }
-      }
-      this.onChangeConfig(payload);
-    }
-  }
-
   render() {
     const {
       sym,
@@ -223,11 +171,8 @@ class Configs extends React.Component {
       displayEnv,
       allConfigs,
     } = this.props;
-    const quotaKey = displayEnv === 'prod' ? 'quota' : 'quota_test';
-    const quota = allConfigs[quotaKey] ? allConfigs[quotaKey].vi : '';
-    const priority = allConfigs[quotaKey] ? allConfigs[quotaKey].vf : '';
-    const trendKey = displayEnv === 'prod' ? 'trend' : 'trend_test';
-    const trend = allConfigs[trendKey] ? allConfigs[trendKey].vf : 0;
+    const quota = allConfigs.quota ? allConfigs.quota.vi : '';
+    const priority = allConfigs.quota ? allConfigs.quota.vf : '';
     return (
       <React.Fragment>
         <Grid container spacing={3}>
@@ -257,44 +202,11 @@ class Configs extends React.Component {
                   </ListItemSecondaryAction>
                 </ListItem>
                 <ListItem>
-                  <ListItemText>{'Quota & Priority'}</ListItemText>
-                  <ListItemSecondaryAction>
-                    <TextField
-                      value={quota}
-                      onChange={e => this.onChangeQuota('quota', e)}
-                      onBlur={this.onCompleteQuota}
-                      inputProps={{
-                        style: { textAlign: "right" }
-                      }}
-                      style = {{width: 80, marginRight: 12}}
-                    />
-                    <TextField
-                      value={priority}
-                      onChange={e => this.onChangeQuota('priority', e)}
-                      onBlur={this.onCompleteQuota}
-                      inputProps={{
-                        style: { textAlign: "right" }
-                      }}
-                      style = {{width: 80}}
-                    />
-                  </ListItemSecondaryAction>
-                </ListItem>
-                <ListItem>
-                  <Link to={`/trend?sym=${sym}&trade_env=${displayEnv}`}>
-                    <ListItemText>
-                      {`Trend Threshould % $${(last_c * trend / 100).toFixed(2)}`}
-                    </ListItemText>
+                  <Link to={`/trend_amp/${sym}`}>
+                    <ListItemText>{'Quota & Priority'}</ListItemText>
                   </Link>
                   <ListItemSecondaryAction>
-                    <TextField
-                      value={trend}
-                      onChange={this.onChangeTrend}
-                      onBlur={this.onCompleteTrend}
-                      inputProps={{
-                        style: { textAlign: "right" }
-                      }}
-                      style = {{width: 80}}
-                    />
+                    {`${quota}, ${priority}`}
                   </ListItemSecondaryAction>
                 </ListItem>
                 <ListItem>

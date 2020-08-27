@@ -81,6 +81,11 @@ class WSocket extends React.Component {
           enqueueSnackbar(`Suggestion: ${msg.data.action_str} ${msg.data.sym}`, {variant: 'info'});
           break;
         }
+        case 'steven': {
+          const cp = getComponent('steven');
+          cp.updatePositions(msg.data);
+          break;
+        }
         default:
       }
     };

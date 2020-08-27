@@ -38,6 +38,8 @@ import TrendOnly from '../trend/TrendOnly';
 import TrendAmp from '../trend/TrendAmp';
 import WatchList from '../watchList/WatchList';
 import Suggestions from '../suggestions/Suggestions';
+import Steven from '../wechat/Steven';
+import Status from '../status/Status';
 
 const drawerWidth = 320;
 
@@ -174,6 +176,11 @@ class Dashboard extends React.Component {
           </div>
           <Divider />
           <List>
+            <Link to="/status">
+              <ListItem button>
+                <ListItemText primary="Status" />
+              </ListItem>
+            </Link>
             <Link to="/suggestions">
               <ListItem button>
                 <ListItemText primary="Suggestions" />
@@ -224,6 +231,11 @@ class Dashboard extends React.Component {
                 <ListItemText primary="Watch List" />
               </ListItem>
             </Link>
+            <Link to="/steven">
+              <ListItem button>
+                <ListItemText primary="Steven" />
+              </ListItem>
+            </Link>
           </List>
           <Divider />
           <SideChart />
@@ -239,6 +251,7 @@ class Dashboard extends React.Component {
             :
             <Container maxWidth="lg" className={classes.container}>
               <Switch>
+                <Route path="/status" component={Status} />
                 <Route path="/suggestions" component={Suggestions} />
                 <Route path="/configs/:id?" component={Configs} />
                 <Route path="/transactions" component={Transactions} />
@@ -250,6 +263,7 @@ class Dashboard extends React.Component {
                 <Route path="/messages" component={Messages} />
                 <Route path="/trend_amp/:id?" component={TrendAmp} />
                 <Route path="/watch_list" component={WatchList} />
+                <Route path="/steven" component={Steven} />
                 <Route component={Configs} />
               </Switch>
             </Container>

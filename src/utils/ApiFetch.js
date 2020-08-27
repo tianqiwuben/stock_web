@@ -92,4 +92,11 @@ export const apiUpdateList = payload => callAPI('/watch_list', 'post', payload);
 
 export const apiGetSuggestions = query => callAPI('/suggestions', 'get', query);
 
+export const apiPostSteven = query => callAPI('/follower/steven', 'post', query);
+
+export const apiDeleteSteven = sym => callAPI(`/follower/delete_position/${sym}`, 'delete');
+
+export const apiGetSteven = () => callAPI('/follower/current_positions', 'get');
+
+export const apiResolverStatus = query => callAPI('/status/resolver', 'get', query);
 

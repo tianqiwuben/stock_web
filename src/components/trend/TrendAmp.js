@@ -17,6 +17,10 @@ import ListSubheader from '@material-ui/core/ListSubheader';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { withSnackbar } from 'notistack';
 
+import {
+  Link,
+} from "react-router-dom";
+
 const styles = theme => ({
   formControl: {
     margin: theme.spacing(1),
@@ -28,7 +32,7 @@ class TrendAmp extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      sym: 'SPY',
+      sym: '',
       last_c: '',
       last_v: '',
       daily_price_vol: '',
@@ -39,6 +43,10 @@ class TrendAmp extends React.Component {
       quota: '',
       priority: '',
       loading: true,
+      sym_idx: 0,
+      atr: 0,
+      all_symbols_count: 1,
+      last_v_per_second: 0,
     }
   }
 
@@ -56,21 +64,22 @@ class TrendAmp extends React.Component {
       sym,
     } = this.state;
     const st = {sym};
+    let action = null;
     if (match.params.id) {
       st.sym = match.params.id;
+    } else {
+      action = 'next';
     }
     this.setState(st, () => {
-      this.onFetch();
+      this.onFetch(action);
     });
   }
 
   onFetch = (action = null) => {
     const {sym} = this.state;
-    const query = {};
+    const query = {sym};
     if (action) {
       query.navigate = action;
-    } else {
-      query.sym = sym;
     }
     this.setState({loading: true});
     apiGetTrendConfig(query).then(resp => {
@@ -130,6 +139,10 @@ class TrendAmp extends React.Component {
       trend_large,
       trend_small,
       loading,
+      all_symbols_count,
+      sym_idx,
+      last_v_per_second,
+      atr,
     } = this.state;
     return (
       <Grid container spacing={3}>
@@ -137,7 +150,11 @@ class TrendAmp extends React.Component {
           <Paper>
             <List subheader={<ListSubheader>Update Trending Amp</ListSubheader>}>
               <ListItem>
-                <ListItemText primary="Symbol" />
+                <Link to={`/configs/${sym}`}>
+                  <ListItemText>
+                    {`Symbol ${sym_idx}/${all_symbols_count} (${(sym_idx * 100 / all_symbols_count).toFixed(2)}%)`}
+                  </ListItemText>
+                </Link>
                 <ListItemSecondaryAction>
                   <Button onClick={() => this.onFetch()} color="primary">GET</Button>
                   <FormControl className={classes.formControl}>
@@ -165,6 +182,13 @@ class TrendAmp extends React.Component {
                 </ListItemSecondaryAction>
               </ListItem>
               <ListItem>
+                <ListItemText primary="last_v_per_second" />
+                <ListItemSecondaryAction>
+                  {last_v_per_second}
+                </ListItemSecondaryAction>
+              </ListItem>
+
+              <ListItem>
                 <ListItemText primary="daily_price_vol" />
                 <ListItemSecondaryAction>
                   ${daily_price_vol}
@@ -180,6 +204,12 @@ class TrendAmp extends React.Component {
                 <ListItemText primary="second_density" />
                 <ListItemSecondaryAction>
                   {second_density}%
+                </ListItemSecondaryAction>
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="Average True Range" />
+                <ListItemSecondaryAction>
+                  {atr}%
                 </ListItemSecondaryAction>
               </ListItem>
               <ListItem>
