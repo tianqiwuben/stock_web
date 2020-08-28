@@ -40,9 +40,9 @@ export const apiLiveBars = query => callAPI('/live_bars', 'get', query);
 
 export const apiGetTrend = query => callAPI('/bar_trend', 'get', query);
 
-export const apiGetTrendConfig = query => callAPI('/trend_configs', 'get', query);
+export const apiGetSymProp = (query) => callAPI(`/sym_prop/`, 'get', query);
 
-export const apiUpdateTrendConfig = query => callAPI('/trend_configs', 'post', query);
+export const apiUpdateSymProp = (query) => callAPI(`/sym_prop`, 'post', query);
 
 export const apiGetDistribution = query => callAPI('/aggs/distribution', 'get', query);
 

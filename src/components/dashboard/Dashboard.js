@@ -35,7 +35,7 @@ import BulkPanel from '../bulk/BulkPanel';
 import MsgBar from '../messages/MsgBar';
 import Messages from '../messages/Messages';
 import TrendOnly from '../trend/TrendOnly';
-import TrendAmp from '../trend/TrendAmp';
+import SymProp from '../configs/SymProp';
 import WatchList from '../watchList/WatchList';
 import Suggestions from '../suggestions/Suggestions';
 import Steven from '../wechat/Steven';
@@ -206,9 +206,9 @@ class Dashboard extends React.Component {
                 <ListItemText primary="Trend Only" />
               </ListItem>
             </Link>
-            <Link to="/trend_amp">
+            <Link to="/sym_prop">
               <ListItem button>
-                <ListItemText primary="Trend Amp" />
+                <ListItemText primary="Sym Props" />
               </ListItem>
             </Link>
             <Link to="/triggers">
@@ -261,7 +261,7 @@ class Dashboard extends React.Component {
                 <Route path="/process" component={Process} />
                 <Route path="/bulk" component={BulkPanel} />
                 <Route path="/messages" component={Messages} />
-                <Route path="/trend_amp/:id?" component={TrendAmp} />
+                <Route path="/sym_prop/:id?" component={SymProp} />
                 <Route path="/watch_list" component={WatchList} />
                 <Route path="/steven" component={Steven} />
                 <Route component={Configs} />

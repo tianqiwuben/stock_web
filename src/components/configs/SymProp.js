@@ -12,7 +12,7 @@ import FormControl from '@material-ui/core/FormControl';
 import Grid from '@material-ui/core/Grid';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
-import {apiGetTrendConfig, apiUpdateTrendConfig} from '../../utils/ApiFetch';
+import {apiGetSymProp, apiUpdateSymProp} from '../../utils/ApiFetch';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { withSnackbar } from 'notistack';
@@ -28,7 +28,7 @@ const styles = theme => ({
   },
 });
 
-class TrendAmp extends React.Component {
+class SymProp extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -82,7 +82,7 @@ class TrendAmp extends React.Component {
       query.navigate = action;
     }
     this.setState({loading: true});
-    apiGetTrendConfig(query).then(resp => {
+    apiGetSymProp(query).then(resp => {
       const {enqueueSnackbar} = this.props;
       if (resp.data.success) {
         this.setState(resp.data.payload);
@@ -107,7 +107,7 @@ class TrendAmp extends React.Component {
       trend_small,
     } = this.state;
     const payload = {sym, quota, priority, trend_large, trend_small};
-    const resp = await apiUpdateTrendConfig(payload);
+    const resp = await apiUpdateSymProp(payload);
     const {enqueueSnackbar} = this.props;
     if (resp.data.success) {
       enqueueSnackbar(`Save Success`, {variant: 'success'});
@@ -311,4 +311,4 @@ export default compose(
   withStyles(styles),
   connect(mapStateToProps),
   withSnackbar
-)(TrendAmp);
+)(SymProp);
