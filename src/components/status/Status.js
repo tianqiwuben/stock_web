@@ -28,8 +28,10 @@ import PlayCircleOutlineIcon from '@material-ui/icons/PlayCircleOutline';
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
 import PauseCircleOutlineIcon from '@material-ui/icons/PauseCircleOutline';
 import Typography from '@material-ui/core/Typography';
+import SymStatus from './SymStatus';
+import Box from '@material-ui/core/Box';
 
-import {apiResolverStatus, apiOptimizationProcessAction, apiOptimizationProcessCancelAll} from '../../utils/ApiFetch';
+import {apiResolverStatus, apiResolverCommand} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
 import {saveProcess, resetProcessPage, updateProcessPage} from '../../redux/processActions';
 
@@ -72,7 +74,7 @@ class Status extends React.Component {
     apiResolverStatus({env}).then(resp => {
       if (resp.data.success) {
         if (resp.data.payload) {
-          this.setState(JSON.parse(resp.data.payload));
+          this.setState(resp.data.payload);
         }
       } else {
         enqueueSnackbar(resp.data.error, {variant: 'error'})
@@ -96,32 +98,37 @@ class Status extends React.Component {
     return (
       <Grid container spacing={3}>
         <Grid item xs={12} md={12} lg={12}>
-          <Paper className={classes.row}>
-            <ToggleButtonGroup
-              size="small"
-              value={env}
-              exclusive
-              onChange={this.changeEnv}
-            >
-              <ToggleButton value="prod">
-                PROD
-              </ToggleButton>
-              <ToggleButton value="paper">
-                PAPER
-              </ToggleButton>
-              <ToggleButton value="notifier">
-                NOTIFIER
-              </ToggleButton>
-              <ToggleButton value="test">
-                TEST
-              </ToggleButton>
-            </ToggleButtonGroup>
-            <span>
-              {`buying_power: $${bp}`}
-            </span>
-            <span>
-              {`available_quota: ${aq}`}
-            </span>
+          <Paper>
+            <Box display="flex" flexDirection="row" alignItems="center" justifyContent="space-between">
+              <ToggleButtonGroup
+                size="small"
+                value={env}
+                exclusive
+                onChange={this.changeEnv}
+              >
+                <ToggleButton value="prod">
+                  PROD
+                </ToggleButton>
+                <ToggleButton value="paper">
+                  PAPER
+                </ToggleButton>
+                <ToggleButton value="notifier">
+                  NOTIFIER
+                </ToggleButton>
+                <ToggleButton value="test">
+                  TEST
+                </ToggleButton>
+                <ToggleButton value="notifier_test">
+                  NOTIFIER_TEST
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <Typography variant="body">
+                {`buying_power: $${bp.toFixed(2)}`}
+              </Typography>
+              <Typography variant="body">
+                {`available_quota: ${aq}`}
+              </Typography>
+            </Box>
           </Paper>
         </Grid>
         <Grid item xs={12} md={12} lg={12}>
@@ -129,16 +136,33 @@ class Status extends React.Component {
             <Table className={classes.table} size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Symbol</TableCell>
-                  <TableCell>Symbol</TableCell>
+                  <TableCell>Sym</TableCell>
+                  <TableCell>Strategy</TableCell>
+                  <TableCell>Acc-Sym-Shares</TableCell>
+                  <TableCell>Side</TableCell>
+                  <TableCell>Action Ts</TableCell>
+                  <TableCell>Cost</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
+                {
+                  pm.map(pos => (
+                    <TableRow key={`${pos.sym}${pos.strategy}`}>
+                      <TableCell>{pos.sym}</TableCell>
+                      <TableCell>{pos.strategy}</TableCell>
+                      <TableCell>{`${pos.acc_quota}-${pos.sym_quota}-${pos.shares}`}</TableCell>
+                      <TableCell>{pos.action_str}</TableCell>
+                      <TableCell>{pos.action_ts_str}</TableCell>
+                      <TableCell>{pos.trade_price}</TableCell>
+                    </TableRow>
+                  ))
+                }
                 
               </TableBody>
             </Table>
           </TableContainer>
         </Grid>
+        <SymStatus env={env}/>
       </Grid>
     );
   }

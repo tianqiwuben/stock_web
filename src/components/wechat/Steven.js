@@ -15,6 +15,9 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
+
 const styles = theme => ({
   formControl: {
     margin: theme.spacing(1),
@@ -27,6 +30,7 @@ class Steven extends React.Component {
     super(props);
     this.state = {
       text: '',
+      env: 'prod',
       prevText: '',
       lastSym: '',
       positions: [],
@@ -77,10 +81,11 @@ class Steven extends React.Component {
     const {
       text,
       prevText,
+      env,
     } = this.state;
     if (text && text.length > 0) {
       if (text !== prevText) {
-        const payload = {text};
+        const payload = {text, env};
         this.setState({prevText: text});
         apiPostSteven(payload).then(resp => {
           const {enqueueSnackbar} = this.props;
@@ -102,12 +107,17 @@ class Steven extends React.Component {
     });
   }
 
+  changeEnv = (e, env) => {
+    this.setState({env});
+  }
+
   render() {
     const {classes} = this.props;
     const {
       text,
       lastSym,
       positions,
+      env,
     } = this.state;
     return (
       <Grid container spacing={3}>
@@ -127,6 +137,19 @@ class Steven extends React.Component {
             <Button color="primary" onClick={this.onSave}>
               SUBMIT
             </Button>
+            <ToggleButtonGroup
+              size="small"
+              value={env}
+              exclusive
+              onChange={this.changeEnv}
+            >
+              <ToggleButton value="prod">
+                PROD
+              </ToggleButton>
+              <ToggleButton value="paper">
+                PAPER
+              </ToggleButton>
+            </ToggleButtonGroup>
             <span>Last Sym: {lastSym}</span>
           </Paper>
         </Grid>

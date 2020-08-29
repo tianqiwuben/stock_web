@@ -100,3 +100,5 @@ export const apiGetSteven = () => callAPI('/follower/current_positions', 'get');
 
 export const apiResolverStatus = query => callAPI('/status/resolver', 'get', query);
 
+export const apiResolverCommand = payload => callAPI('/status/command', 'post', payload);
+

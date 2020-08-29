@@ -83,7 +83,16 @@ class WSocket extends React.Component {
         }
         case 'steven': {
           const cp = getComponent('steven');
-          cp.updatePositions(msg.data);
+          if (cp) {
+            cp.updatePositions(msg.data);
+          }
+          break;
+        }
+        case 'sym_status': {
+          const cp = getComponent('SymStatus');
+          if (cp) {
+            cp.onStatusPush(msg.data);
+          }
           break;
         }
         default:
