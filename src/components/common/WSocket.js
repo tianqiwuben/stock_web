@@ -67,7 +67,7 @@ class WSocket extends React.Component {
           break;
         }
         case 'stock': {
-          const sg = getComponent('suggestions');
+          const sg = getComponent('liveChart');
           if (sg) {
             sg.onFeedBar(msg);
           }

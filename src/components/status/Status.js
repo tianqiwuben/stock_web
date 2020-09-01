@@ -34,6 +34,8 @@ import Box from '@material-ui/core/Box';
 import {apiResolverStatus, apiResolverCommand} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
 import {saveProcess, resetProcessPage, updateProcessPage} from '../../redux/processActions';
+import LiveChart from '../suggestions/LiveChart';
+
 
 import {
   Link,
@@ -86,6 +88,26 @@ class Status extends React.Component {
     this.setState({env}, this.onFetch);
   }
 
+  onSelectSym = (pos) => {
+    if (this.symStatus) {
+      this.symStatus.onSelectSym(pos.sym);
+    }
+    if (this.liveChart) {
+      this.liveChart.onFetchChart(pos.sym, pos.action_ts)
+    }
+  }
+
+  setSymStatusRef = (ref) => {
+    this.symStatus = ref;
+  }
+
+  setLiveChart = (ref) => {
+    this.liveChart = ref;
+    if (ref) {
+      ref.onFetchChart('SPY');
+    }
+  }
+
   render() {
     const {classes} = this.props;
     const {
@@ -131,6 +153,7 @@ class Status extends React.Component {
             </Box>
           </Paper>
         </Grid>
+        <LiveChart setRef={this.setLiveChart} />
         <Grid item xs={12} md={12} lg={12}>
           <TableContainer component={Paper}>
             <Table className={classes.table} size="small">
@@ -148,7 +171,7 @@ class Status extends React.Component {
                 {
                   pm.map(pos => (
                     <TableRow key={`${pos.sym}${pos.strategy}`}>
-                      <TableCell>{pos.sym}</TableCell>
+                      <TableCell onClick={() => this.onSelectSym(pos)}>{pos.sym}</TableCell>
                       <TableCell>{pos.strategy}</TableCell>
                       <TableCell>{`${pos.acc_quota}-${pos.sym_quota}-${pos.shares}`}</TableCell>
                       <TableCell>{pos.action_str}</TableCell>
@@ -157,12 +180,11 @@ class Status extends React.Component {
                     </TableRow>
                   ))
                 }
-                
               </TableBody>
             </Table>
           </TableContainer>
         </Grid>
-        <SymStatus env={env}/>
+        <SymStatus env={env} setRef={this.setSymStatusRef}/>
       </Grid>
     );
   }

@@ -48,11 +48,19 @@ class SymStatus extends React.Component {
   }
 
   componentDidMount(){
+    const {setRef} = this.props;
+    setRef(this);
     registerComponent('SymStatus', this);
   }
 
   componentWillUnmount(){
+    const {setRef} = this.props;
+    setRef(null);
     registerComponent('SymStatus', null);
+  }
+
+  onSelectSym = (sym) => {
+    this.setState({sym}, this.onFetch);
   }
 
   onFetch = () => {

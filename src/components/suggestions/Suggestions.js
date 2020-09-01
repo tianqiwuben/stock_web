@@ -2,7 +2,6 @@ import React from 'react';
 import compose from 'recompose/compose';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
-import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import AddIcon from '@material-ui/icons/Add';
 import RemoveIcon from '@material-ui/icons/Remove';
@@ -15,31 +14,19 @@ import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-import {apiLiveBars, apiGetSuggestions, apiUpdateList} from '../../utils/ApiFetch';
+import {apiGetSuggestions, apiUpdateList} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
 import moment from 'moment';
 import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
-import {getComponent, registerComponent} from '../common/Constants';
+import {registerComponent} from '../common/Constants';
 import AlertMp3 from '../../alert.mp3';
-
-import {
-  Bar,
-  ComposedChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import LiveChart from './LiveChart';
 
 const styles = theme => ({
   formControl: {
     margin: theme.spacing(1),
     minWidth: 120,
-  },
-  oneChart: {
-    height: '40vh',
   },
 });
 
@@ -48,14 +35,10 @@ class Suggestions extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      sym: 'SPY',
       trade_env: 'notifier',
       suggestions: [],
-      bars: [],
       loading: false,
       watchList: [],
-      timeDelay: 0,
-      latestC: 0,
     }
   }
 
@@ -110,27 +93,6 @@ class Suggestions extends React.Component {
     }, 1000);
   }
 
-  onFeedBar = (bar) => {
-    const {sym, bars, trade_env} = this.state;
-    if (bar.sym === sym && trade_env === 'notifier') {
-      const ts = moment(bar.ts * 1000).format('HH:mm:ss')
-      const newBar = {
-        c: bar.c,
-        v: bar.v,
-        ts,
-      }
-      const newBars = [...bars];
-      newBars.shift();
-      newBars.push(newBar);
-      const timeDelay = Date.now() - bar.ts * 1000 - 1000;
-      this.setState({
-        bars: newBars,
-        timeDelay,
-        latestC: bar.c,
-      })
-    }
-  }
-
   fetchSuggestions = () => {
     const {trade_env, sym} = this.state;
     const {enqueueSnackbar} = this.props;
@@ -148,39 +110,6 @@ class Suggestions extends React.Component {
         this.onFetchChart(newSym);
       } else {
         enqueueSnackbar(resp.data.error, {variant: 'error'});
-      }
-    })
-  }
-
-  onFetchChart = (newSym = null, ts_lte = null) => {
-    const {
-      sym,
-    } = this.state;
-    const {enqueueSnackbar} = this.props;
-    this.setState({
-      loading: true,
-    })
-    const s = newSym || sym;
-    const query = {
-      sym: s,
-    }
-    if (ts_lte) {
-      query['ts_lte'] = ts_lte;
-    }
-    apiLiveBars(query).then(resp => {
-      if (resp && resp.data.success && resp.data.payload && resp.data.payload.length > 0) {
-        this.setState({
-          bars: resp.data.payload,
-          sym: s,
-          loading: false,
-        });
-        const ws = getComponent('websocket');
-        if (ws) {
-          ws.subscribeStock(s);
-        }
-      } else {
-        enqueueSnackbar("No bars loaded", {variant: 'error'});
-        this.setState({loading: false});
       }
     })
   }
@@ -227,46 +156,27 @@ class Suggestions extends React.Component {
     this.onFetchChart('SPY');
   }
 
+  onFetchChart = (sym = null, ts_lte = null) => {
+    if (this.liveChart) {
+      this.liveChart.onFetchChart(sym, ts_lte);
+    }
+  }
+
+  setLiveChart = (ref) => {
+    this.liveChart = ref;
+  }
+
   render() {
     const {classes} = this.props;
     const {
-      sym,
       trade_env,
-      bars,
       suggestions,
       watchList,
-      timeDelay,
-      latestC,
     } = this.state;
     this.lastRefresh = Date.now();
     return (
       <Grid container spacing={3}>
-        <Grid item xs={12} md={12} lg={12}>
-          <Paper>
-            <Typography variant="h5">{`${sym} $${latestC} delay ${timeDelay}ms`}</Typography>
-            <div className={classes.oneChart}>
-              <ResponsiveContainer>
-                <ComposedChart
-                  data={bars}
-                  margin={{
-                    top: 16,
-                    right: 16,
-                    bottom: 0,
-                    left: 24,
-                  }}
-                >
-                  <XAxis dataKey="ts"/>
-                  <YAxis yAxisId="l" domain={['dataMin', 'dataMax']}/>
-                  <YAxis yAxisId="r" orientation="right" domain={['dataMin', 'dataMax']}/>
-                  <Tooltip />
-                  <Bar yAxisId="l" dataKey="v" isAnimationActive={false} stroke="lightgrey"/>
-                  <Line yAxisId="r" isAnimationActive={false} strokeWidth={2} type="linear" dataKey="c" dot={false} />
-                  <Line yAxisId="r" isAnimationActive={false} type="linear" stroke="none" dataKey="highlight_ts" dot={{ stroke: 'red', strokeWidth: 2 }}/>
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          </Paper>
-        </Grid>
+        <LiveChart setRef={this.setLiveChart}/>
         <Grid item xs={12} md={5} lg={5}>
           <TableContainer component={Paper}>
             <Table size="small">
