@@ -22,6 +22,12 @@ class WSocket extends React.Component {
     this.ws.send(JSON.stringify(msg));
   }
 
+  subscribePrices = list => {
+    const msg = {type: 'subPrices', list};
+    this.subPrices = list;
+    this.ws.send(JSON.stringify(msg));
+  }
+
   connectWs = () => {
     this.ws = new WebSocket('ws://192.168.86.101:3002');
     this.ws.onopen = () => {
@@ -34,6 +40,9 @@ class WSocket extends React.Component {
       }
       if (this.subStock) {
         this.subscribeStock(this.subStock);
+      }
+      if (this.subPrices) {
+        this.subscribePrices(this.subPrices);
       }
     }
     this.ws.onmessage = (e) => {
@@ -73,6 +82,13 @@ class WSocket extends React.Component {
           }
           break;
         }
+        case 'prices': {
+          const cp = getComponent('status');
+          if (cp) {
+            cp.onPricePush(msg);
+          }
+          break;
+        }
         case 'suggestion': {
           const sg = getComponent('suggestions');
           if (sg) {
@@ -92,6 +108,13 @@ class WSocket extends React.Component {
           const cp = getComponent('SymStatus');
           if (cp) {
             cp.onStatusPush(msg.data);
+          }
+          break;
+        }
+        case 'pm_status': {
+          const cp = getComponent('status');
+          if (cp) {
+            cp.onStatusPush(msg.env, msg.data);
           }
           break;
         }

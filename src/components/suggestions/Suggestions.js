@@ -167,7 +167,6 @@ class Suggestions extends React.Component {
   }
 
   render() {
-    const {classes} = this.props;
     const {
       trade_env,
       suggestions,

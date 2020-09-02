@@ -12,7 +12,6 @@ import Box from '@material-ui/core/Box';
 import {
   Brush,
   ComposedChart,
-  ScatterChart,
   Bar,
   Line,
   XAxis,
@@ -22,13 +21,6 @@ import {
 } from 'recharts';
 import Paper from '@material-ui/core/Paper';
 import {apiGetTrend} from '../../utils/ApiFetch';
-
-const LABEL = {
-  buy_long: 'BL',
-  buy_short: 'BS',
-  sell_long: 'SL',
-  sell_short: 'SS',
-}
 
 const styles = theme => ({
   chartFixedHeight: {

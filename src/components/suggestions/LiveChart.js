@@ -16,6 +16,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
 } from 'recharts';
 
 const styles = theme => ({
@@ -81,8 +82,8 @@ class LiveChart extends React.Component {
   }
 
   onFeedBar = (bar) => {
-    const {sym, bars, trade_env} = this.state;
-    if (bar.sym === sym && trade_env === 'notifier') {
+    const {sym, bars} = this.state;
+    if (bar.sym === sym) {
       const ts = moment(bar.ts * 1000).format('HH:mm:ss')
       const newBar = {
         c: bar.c,
@@ -114,7 +115,7 @@ class LiveChart extends React.Component {
     return (
       <Grid item xs={12} md={12} lg={12}>
         <Paper>
-          <Typography variant="h5">{`${sym} $${latestC} delay ${timeDelay}ms`}</Typography>
+          <Typography variant="h6">{`${sym} $${latestC} delay ${timeDelay}ms`}</Typography>
           <div className={classes.oneChart}>
               <ResponsiveContainer>
                 <ComposedChart
@@ -126,10 +127,15 @@ class LiveChart extends React.Component {
                     left: 24,
                   }}
                 >
+                  <CartesianGrid strokeDasharray="1 8"/>
                   <XAxis dataKey="ts"/>
-                  <YAxis yAxisId="l" domain={['dataMin', 'dataMax']}/>
-                  <YAxis yAxisId="r" orientation="right" domain={['dataMin', 'dataMax']}/>
-                  <Tooltip />
+                  <YAxis yAxisId="l" domain={['auto', 'auto']}/>
+                  <YAxis
+                    yAxisId="r"
+                    orientation="right"
+                    domain={['auto', 'auto']}
+                  />
+                  <Tooltip isAnimationActive={false} contentStyle={{background: '#222222'}} itemStyle={{color: 'orange'}}/>
                   <Bar yAxisId="l" dataKey="v" isAnimationActive={false} stroke="lightgrey"/>
                   <Line yAxisId="r" isAnimationActive={false} strokeWidth={2} type="linear" dataKey="c" dot={false} />
                   <Line yAxisId="r" isAnimationActive={false} type="linear" stroke="none" dataKey="highlight_ts" dot={{ stroke: 'red', strokeWidth: 2 }}/>

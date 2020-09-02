@@ -17,7 +17,7 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
-
+import TrendChart from './TrendChart';
 
 const styles = theme => ({
   formControl: {
@@ -40,6 +40,8 @@ class SymStatus extends React.Component {
       last_bar: null,
       strategies: [],
       sym_props: null,
+      trend: null,
+      tradePrice: null,
     }
   }
 
@@ -59,8 +61,8 @@ class SymStatus extends React.Component {
     registerComponent('SymStatus', null);
   }
 
-  onSelectSym = (sym) => {
-    this.setState({sym}, this.onFetch);
+  onSelectSym = (sym, tradePrice = null) => {
+    this.setState({sym, tradePrice}, this.onFetch);
   }
 
   onFetch = () => {
@@ -90,13 +92,15 @@ class SymStatus extends React.Component {
   }
 
   render() {
-    const {classes} = this.props;
     const {
       sym,
       strategies,
+      trend,
+      tradePrice,
     } = this.state;
     return (
       <React.Fragment>
+        <TrendChart data={trend} tradePrice={tradePrice}/>
         <Grid item xs={12} md={4} lg={4}>
           <Paper>
             <List>

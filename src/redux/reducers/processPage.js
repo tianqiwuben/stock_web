@@ -12,7 +12,8 @@ export const initialState = {
 
 export default (state = initialState, action) => {
   switch (action.type) {
-    case RESET_STORE, RESET_PROCESS_PAGE: {
+    case RESET_STORE:
+    case RESET_PROCESS_PAGE: {
       return initialState;
     }
     case UPDATE_PROCESS_PAGE: {

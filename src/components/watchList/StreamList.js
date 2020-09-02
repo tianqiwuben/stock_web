@@ -14,7 +14,6 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
 import {apiGetList, apiUpdateList} from '../../utils/ApiFetch';
 import ListSubheader from '@material-ui/core/ListSubheader';
-import Box from '@material-ui/core/Box';
 import { withSnackbar } from 'notistack';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
