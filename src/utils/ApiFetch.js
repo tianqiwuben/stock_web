@@ -52,7 +52,7 @@ export const apiGetConfig = sym => callAPI(`/configs/${sym}`, 'get');
 
 export const apiPostConfig = (sym, payload) => callAPI(`/configs/${sym}`, 'post', payload);
 
-export const apiTestConfig = (sym, payload) => callAPI(`/test/${sym}`, 'post', payload);
+export const apiTestConfig = (payload) => callAPI('/test/new', 'post', payload);
 
 export const apiOptimizationProcessAction = payload => callAPI(`/optimization_process`, 'post', payload);
 

@@ -93,7 +93,7 @@ class TrendChart extends React.Component {
         }
         const item = {
           tsx: ts.unix() - anchor,
-          ts: ts.format('L LT'),
+          ts: ts.format('MM/DD HH:mm:ss'),
         }
         switch(useB) {
           case 'l': {

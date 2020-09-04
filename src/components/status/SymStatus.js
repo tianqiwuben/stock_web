@@ -12,7 +12,6 @@ import {registerComponent} from '../common/Constants';
 
 import {apiResolverCommand} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
-import {saveProcess, resetProcessPage, updateProcessPage} from '../../redux/processActions';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -46,7 +45,7 @@ class SymStatus extends React.Component {
   }
 
   handleChange = e => {
-    this.setState({sym: e.target.value.toUpperCase()});
+    this.setState({sym: e.target.value.toUpperCase(), tradePrice: null});
   }
 
   componentDidMount(){
@@ -66,9 +65,12 @@ class SymStatus extends React.Component {
   }
 
   onFetch = () => {
-    const {enqueueSnackbar} = this.props;
+    const {enqueueSnackbar, liveChartSetSym} = this.props;
     const {env} = this.props;
-    const {sym} = this.state;
+    const {sym, tradePrice} = this.state;
+    if (tradePrice === null) {
+      liveChartSetSym(sym);
+    }
     const payload = {
       env,
       command: {
@@ -181,9 +183,6 @@ const mapStateToProps = state => ({
 export default compose(
   withStyles(styles),
   connect(mapStateToProps, {
-    dispatchSaveProcess: saveProcess,
-    dispatchResetProcessPage: resetProcessPage,
-    dispatchUpdateProcessPage: updateProcessPage
   }),
   withSnackbar
 )(SymStatus);

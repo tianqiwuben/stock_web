@@ -11,7 +11,7 @@ import TableRow from '@material-ui/core/TableRow';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import {connect} from 'react-redux';
-import {StrategyDB} from '../common/Constants';
+import {StrategyDB, getComponent} from '../common/Constants';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -21,14 +21,13 @@ import Remark from '../common/Remark';
 import FormControl from '@material-ui/core/FormControl';
 import Box from '@material-ui/core/Box';
 import TextField from '@material-ui/core/TextField';
-import {updateProgress} from '../../redux/progressActions';
 import ProgressWithLabel from '../common/ProgressWithLabel';
 
 import {
   Link,
 } from "react-router-dom";
 
-import {apiOptimizationApply, apiTestConfig} from '../../utils/ApiFetch';
+import {apiOptimizationApply} from '../../utils/ApiFetch';
 
 const useStyles = theme => ({
   wrapper: {
@@ -168,21 +167,15 @@ class StrategyTable extends React.Component {
     })
   }
 
-  onSimulate = (activity) => {
-    const {
-      sym,
-      enqueueSnackbar,      
-      dispatchUpdateProgress,
-    } = this.props;
-    dispatchUpdateProgress(`test_${sym}_`, 1);
-    apiTestConfig(sym, {activity}).then(resp => {
-      if(resp.data && resp.data.success) {
-        enqueueSnackbar(`${sym} ${activity} Start`);
-      } else {
-        enqueueSnackbar(resp.data.error, {variant: 'error'});
-      }
-      dispatchUpdateProgress(`test_${sym}_`, null);
-    })
+  onSimulate = () => {
+    const tp = getComponent('testPanel');
+    if (tp) {
+      const {sym} = this.props;
+      tp.popWithOptions({
+        sym,
+        mode: 'simulate',
+      })
+    }
   }
 
   render() {
@@ -240,11 +233,8 @@ class StrategyTable extends React.Component {
             </FormControl>
             <Box display="flex" flexDirection="row" alignItems="center" style={{margin: 10}} justifyContent="flex-end">
               {progressValue && <ProgressWithLabel value={progressValue} />}
-              <Button color="primary" onClick={() => this.onSimulate('simulate')}>
+              <Button color="primary" onClick={this.onSimulate}>
                 Simulate
-              </Button>
-              <Button color="primary" onClick={() => this.onSimulate('notifier')}>
-                Notifier
               </Button>
               <Link to={`/transactions?sym=${sym}&strategy=all&trade_env=test`} >
                 <Button>
@@ -292,8 +282,6 @@ const mapStateToProps = state => ({
 
 export default compose(
   withStyles(useStyles),
-  connect(mapStateToProps, {
-    dispatchUpdateProgress: updateProgress
-  }),
+  connect(mapStateToProps),
   withSnackbar,
 )(StrategyTable);

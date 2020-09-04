@@ -7,6 +7,7 @@ import {getComponent, registerComponent} from '../common/Constants';
 import Typography from '@material-ui/core/Typography';
 import moment from 'moment';
 import {apiLiveBars} from '../../utils/ApiFetch';
+import { withSnackbar } from 'notistack';
 
 import {
   Bar,
@@ -151,4 +152,5 @@ class LiveChart extends React.Component {
 
 export default compose(
   withStyles(styles),
+  withSnackbar,
 )(LiveChart);

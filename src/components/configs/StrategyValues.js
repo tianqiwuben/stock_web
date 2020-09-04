@@ -12,14 +12,12 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import {connect} from 'react-redux';
 import { withSnackbar } from 'notistack';
-import {apiTestConfig} from '../../utils/ApiFetch';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
 import ProgressWithLabel from '../common/ProgressWithLabel';
 import Remark from '../common/Remark';
 import {setConfigs} from '../../redux/configActions';
-import {updateProgress} from '../../redux/progressActions';
 
-import {StrategyDB} from '../common/Constants';
+import {StrategyDB, getComponent} from '../common/Constants';
 
 import {
   Link,
@@ -67,24 +65,15 @@ class StrategyValues extends React.Component {
   }
 
   onTest = () => {
-    const {
-      sym,
-      strategy,
-      enqueueSnackbar,
-      dispatchUpdateProgress,
-    } = this.props;
-    const payload = {
-      strategy: strategy,
-      activity: 'test',
+    const tp = getComponent('testPanel');
+    if (tp) {
+      const {sym, strategy} = this.props;
+      tp.popWithOptions({
+        sym,
+        strategy,
+        mode: 'test',
+      })
     }
-    apiTestConfig(sym, payload).then(resp => {
-      if(resp.data && resp.data.success) {
-        enqueueSnackbar(`${sym} Test Start`);
-      } else {
-        enqueueSnackbar(resp.data.error, {variant: 'error'});
-      }
-      dispatchUpdateProgress(`test_${sym}_${strategy}`, null);
-    })
   }
 
   render() {
@@ -184,7 +173,6 @@ export default compose(
   withStyles(useStyles),
   connect(mapStateToProps, {
     dispatchSetConfigs: setConfigs,
-    dispatchUpdateProgress: updateProgress,
   }),
   withSnackbar,
 )(StrategyValues);

@@ -40,6 +40,8 @@ import WatchList from '../watchList/WatchList';
 import Suggestions from '../suggestions/Suggestions';
 import Steven from '../wechat/Steven';
 import Status from '../status/Status';
+import TestPanel from './TestPanel';
+import StatusBar from './StatusBar';
 
 const drawerWidth = 320;
 
@@ -78,9 +80,6 @@ const styles = theme => ({
   menuButtonHidden: {
     display: 'none',
   },
-  title: {
-    flexGrow: 1,
-  },
   drawerPaper: {
     position: 'relative',
     whiteSpace: 'nowrap',
@@ -108,8 +107,8 @@ const styles = theme => ({
     overflow: 'auto',
   },
   container: {
-    paddingTop: theme.spacing(4),
-    paddingBottom: theme.spacing(4),
+    paddingTop: theme.spacing(2),
+    paddingBottom: theme.spacing(2),
   },
   paper: {
     padding: theme.spacing(2),
@@ -156,9 +155,7 @@ class Dashboard extends React.Component {
             >
               <MenuIcon />
             </IconButton>
-            <Typography component="h1" variant="h6" noWrap className={classes.title}>
-              Dashboard
-            </Typography>
+            <StatusBar />
             <MsgBar />
           </Toolbar>
         </AppBar>
@@ -249,7 +246,7 @@ class Dashboard extends React.Component {
               <div></div>
             </Box>
             :
-            <Container maxWidth="lg" className={classes.container}>
+            <Container maxWidth="100%" className={classes.container}>
               <Switch>
                 <Route path="/status" component={Status} />
                 <Route path="/suggestions" component={Suggestions} />
@@ -270,6 +267,7 @@ class Dashboard extends React.Component {
           }
           </main>
         <WSocket />
+        <TestPanel />
       </div>
     );
   }

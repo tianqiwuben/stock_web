@@ -35,6 +35,14 @@ class WSocket extends React.Component {
         clearInterval(this.interval);
         this.interval = null;
       }
+
+      this.ws.send(JSON.stringify(
+        {
+          type: 'whoami',
+          instance: 'web'
+        }
+      ));
+
       this.ws.onclose = (e) => {
         this.interval = setInterval(this.connectWs, 10000);
       }
@@ -117,6 +125,12 @@ class WSocket extends React.Component {
             cp.onStatusPush(msg.env, msg.data);
           }
           break;
+        }
+        case 'subSysStatus': {
+          const cp = getComponent('statusBar');
+          if (cp) {
+            cp.onSubSysStatus(msg);
+          }
         }
         default:
       }

@@ -29,7 +29,7 @@ const styles = theme => ({
 });
 
 
-class NsgBar extends React.Component {
+class MsgBar extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -152,4 +152,4 @@ export default compose(
     dispatchUpdateMessagesPage: updateMessagesPage,
   }),
   withSnackbar,
-)(NsgBar);
+)(MsgBar);

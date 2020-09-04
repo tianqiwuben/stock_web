@@ -8,6 +8,7 @@ import {connect} from 'react-redux';
 import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import Table from '@material-ui/core/Table';
+import moment from 'moment';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
@@ -24,7 +25,6 @@ import Tooltip from '@material-ui/core/Tooltip';
 import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
 import {apiResolverStatus, apiResolverCommand} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
-import {saveProcess, resetProcessPage, updateProcessPage} from '../../redux/processActions';
 import LiveChart from '../suggestions/LiveChart';
 
 
@@ -53,6 +53,8 @@ class Status extends React.Component {
       bp: 0,
       aq: 0,
       pm: [],
+      pl: '',
+      pl_pct: '',
     }
     this.prices = {};
   }
@@ -60,7 +62,7 @@ class Status extends React.Component {
   componentDidMount() {
     registerComponent('status', this);
     this.onFetch();
-    this.refreshInterval = setInterval(this.refreshPrices, 5000);
+    this.refreshInterval = setInterval(this.refreshPrices, 3000);
   }
 
   componentWillMount() {
@@ -109,7 +111,9 @@ class Status extends React.Component {
   }
 
   changeEnv = (e, env) => {
-    this.setState({env}, this.onFetch);
+    if (env) {
+      this.setState({env}, this.onFetch);
+    }
   }
 
   onSelectSym = (pos) => {
@@ -118,6 +122,12 @@ class Status extends React.Component {
     }
     if (this.liveChart) {
       this.liveChart.onFetchChart(pos.sym, pos.action_ts)
+    }
+  }
+
+  liveChartSetSym = (sym) => {
+    if (this.liveChart) {
+      this.liveChart.onFetchChart(sym);
     }
   }
 
@@ -132,10 +142,13 @@ class Status extends React.Component {
     }
   }
 
-  showSpy = () => {
-    if (this.liveChart) {
-      this.liveChart.onFetchChart('SPY');
-    }
+  flattenExist = () => {
+    const {pm} = this.state;
+    pm.forEach(pos => {
+      if (pos.strategy === 'prev_exist') {
+        this.onFlatten(pos);
+      }
+    })
   }
 
   onFlatten = (pos, isHalf = false) => {
@@ -164,6 +177,8 @@ class Status extends React.Component {
       bp,
       aq,
       pm,
+      pl,
+      pl_pct,
     } = this.state;
     return (
       <Grid container spacing={3}>
@@ -182,23 +197,30 @@ class Status extends React.Component {
                 <ToggleButton value="paper">
                   PAPER
                 </ToggleButton>
-                <ToggleButton value="notifier">
-                  NOTIFIER
-                </ToggleButton>
                 <ToggleButton value="test">
                   TEST
+                </ToggleButton>
+                <ToggleButton value="notifier">
+                  NOTIFIER
                 </ToggleButton>
                 <ToggleButton value="notifier_test">
                   NOTIFIER_TEST
                 </ToggleButton>
               </ToggleButtonGroup>
-              <Button onClick={this.showSpy}>SPY</Button>
+              <Button onClick={() => this.liveChartSetSym('SPY')}>SHOW SPY</Button>
+              <Typography variant="body">
+                {`Profit: $${pl} (${pl_pct}%)`}
+              </Typography>
               <Typography variant="body">
                 {`buying_power: $${bp.toFixed(2)}`}
               </Typography>
               <Typography variant="body">
                 {`available_quota: ${aq}`}
               </Typography>
+              {
+                (env === 'prod' || env === 'paper') &&
+                <Button onClick={this.flattenExist}>FLATTEN PREVS</Button>
+              }
             </Box>
           </Paper>
         </Grid>
@@ -214,46 +236,49 @@ class Status extends React.Component {
                   <TableCell>Entry Ts</TableCell>
                   <TableCell>Cost / Now</TableCell>
                   <TableCell>PL</TableCell>
-                  <TableCell>Actions</TableCell>
+                  <TableCell width="10%">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {
-                  pm.map(pos => (
-                    <TableRow key={`${pos.sym}${pos.strategy}`}>
-                      <TableCell onClick={() => this.onSelectSym(pos)}>{pos.sym}</TableCell>
-                      <TableCell>{pos.strategy}</TableCell>
-                      <TableCell>{`${pos.acc_quota} / ${pos.sym_quota} / ${pos.shares} (${pos.action_str === 'buy_short' ? '-' : '+'})`}</TableCell>
-                      <TableCell>{pos.action_ts_str}</TableCell>
-                      <TableCell>
-                        {`${pos.trade_price} / ${this.prices[pos.sym] || ''}`}
-                      </TableCell>
-                      <TableCell>
-                        {
-                          this.prices[pos.sym] &&
-                          `${((this.prices[pos.sym] - pos.trade_price) / pos.trade_price * 100).toFixed(3) * (pos.action_str === 'buy_short' ? -1 : 1)}%`
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <Tooltip title="Flatten">
-                          <span className={classes.actionIcon} onClick={() => {this.onFlatten(pos)}}>
-                            <HighlightOffIcon />
-                          </span>
-                        </Tooltip>
-                        <Tooltip title="Flatten Half">
-                          <span className={classes.actionIcon} onClick={() => {this.onFlatten(pos, true)}}>
-                            <RemoveCircleOutlineIcon />
-                          </span>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  pm.map(pos => {
+                    const mm = moment.utc(Date.now() - pos.action_ts * 1000).format('mm:ss');
+                    return(
+                      <TableRow key={`${pos.sym}${pos.strategy}`}>
+                        <TableCell onClick={() => this.onSelectSym(pos)}>{pos.sym}</TableCell>
+                        <TableCell>{pos.strategy}</TableCell>
+                        <TableCell>{`${pos.acc_quota} / ${pos.sym_quota} / ${pos.shares} (${pos.action_str === 'buy_short' ? '-' : '+'})`}</TableCell>
+                        <TableCell>{`${pos.action_ts_str} (${mm})`}</TableCell>
+                        <TableCell>
+                          {`${pos.trade_price} / ${this.prices[pos.sym] || ''}`}
+                        </TableCell>
+                        <TableCell>
+                          {
+                            this.prices[pos.sym] &&
+                            `${((this.prices[pos.sym] - pos.trade_price) / pos.trade_price * 100).toFixed(3) * (pos.action_str === 'buy_short' ? -1 : 1)}%`
+                          }
+                        </TableCell>
+                        <TableCell>
+                          <Tooltip title="Flatten">
+                            <span className={classes.actionIcon} onClick={() => {this.onFlatten(pos)}}>
+                              <HighlightOffIcon />
+                            </span>
+                          </Tooltip>
+                          <Tooltip title="Flatten Half">
+                            <span className={classes.actionIcon} onClick={() => {this.onFlatten(pos, true)}}>
+                              <RemoveCircleOutlineIcon />
+                            </span>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
                 }
               </TableBody>
             </Table>
           </TableContainer>
         </Grid>
-        <SymStatus env={env} setRef={this.setSymStatusRef}/>
+        <SymStatus env={env} setRef={this.setSymStatusRef} liveChartSetSym={this.liveChartSetSym}/>
       </Grid>
     );
   }
@@ -268,9 +293,6 @@ const mapStateToProps = state => ({
 export default compose(
   withStyles(styles),
   connect(mapStateToProps, {
-    dispatchSaveProcess: saveProcess,
-    dispatchResetProcessPage: resetProcessPage,
-    dispatchUpdateProcessPage: updateProcessPage
   }),
   withSnackbar
 )(Status);
