@@ -3,14 +3,6 @@ import compose from 'recompose/compose';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord';
-import IconButton from '@material-ui/core/IconButton';
-import Badge from '@material-ui/core/Badge';
-import NotificationsIcon from '@material-ui/icons/Notifications';
-import ErrorOutlineIcon from '@material-ui/icons/ErrorOutline';
-import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
-import EmailIcon from '@material-ui/icons/Email';
-import DoneAllIcon from '@material-ui/icons/DoneAll';
-import CancelOutlinedIcon from '@material-ui/icons/CancelOutlined';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import moment from 'moment';
@@ -18,16 +10,8 @@ import moment from 'moment';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 
-import {getComponent, registerComponent} from '../common/Constants';
+import {registerComponent} from '../common/Constants';
 
-
-import {connect} from 'react-redux';
-
-import {saveMessages, updateMessagesPage}  from '../../redux/messagesActions';
-
-import {
-  Link,
-} from "react-router-dom";
 
 const styles = theme => ({
   container: {
@@ -46,8 +30,9 @@ const subsysInstances = [
   'aggs_bar',
   'second_bar_streaming', 
   'sidekiq_transaction_worker',
-  'strategy_resolver_paper',
   'strategy_resolver_prod',
+  'strategy_resolver_paper',
+  'strategy_resolver_test',
 ];
 
 
@@ -76,11 +61,11 @@ class StatusBar extends React.Component {
     subsysInstances.forEach(instName => {
       if (data[instName]) {
         newStatus[instName] = data[instName];
-        if (data[instName].status !== 'ok') {
+        if (data[instName].status !== 'ok' && !instName.includes('strategy_resolver')) {
           status = data[instName].status;
         }
       } else {
-        if (instName !== 'strategy_resolver_prod') {
+        if (!instName.includes('strategy_resolver')) {
           newStatus[instName] = {status: 'offline'};
           status = 'offline';
         }

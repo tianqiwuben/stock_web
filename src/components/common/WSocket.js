@@ -10,15 +10,39 @@ class WSocket extends React.Component {
   componentDidMount() {
     this.connectWs();
     registerComponent('websocket', this);
+    this.chartID = 0;
+    this.liveCharts = {};
   }
 
   componentWillUnmount() {
     registerComponent('websocket', null);
   }
 
-  subscribeStock = (sym) => {
-    const msg = {type: 'listen', sym};
-    this.subStock = sym;
+  registerChart = (inst) => {
+    this.chartID += 1;
+    this.liveCharts[this.chartID] = {
+      inst,
+    }
+    return this.chartID;
+  }
+
+  removeChart = (chartID) => {
+    delete this.liveCharts[chartID];
+  }
+
+  subscribeStock = (chartID, sym) => {
+    this.liveCharts[chartID].sym = sym;
+    this.sendSubscribeStock();
+  }
+
+  sendSubscribeStock = () => {
+    const syms = [];
+    for (let chartID in this.liveCharts) {
+      if (this.liveCharts[chartID].sym) {
+        syms.push(this.liveCharts[chartID].sym);
+      }
+    }
+    const msg = {type: 'listen', syms: [...new Set(syms)]};
     this.ws.send(JSON.stringify(msg));
   }
 
@@ -35,20 +59,10 @@ class WSocket extends React.Component {
         clearInterval(this.interval);
         this.interval = null;
       }
-
-      this.ws.send(JSON.stringify(
-        {
-          type: 'whoami',
-          instance: 'web'
-        }
-      ));
-
       this.ws.onclose = (e) => {
         this.interval = setInterval(this.connectWs, 10000);
       }
-      if (this.subStock) {
-        this.subscribeStock(this.subStock);
-      }
+      this.sendSubscribeStock();
       if (this.subPrices) {
         this.subscribePrices(this.subPrices);
       }
@@ -84,9 +98,10 @@ class WSocket extends React.Component {
           break;
         }
         case 'stock': {
-          const sg = getComponent('liveChart');
-          if (sg) {
-            sg.onFeedBar(msg);
+          for (let chartID in this.liveCharts) {
+            if (this.liveCharts[chartID].sym === msg.sym) {
+              this.liveCharts[chartID].inst.onFeedBar(msg);
+            }
           }
           break;
         }
@@ -131,6 +146,7 @@ class WSocket extends React.Component {
           if (cp) {
             cp.onSubSysStatus(msg);
           }
+          break;
         }
         default:
       }

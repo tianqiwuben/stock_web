@@ -5,7 +5,7 @@ import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import BulkOptimization from './BulkOptimization';
 import BulkAssignResult from './BulkAssignResult';
-import BulkAssignQuota from './BulkAssignQuota';
+import BulkInitStrategy from './BulkInitStrategy';
 
 const useStyles = theme => ({
 
@@ -18,7 +18,7 @@ class BulkPanel extends React.Component {
       <Grid container spacing={3}>
         <BulkOptimization />
         <BulkAssignResult />
-        <BulkAssignQuota />
+        <BulkInitStrategy />
       </Grid>
     );
   }

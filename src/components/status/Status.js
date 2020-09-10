@@ -151,6 +151,13 @@ class Status extends React.Component {
     })
   }
 
+  flattenAll = () => {
+    const {pm} = this.state;
+    pm.forEach(pos => {
+      this.onFlatten(pos);
+    })
+  }
+
   onFlatten = (pos, isHalf = false) => {
     const {enqueueSnackbar} = this.props;
     const {env} = this.state;
@@ -181,7 +188,7 @@ class Status extends React.Component {
       pl_pct,
     } = this.state;
     return (
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         <Grid item xs={12} md={12} lg={12}>
           <Paper>
             <Box display="flex" flexDirection="row" alignItems="center" justifyContent="space-between">
@@ -200,12 +207,6 @@ class Status extends React.Component {
                 <ToggleButton value="test">
                   TEST
                 </ToggleButton>
-                <ToggleButton value="notifier">
-                  NOTIFIER
-                </ToggleButton>
-                <ToggleButton value="notifier_test">
-                  NOTIFIER_TEST
-                </ToggleButton>
               </ToggleButtonGroup>
               <Button onClick={() => this.liveChartSetSym('SPY')}>SHOW SPY</Button>
               <Typography variant="body">
@@ -219,12 +220,18 @@ class Status extends React.Component {
               </Typography>
               {
                 (env === 'prod' || env === 'paper') &&
+                <Button onClick={this.flattenAll}>FLATTEN ALL</Button>
+              }
+              {
+                (env === 'prod' || env === 'paper') &&
                 <Button onClick={this.flattenExist}>FLATTEN PREVS</Button>
               }
             </Box>
           </Paper>
         </Grid>
-        <LiveChart setRef={this.setLiveChart} />
+        <Grid item xs={12} md={12} lg={12}>
+          <LiveChart setRef={this.setLiveChart} />
+        </Grid>
         <Grid item xs={12} md={12} lg={12}>
           <TableContainer component={Paper}>
             <Table className={classes.table} size="small">

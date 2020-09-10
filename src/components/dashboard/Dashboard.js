@@ -9,7 +9,6 @@ import ListItemText from '@material-ui/core/ListItemText';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import List from '@material-ui/core/List';
-import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
 import Container from '@material-ui/core/Container';
@@ -49,72 +48,56 @@ const styles = theme => ({
   root: {
     display: 'flex',
   },
-  toolbar: {
-    paddingRight: 24, // keep right padding when drawer closed
-  },
-  toolbarIcon: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    padding: '0 8px',
-    ...theme.mixins.toolbar,
-  },
   appBar: {
-    zIndex: theme.zIndex.drawer + 1,
-    transition: theme.transitions.create(['width', 'margin'], {
+    transition: theme.transitions.create(['margin', 'width'], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
     }),
   },
   appBarShift: {
-    marginLeft: drawerWidth,
     width: `calc(100% - ${drawerWidth}px)`,
-    transition: theme.transitions.create(['width', 'margin'], {
-      easing: theme.transitions.easing.sharp,
+    marginLeft: drawerWidth,
+    transition: theme.transitions.create(['margin', 'width'], {
+      easing: theme.transitions.easing.easeOut,
       duration: theme.transitions.duration.enteringScreen,
     }),
   },
   menuButton: {
-    marginRight: 36,
+    marginRight: theme.spacing(2),
   },
-  menuButtonHidden: {
+  hide: {
     display: 'none',
   },
-  drawerPaper: {
-    position: 'relative',
-    whiteSpace: 'nowrap',
+  drawer: {
     width: drawerWidth,
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
+    flexShrink: 0,
   },
-  drawerPaperClose: {
-    overflowX: 'hidden',
-    transition: theme.transitions.create('width', {
+  drawerPaper: {
+    width: drawerWidth,
+  },
+  drawerHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: theme.spacing(0, 1),
+    // necessary for content to be below app bar
+    ...theme.mixins.toolbar,
+    justifyContent: 'flex-end',
+  },
+  content: {
+    flexGrow: 1,
+    padding: theme.spacing(3),
+    transition: theme.transitions.create('margin', {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
     }),
-    width: theme.spacing(7),
-    [theme.breakpoints.up('sm')]: {
-      width: theme.spacing(9),
-    },
+    marginLeft: -drawerWidth,
   },
-  appBarSpacer: theme.mixins.toolbar,
-  content: {
-    flexGrow: 1,
-    height: '100vh',
-    overflow: 'auto',
-  },
-  container: {
-    paddingTop: theme.spacing(2),
-    paddingBottom: theme.spacing(2),
-  },
-  paper: {
-    padding: theme.spacing(2),
-    display: 'flex',
-    overflow: 'auto',
-    flexDirection: 'column',
+  contentShift: {
+    transition: theme.transitions.create('margin', {
+      easing: theme.transitions.easing.easeOut,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+    marginLeft: 0,
   },
 });
 
@@ -122,7 +105,7 @@ class Dashboard extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      open: true,
+      open: false,
       loading: true,
     }
   }
@@ -144,14 +127,14 @@ class Dashboard extends React.Component {
     return (
       <div className={classes.root}>
         <CssBaseline />
-        <AppBar position="absolute" className={clsx(classes.appBar, open && classes.appBarShift)}>
+        <AppBar position="fixed" className={clsx(classes.appBar, open && classes.appBarShift)}>
           <Toolbar className={classes.toolbar}>
             <IconButton
               edge="start"
               color="inherit"
               aria-label="open drawer"
               onClick={this.handleDrawerOpen}
-              className={clsx(classes.menuButton, open && classes.menuButtonHidden)}
+              className={clsx(classes.menuButton, open && classes.hide)}
             >
               <MenuIcon />
             </IconButton>
@@ -160,13 +143,15 @@ class Dashboard extends React.Component {
           </Toolbar>
         </AppBar>
         <Drawer
-          variant="permanent"
+          variant="persistent"
+          anchor="left"
+          className={classes.drawer}
           classes={{
-            paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),
+            paper: clsx(classes.drawerPaper),
           }}
           open={open}
         >
-          <div className={classes.toolbarIcon}>
+          <div className={classes.drawerHeader}>
             <IconButton onClick={this.handleDrawerOpen}>
               <ChevronLeftIcon />
             </IconButton>
@@ -237,8 +222,10 @@ class Dashboard extends React.Component {
           <Divider />
           <SideChart />
         </Drawer>
-        <main className={classes.content}>
-          <div className={classes.appBarSpacer} />
+        <main className={clsx(classes.content, {
+          [classes.contentShift]: open,
+        })}>
+          <div className={classes.drawerHeader} />
           {
             loading ?
             <Box display="flex" flexDirection="column" justifyContent="space-around" alignItems="center" height="100%">
@@ -261,7 +248,7 @@ class Dashboard extends React.Component {
                 <Route path="/sym_prop/:id?" component={SymProp} />
                 <Route path="/watch_list" component={WatchList} />
                 <Route path="/steven" component={Steven} />
-                <Route component={Configs} />
+                <Route component={Status} />
               </Switch>
             </Container>
           }
