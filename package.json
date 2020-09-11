@@ -25,6 +25,7 @@
     "redux-devtools-extension": "^2.13.8",
     "redux-mock-store": "^1.5.4",
     "redux-thunk": "^2.3.0",
+    "uplot": "^1.1.2",
     "ws": "^7.3.0"
   },
   "scripts": {

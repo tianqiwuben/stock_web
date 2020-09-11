@@ -9,41 +9,171 @@ import Button from '@material-ui/core/Button';
 import Box from '@material-ui/core/Box';
 import moment from 'moment';
 import {apiLiveBars} from '../../utils/ApiFetch';
+import "../../../node_modules/uplot/dist/uPlot.min.css";
 import { withSnackbar } from 'notistack';
 
-import {
-  Bar,
-  ComposedChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from 'recharts';
+import uPlot from "uplot";
 
 const styles = theme => ({
+  container: {
+    position: 'relative',
+  },
   oneChart: {
     height: '35vh',
   },
   title: {
     padding: '4px 16px 0 16px',
-  }
+  },
+  toolTip: {
+    position: 'absolute',
+    visibility: 'hidden',
+    left: -20,
+    top: 64,
+    width: 150,
+    padding: theme.spacing(1),
+    background: '#222',
+    pointerEvents: 'none',
+  },
 });
+
+const drawV = (u) => {
+  let [iMin, iMax] = u.series[0].idxs;
+  let vol0AsY = u.valToPos(0, "v", true);
+  for (let i = iMin; i <= iMax; i++) {
+    let vol = u.data[1][i];
+    let timeAsX = u.valToPos(i,  "x", true);
+    let columnWidth  = u.bbox.width / (iMax - iMin);
+    let bodyX = timeAsX - (columnWidth / 2);
+    let volAsY = u.valToPos(vol, "v", true);
+    u.ctx.fillStyle = "#eee"
+    u.ctx.fillRect(
+      Math.round(bodyX),
+      Math.round(volAsY),
+      Math.round(columnWidth),
+      Math.round(vol0AsY - volAsY),
+    );
+  }
+}
+
+const plotOptions = {
+  width: 800,
+  height: window.innerHeight * 0.35,
+  legend: {
+    show: false,
+  },
+  scales: {
+    x: {
+      distr: 2,
+    },
+  },
+  series: [
+    {},
+    {
+      scale: 'v',
+      paths: () => null,
+      points: {
+        show: false,
+      },
+      stroke: 'transaparent',
+    },
+    {
+      stroke: '#00E5FF',
+      width: 2,
+      scale: '$',
+      points: {
+        show: false,
+      },
+    },
+  ],
+  axes: [
+    {
+      stroke: '#eee',
+      grid: {
+        stroke: '#aaa',
+        dash: [1, 8],
+      },
+      incrs: [60],
+    },
+    {
+      scale: 'v',
+      grid: {show: false},
+      stroke: '#eee',
+      ticks: {
+        show: false,
+      },
+    },
+    {
+      scale: '$',
+      side: 1,
+      stroke: '#eee',
+      grid: {
+        stroke: '#aaa',
+        dash: [1, 8],
+      },
+      size: 32,
+      ticks: {
+        show: false,
+      },
+    }
+  ],
+  plugins: [
+    {
+      hooks: {
+        drawClear: drawV,
+      },
+    },
+  ],
+}
 
 class LiveChart extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      bars: [],
       sym: 'SPY',
       latestC: 0,
       startTime: '',
       timeDelay: 0,
     }
+    let now = Math.floor(new Date() / 1e3);
+    this.bars = [
+      [now, now + 60],
+      [0,0],
+      [0,0],
+    ]
+    this.prevTipIdx = 0;
+  }
+
+  onCursorMove = (u, l, t) => {
+    if (this.toolTip) {
+      this.toolTip.style.transform = `translate(${l}px, ${t}px)`;
+    }
+    if (l > 0 && t > 0) {
+      this.toolTip.style.visibility = 'visible';
+    } else {
+      this.toolTip.style.visibility = 'hidden';
+    }
+    return [l,t];
+  }
+
+  onCursorIdx = (u, sId, idx) => {
+    if (idx !== this.prevTipIdx) {
+      this.prevTipIdx = idx;
+      const ts = moment.unix(this.bars[0][idx]);
+      this.tpTs.innerHTML = ts.format('MM/DD LTS');
+      this.tpCV.innerHTML = `$${this.bars[2][idx]} (${this.bars[1][idx]})`;
+    }
+    return(idx);
   }
 
   componentDidMount() {
+    const opt = {
+      ...plotOptions,
+      cursor: {
+        move: this.onCursorMove,
+        dataIdx: this.onCursorIdx,
+      }
+    }
+    this.u = new uPlot(opt, this.bars, this.chartEl);
     const {setRef} = this.props;
     setRef(this);
     const ws = getComponent('websocket');
@@ -51,10 +181,20 @@ class LiveChart extends React.Component {
   }
 
   componentWillUnmount() {
+    if (this.u) {
+      this.u.destroy();
+      this.u = null;
+    }
     const {setRef} = this.props;
     setRef(null);
     const ws = getComponent('websocket');
     ws.removeChart(this.chartID);
+  }
+
+  setWidth = (width) => {
+    if (this.u) {
+      this.u.setSize({width, height: window.innerHeight * 0.35});
+    }
   }
 
   onFetchChart = (newSym = null, ts_lte = null, ts_start = null) => {
@@ -76,12 +216,15 @@ class LiveChart extends React.Component {
       query['ts_start'] = ts_start;
     }
     apiLiveBars(query).then(resp => {
-      if (resp && resp.data.success && resp.data.payload && resp.data.payload.length > 0) {
+      if (resp && resp.data.success && resp.data.payload) {
         this.setState({
-          bars: resp.data.payload,
           sym: s,
           loading: false,
         });
+        this.bars = resp.data.payload.data;
+        if (this.u) {
+          this.u.setData(this.bars);
+        }
         const ws = getComponent('websocket');
         if (ws) {
           ws.subscribeStock(this.chartID, s);
@@ -94,14 +237,12 @@ class LiveChart extends React.Component {
   }
 
   onPrev15 = () => {
-    const {bars} = this.state;
-    const ts = bars[0].ts_i;
+    const ts = this.bars[0][0];
     this.onFetchChart(null, null, ts - 15 * 60);
   }
 
   onNext15 = () => {
-    const {bars} = this.state;
-    const ts = bars[0].ts_i;
+    const ts = this.bars[0][0];
     this.onFetchChart(null, null, ts + 15 * 60);
   }
 
@@ -116,20 +257,19 @@ class LiveChart extends React.Component {
   }
 
   onFeedBar = (bar) => {
-    const {sym, bars} = this.state;
+    const {sym} = this.state;
     if (bar.sym === sym) {
-      const ts = moment(bar.ts * 1000).format('HH:mm:ss')
-      const newBar = {
-        c: bar.c,
-        v: bar.v,
-        ts,
+      this.bars[0].shift();
+      this.bars[1].shift();
+      this.bars[2].shift();
+      this.bars[0].push(bar.ts);
+      this.bars[1].push(bar.v);
+      this.bars[2].push(bar.c);
+      if (this.u) {
+        this.u.setData(this.bars);
       }
-      const newBars = [...bars];
-      newBars.shift();
-      newBars.push(newBar);
       const timeDelay = Date.now() - bar.ts * 1000 - 1000;
       this.setState({
-        bars: newBars,
         timeDelay,
         latestC: bar.c,
       })
@@ -141,14 +281,13 @@ class LiveChart extends React.Component {
       classes,
     } = this.props;
     const {
-      bars,
       sym,
       latestC,
       timeDelay,
       startTime
     } = this.state;
     return (
-      <Paper>
+      <Paper className={classes.container}>
         <Box className={classes.title} display="flex" flexDirection="row" alignItems="flex-start" justifyContent="space-between">
           <Typography variant="h6" style={{flexGrow: 1}}>{`${sym} $${latestC} delay ${timeDelay}ms`}</Typography>
           <TextField
@@ -164,31 +303,15 @@ class LiveChart extends React.Component {
           <Button onClick={() => this.onFetchChart()}>{'NOW'}</Button>
           <Button onClick={this.onNext15}>{'>>'}</Button>
         </Box>
-        <div className={classes.oneChart}>
-          <ResponsiveContainer>
-            <ComposedChart
-              data={bars}
-              margin={{
-                top: 16,
-                right: 16,
-                bottom: 0,
-                left: 24,
-              }}
-            >
-              <CartesianGrid strokeDasharray="1 8"/>
-              <XAxis dataKey="ts"/>
-              <YAxis yAxisId="l" domain={['auto', 'auto']}/>
-              <YAxis
-                yAxisId="r"
-                orientation="right"
-                domain={['auto', 'auto']}
-              />
-              <Tooltip isAnimationActive={false} contentStyle={{background: '#222222'}} itemStyle={{color: 'orange'}}/>
-              <Bar yAxisId="l" dataKey="v" isAnimationActive={false} stroke="lightgrey"/>
-              <Line yAxisId="r" isAnimationActive={false} strokeWidth={2} type="linear" dataKey="c" dot={false} />
-              <Line yAxisId="r" isAnimationActive={false} type="linear" stroke="none" dataKey="highlight_ts" dot={{ stroke: 'red', strokeWidth: 2 }}/>
-            </ComposedChart>
-          </ResponsiveContainer>
+        <div className={classes.oneChart} ref={el => this.chartEl = el} />
+        <div className={classes.toolTip} ref={el => this.toolTip = el}>
+          <Typography variant="body" style={{color: 'orange'}} ref={el => this.tpTs = el}>
+            MM/DD HH:MM:SS
+          </Typography>
+          <br />
+          <Typography variant="body" style={{color: 'orange'}} ref={el => this.tpCV = el}>
+            $ccc.cc vvvv
+          </Typography>
         </div>
       </Paper>
     );

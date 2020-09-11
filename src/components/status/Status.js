@@ -44,7 +44,6 @@ const styles = theme => ({
   },
 });
 
-
 class Status extends React.Component {
   constructor(props) {
     super(props);
@@ -63,6 +62,8 @@ class Status extends React.Component {
     registerComponent('status', this);
     this.onFetch();
     this.refreshInterval = setInterval(this.refreshPrices, 3000);
+    const {width} = this.paperEl.getBoundingClientRect();
+    this.liveChart.setWidth(width)
   }
 
   componentWillMount() {
@@ -190,7 +191,7 @@ class Status extends React.Component {
     return (
       <Grid container spacing={2}>
         <Grid item xs={12} md={12} lg={12}>
-          <Paper>
+          <Paper ref={el => this.paperEl = el}>
             <Box display="flex" flexDirection="row" alignItems="center" justifyContent="space-between">
               <ToggleButtonGroup
                 size="small"
