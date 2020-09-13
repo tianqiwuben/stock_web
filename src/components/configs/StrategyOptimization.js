@@ -46,7 +46,7 @@ class StrategyOptimization extends React.Component {
       }
     })
     newConf[`${strategy}_optimization`] = {
-      vs: JSON.stringify(newVs),
+      attrs: JSON.stringify(newVs),
     }
     dispatchSetConfigs(newConf);
   }
@@ -59,11 +59,11 @@ class StrategyOptimization extends React.Component {
     } = this.props;
     const newConf = {};
     const optimization = all_configs[`${strategy}_optimization`];
-    const newVs = (optimization && optimization.vs) ? JSON.parse(optimization.vs) : {};
+    const newVs = (optimization && optimization.attrs) ? JSON.parse(optimization.attrs) : {};
     newVs[field] = e.target.value;
     newConf[`${strategy}_optimization`] = {
       ...optimization,
-      vs: JSON.stringify(newVs),
+      attrs: JSON.stringify(newVs),
     }
     dispatchSetConfigs(newConf);
   }
@@ -131,14 +131,14 @@ class StrategyOptimization extends React.Component {
       sym,
     } = this.props;
     const optimization = all_configs[`${strategy}_optimization`];
-    const configs = (optimization && optimization.vs) ? JSON.parse(optimization.vs) : {};
+    const configs = (optimization && optimization.attrs) ? JSON.parse(optimization.attrs) : {};
     
     let progressStr = '-';
     if (optimization && optimization.optimization_process) {
       progressStr = `${optimization.optimization_process.status} ${optimization.optimization_process.completed_percent}% ${optimization.optimization_process.expected_finish_time_str}`;
     }
     return (
-      <Grid item sm={12} md={6} lg={5}>
+      <Grid item sm={12} md={6} lg={6}>
         <Paper>
             <List subheader={<ListSubheader>Optimization Min Max Step</ListSubheader>}>
             {

@@ -5,8 +5,9 @@ export const initialState = {
   last_v: 0,
   sym: 'SPY',
   strategy: '',
-  isPercent: true,
+  isPercent: false,
   displayEnv: 'prod',
+  sym_prop: {},
 };
 
 export default (state = initialState, action) => {

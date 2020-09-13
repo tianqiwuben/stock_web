@@ -20,9 +20,7 @@ import {StrategyDB} from '../common/Constants';
 import StrategyTable from './StrategyTable';
 import { withSnackbar } from 'notistack';
 import Remark from '../common/Remark';
-import {
-  Link,
-} from "react-router-dom";
+import SymProp from './SymProp';
 
 import {
   saveRemarks,
@@ -39,6 +37,7 @@ import {
   apiGetConfig,
   apiPostConfig,
   apiGetRemarks,
+  apiResolverCommand,
 } from '../../utils/ApiFetch';
 
 const useStyles = theme => ({
@@ -111,6 +110,9 @@ class Configs extends React.Component {
           rest.data.payload.strategy = rest.data.payload.current_strategy;
         }
         dispatchSetConfigs(rest.data.payload);
+        if(this.symProp) {
+          this.symProp.updateRecord(rest.data.payload.sym_prop);
+        }
       }
     })
   }
@@ -120,11 +122,6 @@ class Configs extends React.Component {
       [field]: e.target.value,
     });
   }
-
-  numberWithCommas = (x) => {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  }
-
 
   onTogglePercent = () => {
     const {isPercent, dispatchSetConfigs} = this.props;
@@ -159,6 +156,30 @@ class Configs extends React.Component {
     }
   }
 
+  switchEnable = (disabled) => {
+    const {
+      sym,
+    } = this.state;
+    const {enqueueSnackbar, displayEnv} = this.props;
+    const payload = {
+      env: displayEnv,
+      command: {
+        cmd: 'config_sym',
+        sym: sym,
+        config: {
+          disabled: disabled,
+        }
+      },
+    }
+    apiResolverCommand(payload).then(resp => {
+      if (resp.data.success) {
+        enqueueSnackbar(`${sym} Disabled ${disabled} (${displayEnv})`);
+      } else {
+        enqueueSnackbar(resp.data.error, {variant: 'error'})
+      }
+    })
+  }
+
   render() {
     const {
       sym,
@@ -169,14 +190,14 @@ class Configs extends React.Component {
       isPercent,
       strategy,
       displayEnv,
+      last_v_per_second,
       allConfigs,
+      daily_price_vol,
     } = this.props;
-    const quota = allConfigs.quota ? allConfigs.quota.vi : '';
-    const priority = allConfigs.quota ? allConfigs.quota.vf : '';
     return (
       <React.Fragment>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6} lg={4}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6} lg={3}>
             <Paper>
               <List subheader={<ListSubheader>OverView</ListSubheader>}>
                 <ListItem>
@@ -202,20 +223,22 @@ class Configs extends React.Component {
                   </ListItemSecondaryAction>
                 </ListItem>
                 <ListItem>
-                  <Link to={`/trend_amp/${sym}`}>
-                    <ListItemText>{'Quota & Priority'}</ListItemText>
-                  </Link>
+                  <ListItemText primary="last_c x last_v" />
                   <ListItemSecondaryAction>
-                    {`${quota}, ${priority}`}
+                    ${last_c} x {last_v}
                   </ListItemSecondaryAction>
                 </ListItem>
                 <ListItem>
-                  <ListItemText>Latest Price</ListItemText>
-                  <ListItemSecondaryAction>{`$${last_c}`}</ListItemSecondaryAction>
+                  <ListItemText primary="daily_price_vol" />
+                  <ListItemSecondaryAction>
+                    ${daily_price_vol}
+                  </ListItemSecondaryAction>
                 </ListItem>
                 <ListItem>
-                  <ListItemText>Daily Vol</ListItemText>
-                  <ListItemSecondaryAction>{`${this.numberWithCommas(last_v)}`}</ListItemSecondaryAction>
+                  <ListItemText primary="last_v_per_second" />
+                  <ListItemSecondaryAction>
+                    {last_v_per_second}
+                  </ListItemSecondaryAction>
                 </ListItem>
                 <ListItem>
                   <ListItemText>
@@ -253,9 +276,24 @@ class Configs extends React.Component {
                     remarkKey={this.props.sym}
                   />
                 </ListItem>
+                <ListItem>
+                  <ListItemText>
+                    <Button onClick={() => this.switchEnable(false)}>
+                      ENABLE
+                    </Button>
+                    <Button color="secondary" onClick={() => this.switchEnable(true)}>
+                      DISABLE TRADING
+                    </Button>
+                  </ListItemText>
+                </ListItem>
               </List>
             </Paper>
           </Grid>
+          <SymProp
+            setRef={el => this.symProp = el}
+            record={allConfigs.sym_prop}
+            last_c={last_c}
+          />
           {
             strategy.length > 0 &&
             <StrategyTable
@@ -286,6 +324,8 @@ const mapStateToProps = state => ({
   sym: state.configs.sym,
   strategy: state.configs.strategy,
   displayEnv: state.configs.displayEnv,
+  last_v_per_second: state.configs.last_v_per_second,
+  daily_price_vol: state.configs.daily_price_vol,
   allConfigs: state.configs,
 })
 

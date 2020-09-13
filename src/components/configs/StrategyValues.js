@@ -39,11 +39,11 @@ class StrategyValues extends React.Component {
     const newConf = {};
     const strategyName = `${strategy}${isTest ? '_test' : ''}`;
     const conf = all_configs[strategyName];
-    const newVs = (conf && conf.vs) ? JSON.parse(conf.vs) : {};
+    const newVs = (conf && conf.attrs) ? JSON.parse(conf.attrs) : {};
     newVs[field] = e.target.value;
     newConf[strategyName] = {
       ...conf,
-      vs: JSON.stringify(newVs),
+      attrs: JSON.stringify(newVs),
     }
     dispatchSetConfigs(newConf);
   }
@@ -88,11 +88,11 @@ class StrategyValues extends React.Component {
     } = this.props;
     const strategyKey = isTest ? `${strategy}_test` : strategy;
     const sc = all_configs[strategyKey];
-    const configs = (sc && sc.vs) ? JSON.parse(sc.vs) : {};
+    const configs = (sc && sc.attrs) ? JSON.parse(sc.attrs) : {};
     const title = isTest ? 'Test' : strategy;
     const progressValue = isTest ? progress[`test_${sym}_${strategy}`] : null;
     return (
-      <Grid item sm={12} md={6} lg={isTest ? 3 : 4}>
+      <Grid item sm={12} md={6} lg={3}>
         <Paper>
             <List subheader={<ListSubheader>{title}</ListSubheader>}>
             {

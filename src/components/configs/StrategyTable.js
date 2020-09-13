@@ -71,18 +71,18 @@ class StrategyTable extends React.Component {
     const data = [];
     for(let key in StrategyDB) {
       const item = {key, prod: '-', test: '-', pl: '', hold: ''};
-      if (allConfigs[key] && allConfigs[key].vi === 1 && typeof allConfigs[key].vf === 'number') {
-        item.prod = allConfigs[key].vf;
+      if (allConfigs[key] && allConfigs[key].enabled === 1 && typeof allConfigs[key].priority === 'number') {
+        item.prod = allConfigs[key].priority;
       }
-      if (allConfigs[key + '_test'] && allConfigs[key + '_test'].vi === 1 && typeof allConfigs[key + '_test'].vf === 'number') {
-        item.test = allConfigs[key + '_test'].vf;
+      if (allConfigs[key + '_test'] && allConfigs[key + '_test'].enabled === 1 && typeof allConfigs[key + '_test'].priority === 'number') {
+        item.test = allConfigs[key + '_test'].priority;
       }
       if (allConfigs[key + '_optimization']) {
-        const profit = allConfigs[key + '_optimization'].vf;
+        const profit = allConfigs[key + '_optimization'].priority;
         if (profit) {
           item.pl = profit.toFixed(3) + '%';
         }
-        const hold = allConfigs[key + '_optimization'].vi;
+        const hold = allConfigs[key + '_optimization'].enabled;
         if (hold) {
           item.hold = (hold / 60).toFixed(1);
         }
@@ -117,7 +117,7 @@ class StrategyTable extends React.Component {
       return;
     }
     this.setState({
-      dialogInput: allConfigs[key].vf,
+      dialogInput: allConfigs[key].priority,
       openDialog: true,
       editStrategy: key,
     })
@@ -137,9 +137,9 @@ class StrategyTable extends React.Component {
     const payload = {
       configs: {
         [editStrategy]: {
-          vi: 1,
-          vf: dialogInput,
-          vs: allConfigs[editStrategy].vs,
+          enabled: 1,
+          priority: dialogInput,
+          attrs: allConfigs[editStrategy].attrs,
         }
       }
     };
@@ -155,9 +155,9 @@ class StrategyTable extends React.Component {
     const payload = {
       configs: {
         [editStrategy]: {
-          vi: 0,
-          vf: allConfigs[editStrategy].vf,
-          vs: allConfigs[editStrategy].vs,
+          enabled: 0,
+          priority: allConfigs[editStrategy].priority,
+          attrs: allConfigs[editStrategy].attrs,
         }
       }
     };
@@ -195,7 +195,7 @@ class StrategyTable extends React.Component {
     const progressValue = progress[`test_${sym}_`];
 
     return (
-      <Grid item sm={12} md={6} lg={8}>
+      <Grid item sm={12} md={6} lg={6}>
         <TableContainer component={Paper}>
           <Table className={classes.table} size="small">
             <TableHead>

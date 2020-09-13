@@ -40,9 +40,9 @@ export const apiLiveBars = query => callAPI('/live_bars', 'get', query);
 
 export const apiGetTrend = query => callAPI('/bar_trend', 'get', query);
 
-export const apiGetSymProp = (query) => callAPI(`/sym_prop/`, 'get', query);
-
 export const apiUpdateSymProp = (query) => callAPI(`/sym_prop`, 'post', query);
+
+export const apiRecalcSymProp = (sym) => callAPI(`/sym_prop/${sym}`, 'get');
 
 export const apiGetDistribution = query => callAPI('/aggs/distribution', 'get', query);
 
@@ -92,11 +92,11 @@ export const apiUpdateList = payload => callAPI('/watch_list', 'post', payload);
 
 export const apiGetSuggestions = query => callAPI('/suggestions', 'get', query);
 
-export const apiPostSteven = query => callAPI('/follower/steven', 'post', query);
+export const apiPostManual = query => callAPI('/follower/manual', 'post', query);
 
-export const apiDeleteSteven = sym => callAPI(`/follower/delete_position/${sym}`, 'delete');
+export const apiDeleteManual = sym => callAPI(`/follower/delete_position/${sym}`, 'delete');
 
-export const apiGetSteven = () => callAPI('/follower/current_positions', 'get');
+export const apiGetManual = () => callAPI('/follower/current_positions', 'get');
 
 export const apiResolverStatus = query => callAPI('/status/resolver', 'get', query);
 

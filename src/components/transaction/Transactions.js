@@ -13,18 +13,17 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
-import {apiGetTransactions, apiBars} from '../../utils/ApiFetch';
+import {apiGetTransactions} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
 import querystring from 'querystring';
 import FormControl from '@material-ui/core/FormControl';
 import {connect} from 'react-redux';
+import LiveChart from '../common/LiveChart';
 
 import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import {StrategyDB, getStrategyColor} from '../common/Constants';
-import {saveSideChart} from '../../redux/sideChartActions';
-
 
 import {
   Link,
@@ -50,6 +49,7 @@ class Transactions extends React.Component {
       sym: '',
       strategy: 'all',
       trade_env: 'test',
+      startTime: '',
       summary: [],
       records: [],
     }
@@ -66,11 +66,12 @@ class Transactions extends React.Component {
   }
 
   onFetch = () => {
-    const {sym, strategy, trade_env} = this.state;
+    const {sym, strategy, trade_env, startTime} = this.state;
     const query = {
       sym,
       strategy,
       trade_env,
+      startTime,
     }
     apiGetTransactions(query).then(resp => {
       if (resp.data.success) {
@@ -91,18 +92,10 @@ class Transactions extends React.Component {
     });
   }
 
-  onShowChart = (trans_id) => {
-    const {strategy} = this.state;
-    const query = {
-      trans_id,
-      strategy,
-    };
-    apiBars(query).then(resp => {
-      if (resp && resp.data.success && resp.data.payload.bars && resp.data.payload.bars.length > 0) {
-        const {dispatchSaveSideChart} = this.props;
-        dispatchSaveSideChart(resp.data.payload.bars);
-      }
-    })
+  onShowChart = (row) => {
+    if (this.liveChart) {
+      this.liveChart.onFetchChart(row.sym, row.action_ts_i);
+    }
   }
 
   render() {
@@ -113,137 +106,156 @@ class Transactions extends React.Component {
       trade_env,
       sym,
       strategy,
+      startTime,
     } = this.state;
     return (
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={12} lg={12}>
-          <Paper className={classes.row}>
-              <FormControl className={classes.formControl}>
+      <div>
+        <Paper>
+            <LiveChart setRef={el => this.liveChart = el}/>
+        </Paper>
+        <Grid container spacing={3} style={{overflow: 'auto', maxHeight: '47vh', marginTop: 12}}>
+          <Grid item xs={12} md={12} lg={12}>
+            <Paper className={classes.row}>
+                <FormControl className={classes.formControl}>
+                  <TextField
+                    label="Symbol"
+                    value={sym}
+                    onChange={e => this.handleChange('sym', e)}
+                  />
+                </FormControl>
+                <FormControl className={classes.formControl}>
+                  <InputLabel>Strategy</InputLabel>
+                  <Select
+                    value={strategy}
+                    onChange={e => this.handleChange('strategy', e)}
+                    autoWidth
+                  >
+                    <MenuItem value="all">All</MenuItem>
+                    {
+                      Object.keys(StrategyDB).map(key => (
+                        <MenuItem key={key} value={key}>{key}</MenuItem>
+                      ))
+                    }
+                  </Select>
+                </FormControl>
+                <FormControl className={classes.formControl}>
+                  <InputLabel>Trade Env</InputLabel>
+                  <Select
+                    value={trade_env}
+                    onChange={e => this.handleChange('trade_env', e)}
+                    autoWidth
+                  >
+                    <MenuItem value="test">Test</MenuItem>
+                    <MenuItem value="paper">Paper</MenuItem>
+                    <MenuItem value="prod">Prod</MenuItem>
+                  </Select>
+                </FormControl>
                 <TextField
-                  label="Symbol"
-                  value={sym}
-                  onChange={e => this.handleChange('sym', e)}
+                  label="Start Time"
+                  type="datetime-local"
+                  value={startTime}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  onChange={e => this.handleChange('startTime', e)}
                 />
-              </FormControl>
-              <FormControl className={classes.formControl}>
-                <InputLabel>Strategy</InputLabel>
-                <Select
-                  value={strategy}
-                  onChange={e => this.handleChange('strategy', e)}
-                  autoWidth
-                >
-                  <MenuItem value="all">All</MenuItem>
-                  {
-                    Object.keys(StrategyDB).map(key => (
-                      <MenuItem key={key} value={key}>{key}</MenuItem>
-                    ))
-                  }
-                </Select>
-              </FormControl>
-              <FormControl className={classes.formControl}>
-                <InputLabel>Trade Env</InputLabel>
-                <Select
-                  value={trade_env}
-                  onChange={e => this.handleChange('trade_env', e)}
-                  autoWidth
-                >
-                  <MenuItem value="test">Test</MenuItem>
-                  <MenuItem value="paper">Paper</MenuItem>
-                  <MenuItem value="prod">Prod</MenuItem>
-                </Select>
-              </FormControl>
-              <Button variant="contained" color="primary" onClick={this.onFetch}>
-                Fetch
-              </Button>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={12} lg={12}>
-          <TableContainer component={Paper}>
-            <Table className={classes.table}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Strategy</TableCell>
-                  <TableCell>P/L %</TableCell>
-                  <TableCell>Hold Min</TableCell>
-                  <TableCell>Trans Count</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {summary.map((row) => (
-                  <TableRow key={row.strategy}>
-                    <TableCell>
-                      <Link to={`/configs/${sym}?strategy=${row.strategy === 'all' ? '' : row.strategy}`}>
-                        {row.strategy}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      {`${row.pl.toFixed(3)} (${(row.pl / row.count).toFixed(3)})`}
-                    </TableCell>
-                    <TableCell>
-                      {`${(row.hold_seconds / 60).toFixed(1)} (${(row.hold_seconds / row.count / 60).toFixed(1)})`}
-                    </TableCell>
-                    <TableCell>{row.count}</TableCell>
+                <Button variant="contained" color="primary" onClick={this.onFetch}>
+                  Fetch
+                </Button>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={12} lg={12}>
+            <TableContainer component={Paper}>
+              <Table className={classes.table}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Strategy</TableCell>
+                    <TableCell>P/L %</TableCell>
+                    <TableCell>Hold Min</TableCell>
+                    <TableCell>Trans Count</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Grid>
+                </TableHead>
+                <TableBody>
+                  {summary.map((row) => (
+                    <TableRow key={row.strategy}>
+                      <TableCell>
+                        <Link to={`/configs/${sym}?strategy=${row.strategy === 'all' ? '' : row.strategy}`}>
+                          {row.strategy}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        {`${row.pl.toFixed(3)} (${(row.pl / row.count).toFixed(3)})`}
+                      </TableCell>
+                      <TableCell>
+                        {`${(row.hold_seconds / 60).toFixed(1)} (${(row.hold_seconds / row.count / 60).toFixed(1)})`}
+                      </TableCell>
+                      <TableCell>{row.count}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Grid>
 
-        <Grid item xs={12} md={12} lg={12}>
-          <TableContainer component={Paper}>
-            <Table className={classes.table} size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Strategy</TableCell>
-                  <TableCell>Action</TableCell>
-                  <TableCell>Price</TableCell>
-                  <TableCell>Quota</TableCell>
-                  <TableCell>Action Time</TableCell>
-                  <TableCell>P/L (Agg)%</TableCell>
-                  <TableCell>Hold Min</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {records.map((row) => (
-                  <TableRow key={row.id} selected={row.overwrite}>
-                    <TableCell>
-                      <span style={{color: getStrategyColor(row.strategy)}}>
-                        {row.strategy}
-                      </span>
-                    </TableCell>
-                    <TableCell>{row.action_name}</TableCell>
-                    <TableCell>{row.price}</TableCell>
-                    <TableCell>{row.count}</TableCell>
-                    <TableCell>{row.action_time}</TableCell>
-                    <TableCell>
-                      {
-                        (typeof row.profit_percent == 'number' && row.profit_percent !== 0) &&
-                        <span>
-                          <span style={{color: row.profit_percent > 0 ? 'green' : (row.profit_percent < 0 ? 'red' : 'inherit')}}>
-                            {`${row.profit_percent.toFixed(3)}`}
-                          </span>
-                          <br />
-                          {`(${row.agg_pl.toFixed(3)}, ${row.agg_all.toFixed(3)})`}
-                        </span>
-                      }
-                    </TableCell>
-                    <TableCell>
-                      {row.hold_seconds > 0 ? (row.hold_seconds / 60).toFixed(1) : null}
-                    </TableCell>
-                    <TableCell>
-                    <IconButton color="primary" onClick={() => this.onShowChart(row.id)}>
-                      <ShowChartIcon />
-                    </IconButton>
-                    </TableCell>
+          <Grid item xs={12} md={12} lg={12}>
+            <TableContainer component={Paper}>
+              <Table className={classes.table} size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Sym</TableCell>
+                    <TableCell>Strategy</TableCell>
+                    <TableCell>Action</TableCell>
+                    <TableCell>Price</TableCell>
+                    <TableCell>Quota</TableCell>
+                    <TableCell>Action Time</TableCell>
+                    <TableCell>P/L (Agg)%</TableCell>
+                    <TableCell>Hold Min</TableCell>
+                    <TableCell>Actions</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {records.map((row) => (
+                    <TableRow key={row.id} selected={row.overwrite}>
+                      <TableCell>
+                        {row.sym}
+                      </TableCell>
+                      <TableCell>
+                        <span style={{color: getStrategyColor(row.strategy)}}>
+                          {row.strategy}
+                        </span>
+                      </TableCell>
+                      <TableCell>{row.action_name}</TableCell>
+                      <TableCell>{row.price}</TableCell>
+                      <TableCell>{`${row.acc_quota} / ${row.sym_quota} / ${row.shares}`}</TableCell>
+                      <TableCell>{row.action_time}</TableCell>
+                      <TableCell>
+                        {
+                          (typeof row.profit_percent == 'number' && row.profit_percent !== 0) &&
+                          <span>
+                            <span style={{color: row.profit_percent > 0 ? 'green' : (row.profit_percent < 0 ? 'red' : 'inherit')}}>
+                              {`${row.profit_percent.toFixed(3)}`}
+                            </span>
+                            <br />
+                            {`(${row.agg_pl.toFixed(3)}, ${row.agg_all.toFixed(3)})`}
+                          </span>
+                        }
+                      </TableCell>
+                      <TableCell>
+                        {row.hold_seconds > 0 ? (row.hold_seconds / 60).toFixed(1) : null}
+                      </TableCell>
+                      <TableCell>
+                      <IconButton color="primary" onClick={() => this.onShowChart(row)}>
+                        <ShowChartIcon />
+                      </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Grid>
         </Grid>
-      </Grid>
+      </div>
     );
   }
 }
@@ -251,8 +263,6 @@ class Transactions extends React.Component {
 
 export default compose(
   withStyles(styles),
-  connect(null, {
-    dispatchSaveSideChart: saveSideChart,
-  }),
+  connect(null),
   withSnackbar,
 )(Transactions);

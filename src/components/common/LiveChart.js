@@ -2,13 +2,15 @@ import React from 'react';
 import compose from 'recompose/compose';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
-import {getComponent} from '../common/Constants';
+import {getComponent} from './Constants';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import Box from '@material-ui/core/Box';
 import moment from 'moment';
 import {apiLiveBars} from '../../utils/ApiFetch';
+import CircularProgress from '@material-ui/core/CircularProgress';
+
 import "../../../node_modules/uplot/dist/uPlot.min.css";
 import { withSnackbar } from 'notistack';
 
@@ -126,6 +128,9 @@ class LiveChart extends React.Component {
       latestC: 0,
       startTime: '',
       timeDelay: 0,
+      prevMin: '15',
+      nextMin: '15',
+      loading: false,
     }
     let now = Math.floor(new Date() / 1e3);
     this.bars = [
@@ -173,8 +178,10 @@ class LiveChart extends React.Component {
   }
 
   componentDidMount() {
+    const {width} = this.container.getBoundingClientRect();
     const opt = {
       ...plotOptions,
+      width: width - 32,
       cursor: {
         move: this.onCursorMove,
         dataIdx: this.onCursorIdx,
@@ -194,7 +201,7 @@ class LiveChart extends React.Component {
     }
     this.u = new uPlot(opt, this.bars, this.chartEl);
     const {setRef} = this.props;
-    setRef(this);
+    setRef && setRef(this);
     const ws = getComponent('websocket');
     this.chartID = ws.registerChart(this);
   }
@@ -256,14 +263,16 @@ class LiveChart extends React.Component {
     })
   }
 
-  onPrev15 = () => {
+  onPrevFrame = () => {
+    const {prevMin} = this.state;
     const ts = this.bars[0][0];
-    this.onFetchChart(null, null, ts - 15 * 60);
+    this.onFetchChart(null, null, ts - parseInt(prevMin) * 60);
   }
 
-  onNext15 = () => {
+  onNextFrame = () => {
+    const {nextMin} = this.state;
     const ts = this.bars[0][0];
-    this.onFetchChart(null, null, ts + 15 * 60);
+    this.onFetchChart(null, null, ts + parseInt(nextMin) * 60);
   }
 
   handleChange = (field, e) => {
@@ -310,25 +319,35 @@ class LiveChart extends React.Component {
       sym,
       latestC,
       timeDelay,
-      startTime
+      startTime,
+      loading,
+      prevMin,
+      nextMin,
     } = this.state;
     return (
-      <Paper className={classes.container}>
-        <Box className={classes.title} display="flex" flexDirection="row" alignItems="flex-start" justifyContent="space-between">
-          <Button onClick={this.onPrev15}>{'<<'}</Button>
+      <Paper className={classes.container} ref={el => this.container = el}>
+        <Box className={classes.title} display="flex" flexDirection="row" alignItems="center" justifyContent="space-between">
+          <Button onClick={this.onPrevFrame}>{'<<'}</Button>
+          <TextField
+            value={prevMin}
+            style={{width: 20}}
+            onChange={e => this.handleChange('prevMin', e)}
+          />
           <Button onClick={() => this.onFetchChart()}>{'NOW'}</Button>
-          <Button onClick={this.onNext15}>{'>>'}</Button>
+          <TextField
+            value={nextMin}
+            style={{width: 20}}
+            onChange={e => this.handleChange('nextMin', e)}
+          />
+          <Button onClick={this.onNextFrame}>{'>>'}</Button>
           <TextField
             type="datetime-local"
             value={startTime}
-            InputLabelProps={{
-              shrink: true,
-            }}
             onChange={e => this.handleChange('startTime', e)}
             onBlur={e => this.onTimeChange()}
           />
-          <Typography variant="h6" style={{flexGrow: 1}} align="center">{`${sym} delay ${timeDelay}ms`}</Typography>
-          <Typography variant="h6">{`$${latestC}`}</Typography>
+          {loading && <CircularProgress style={{marginLeft: 16}} size={20}/>}
+          <Typography variant="h6" style={{flexGrow: 1}} align="right">{`${sym} delay ${timeDelay}ms $${latestC}`}</Typography>
         </Box>
         <div className={classes.oneChart} ref={el => this.chartEl = el} />
         <div className={classes.toolTip} ref={el => this.toolTip = el}>

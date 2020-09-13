@@ -26,16 +26,13 @@ import Process from '../process/Process';
 import {apiConstants} from '../../utils/ApiFetch';
 import {setDB} from '../common/Constants';
 import Transactions from '../transaction/Transactions';
-import SideChart from '../charts/SideChart';
 import WSocket from '../common/WSocket';
 import BulkPanel from '../bulk/BulkPanel';
 import MsgBar from '../messages/MsgBar';
 import Messages from '../messages/Messages';
 import TrendOnly from '../trend/TrendOnly';
-import SymProp from '../configs/SymProp';
 import WatchList from '../watchList/WatchList';
-import Suggestions from '../suggestions/Suggestions';
-import Steven from '../wechat/Steven';
+import Manual from '../manual/Manual';
 import Status from '../status/Status';
 import TestPanel from './TestPanel';
 import StatusBar from './StatusBar';
@@ -109,11 +106,6 @@ class Dashboard extends React.Component {
                 <ListItemText primary="Status" />
               </ListItem>
             </Link>
-            <Link to="/suggestions">
-              <ListItem button>
-                <ListItemText primary="Suggestions" />
-              </ListItem>
-            </Link>
             <Link to="/configs">
               <ListItem button>
                 <ListItemText primary="Configs" />
@@ -132,11 +124,6 @@ class Dashboard extends React.Component {
             <Link to="/trend_only">
               <ListItem button>
                 <ListItemText primary="Trend Only" />
-              </ListItem>
-            </Link>
-            <Link to="/sym_prop">
-              <ListItem button>
-                <ListItemText primary="Sym Props" />
               </ListItem>
             </Link>
             <Link to="/triggers">
@@ -159,14 +146,13 @@ class Dashboard extends React.Component {
                 <ListItemText primary="Watch List" />
               </ListItem>
             </Link>
-            <Link to="/steven">
+            <Link to="/manual">
               <ListItem button>
-                <ListItemText primary="Steven" />
+                <ListItemText primary="Manual" />
               </ListItem>
             </Link>
           </List>
           <Divider />
-          <SideChart />
         </Drawer>
         <main className={classes.content}>
           {
@@ -179,7 +165,6 @@ class Dashboard extends React.Component {
             <Container maxWidth="100%" className={classes.container}>
               <Switch>
                 <Route path="/status" component={Status} />
-                <Route path="/suggestions" component={Suggestions} />
                 <Route path="/configs/:id?" component={Configs} />
                 <Route path="/transactions" component={Transactions} />
                 <Route path="/trend" component={Trend} />
@@ -188,9 +173,8 @@ class Dashboard extends React.Component {
                 <Route path="/process" component={Process} />
                 <Route path="/bulk" component={BulkPanel} />
                 <Route path="/messages" component={Messages} />
-                <Route path="/sym_prop/:id?" component={SymProp} />
                 <Route path="/watch_list" component={WatchList} />
-                <Route path="/steven" component={Steven} />
+                <Route path="/manual" component={Manual} />
                 <Route component={Status} />
               </Switch>
             </Container>

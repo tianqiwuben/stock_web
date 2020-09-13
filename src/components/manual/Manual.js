@@ -7,13 +7,15 @@ import Grid from '@material-ui/core/Grid';
 import {connect} from 'react-redux';
 import Paper from '@material-ui/core/Paper';
 import FormControl from '@material-ui/core/FormControl';
-import {apiPostSteven, apiDeleteSteven, apiGetSteven} from '../../utils/ApiFetch';
+import {apiPostManual, apiDeleteManual, apiGetManual} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
 import {registerComponent} from '../common/Constants';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+import Box from '@material-ui/core/Box';
+import Typography from '@material-ui/core/Typography';
 
 import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
@@ -23,9 +25,12 @@ const styles = theme => ({
     margin: theme.spacing(1),
     minWidth: 60,
   },
+  text: {
+    marginLeft: theme.spacing(2),
+  },
 });
 
-class Steven extends React.Component {
+class Manual extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -39,15 +44,15 @@ class Steven extends React.Component {
 
   componentDidMount(){
     this.onFetch();
-    registerComponent('steven', this);
+    registerComponent('manual', this);
   }
 
   componentWillUnmount(){
-    registerComponent('steven', null);
+    registerComponent('manual', null);
   }
 
   onFetch = () => {
-    apiGetSteven().then(resp => {
+    apiGetManual().then(resp => {
       const {enqueueSnackbar} = this.props;
       if (!resp.data.success) {
         enqueueSnackbar(`ERROR: ${resp.data.error}`, {variant: 'error'});
@@ -87,7 +92,7 @@ class Steven extends React.Component {
       if (text !== prevText) {
         const payload = {text, env};
         this.setState({prevText: text});
-        apiPostSteven(payload).then(resp => {
+        apiPostManual(payload).then(resp => {
           const {enqueueSnackbar} = this.props;
           if (!resp.data.success) {
             enqueueSnackbar(`ERROR: ${resp.data.error}`, {variant: 'error'});
@@ -99,7 +104,7 @@ class Steven extends React.Component {
   }
 
   onDeletePos = (sym) => {
-    apiDeleteSteven(sym).then(resp => {
+    apiDeleteManual(sym).then(resp => {
       const {enqueueSnackbar} = this.props;
       if (!resp.data.success) {
         enqueueSnackbar(`ERROR: ${resp.data.error}`, {variant: 'error'});
@@ -123,34 +128,39 @@ class Steven extends React.Component {
       <Grid container spacing={3}>
         <Grid item xs={12} md={12} lg={12}>
           <Paper>
-            <FormControl className={classes.formControl}>
-              <TextField
-                value={text}
-                onChange={this.handleChange}
-                onKeyPress={(ev) => {
-                  if (ev.key === 'Enter') {
-                    this.onSave();
-                  }
-                }}
-              />
-            </FormControl>
-            <Button color="primary" onClick={this.onSave}>
-              SUBMIT
-            </Button>
-            <ToggleButtonGroup
-              size="small"
-              value={env}
-              exclusive
-              onChange={this.changeEnv}
-            >
-              <ToggleButton value="prod">
-                PROD
-              </ToggleButton>
-              <ToggleButton value="paper">
-                PAPER
-              </ToggleButton>
-            </ToggleButtonGroup>
-            <span>Last Sym: {lastSym}</span>
+            <Box display="flex" flexDirection="row" alignItems="center">
+              <FormControl className={classes.formControl}>
+                <TextField
+                  value={text}
+                  onChange={this.handleChange}
+                  onKeyPress={(ev) => {
+                    if (ev.key === 'Enter') {
+                      this.onSave();
+                    }
+                  }}
+                />
+              </FormControl>
+              <Button color="primary" onClick={this.onSave}>
+                SUBMIT
+              </Button>
+              <ToggleButtonGroup
+                size="small"
+                value={env}
+                exclusive
+                onChange={this.changeEnv}
+              >
+                <ToggleButton value="prod">
+                  PROD
+                </ToggleButton>
+                <ToggleButton value="paper">
+                  PAPER
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <Typography className={classes.text} variant="body">Last Sym: {lastSym}</Typography>
+              <Typography className={classes.text} variant="body">AAPL 500;</Typography>
+              <Typography className={classes.text} variant="body">100.1 99.5;</Typography>
+              <Typography className={classes.text} variant="body">AAPL 99;</Typography>
+            </Box>
           </Paper>
         </Grid>
         {
@@ -191,4 +201,4 @@ export default compose(
   withStyles(styles),
   connect(mapStateToProps),
   withSnackbar
-)(Steven);
+)(Manual);

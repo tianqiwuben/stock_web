@@ -3,7 +3,7 @@ export const StrategyDB = {};
 
 export const SymList = [];
 
-const COLORS = ['black', 'teal', 'purple', 'orange', 'maroon', 'pink', 'olive', 'red'];
+const COLORS = ['white', 'teal', 'purple', 'orange', 'maroon', 'pink', 'olive', 'red'];
 
 const colorMap = {idx: 0};
 

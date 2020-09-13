@@ -4,7 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 
 import {connect} from 'react-redux';
-
+import SettingsIcon from '@material-ui/icons/Settings';
 import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import Table from '@material-ui/core/Table';
@@ -25,11 +25,13 @@ import Tooltip from '@material-ui/core/Tooltip';
 import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
 import {apiResolverStatus, apiResolverCommand} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
-import LiveChart from '../suggestions/LiveChart';
+import LiveChart from '../common/LiveChart';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
-
+import {
+  Link,
+} from "react-router-dom";
 
 const styles = theme => ({
   formControl: {
@@ -129,6 +131,7 @@ class Status extends React.Component {
   }
 
   onSelectSym = (pos) => {
+    console.log('onSelectSym', pos);
     if (this.symStatus) {
       this.symStatus.onSelectSym(pos.sym, pos.trade_price);
     }
@@ -227,7 +230,6 @@ class Status extends React.Component {
                   TEST
                 </ToggleButton>
               </ToggleButtonGroup>
-              <Button onClick={() => this.liveChartSetSym('SPY')}>SHOW SPY</Button>
               <Typography variant="body">
                 {`Profit: $${pl} (${pl_pct}%)`}
               </Typography>
@@ -237,6 +239,7 @@ class Status extends React.Component {
               <Typography variant="body">
                 {`available_quota: ${aq}`}
               </Typography>
+              <Button onClick={() => this.liveChartSetSym('SPY')}>SHOW SPY</Button>
               <FormGroup row>
                 <FormControlLabel
                   control={<Switch checked={autoShow} color="primary" onChange={this.changeAutoShow}/>}
@@ -268,7 +271,7 @@ class Status extends React.Component {
                   <TableCell>Entry Ts</TableCell>
                   <TableCell>Cost / Now</TableCell>
                   <TableCell>PL</TableCell>
-                  <TableCell width="10%">Actions</TableCell>
+                  <TableCell width="15%">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -276,8 +279,8 @@ class Status extends React.Component {
                   pm.map(pos => {
                     const mm = moment.utc(Date.now() - pos.action_ts * 1000).format('mm:ss');
                     return(
-                      <TableRow key={`${pos.sym}${pos.strategy}`}>
-                        <TableCell onClick={() => this.onSelectSym(pos)}>{pos.sym}</TableCell>
+                      <TableRow key={`${pos.sym}${pos.strategy}`} onClick={() => this.onSelectSym(pos)}>
+                        <TableCell>{pos.sym}</TableCell>
                         <TableCell>{pos.strategy}</TableCell>
                         <TableCell>{`${pos.acc_quota} / ${pos.sym_quota} / ${pos.shares} (${pos.action_str === 'buy_short' ? '-' : '+'})`}</TableCell>
                         <TableCell>{`${pos.action_ts_str} (${mm})`}</TableCell>
@@ -291,13 +294,22 @@ class Status extends React.Component {
                           }
                         </TableCell>
                         <TableCell>
+                          <Link className={classes.actionIcon} to={`/configs/${pos.sym}`} target="_blank">
+                            <SettingsIcon />
+                          </Link>
                           <Tooltip title="Flatten">
-                            <span className={classes.actionIcon} onClick={() => {this.onFlatten(pos)}}>
+                            <span className={classes.actionIcon} onClick={(e) => {
+                              this.onFlatten(pos);
+                              e.stopPropagation();
+                            }}>
                               <HighlightOffIcon />
                             </span>
                           </Tooltip>
                           <Tooltip title="Flatten Half">
-                            <span className={classes.actionIcon} onClick={() => {this.onFlatten(pos, true)}}>
+                            <span className={classes.actionIcon} onClick={(e) => {
+                              this.onFlatten(pos, true)
+                              e.stopPropagation();
+                            }}>
                               <RemoveCircleOutlineIcon />
                             </span>
                           </Tooltip>
