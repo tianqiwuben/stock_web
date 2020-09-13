@@ -26,6 +26,9 @@ import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
 import {apiResolverStatus, apiResolverCommand} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
 import LiveChart from '../suggestions/LiveChart';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
 
 
 const styles = theme => ({
@@ -54,16 +57,18 @@ class Status extends React.Component {
       pm: [],
       pl: '',
       pl_pct: '',
+      autoShow: false,
     }
     this.prices = {};
+    this.chartSym = null;
   }
 
   componentDidMount() {
     registerComponent('status', this);
     this.onFetch();
     this.refreshInterval = setInterval(this.refreshPrices, 3000);
-    const {width} = this.paperEl.getBoundingClientRect();
-    this.liveChart.setWidth(width)
+    const {width} = this.chartEl.getBoundingClientRect();
+    this.liveChart.setWidth(width - 32)
   }
 
   componentWillMount() {
@@ -72,9 +77,15 @@ class Status extends React.Component {
   }
 
   onStatusPush = (data_env, payload) => {
-    const {env} = this.state;
+    const {env, autoShow} = this.state;
     if (data_env === env) {
       this.setState(payload, this.subscribePrice);
+      if (env !== 'test' && autoShow && payload.pm.length > 0) {
+        const lastPos = payload.pm[payload.pm.length - 1];
+        if (this.chartSym !== lastPos.sym) {
+          this.onSelectSym(lastPos);
+        }
+      }
     }
   }
 
@@ -123,6 +134,7 @@ class Status extends React.Component {
     }
     if (this.liveChart) {
       this.liveChart.onFetchChart(pos.sym, pos.action_ts)
+      this.chartSym = pos.sym;
     }
   }
 
@@ -178,6 +190,11 @@ class Status extends React.Component {
     })
   }
 
+  changeAutoShow = () => {
+    const {autoShow} = this.state;
+    this.setState({autoShow: !autoShow});
+  }
+
   render() {
     const {classes} = this.props;
     const {
@@ -187,11 +204,12 @@ class Status extends React.Component {
       pm,
       pl,
       pl_pct,
+      autoShow,
     } = this.state;
     return (
       <Grid container spacing={2}>
         <Grid item xs={12} md={12} lg={12}>
-          <Paper ref={el => this.paperEl = el}>
+          <Paper>
             <Box display="flex" flexDirection="row" alignItems="center" justifyContent="space-between">
               <ToggleButtonGroup
                 size="small"
@@ -219,6 +237,12 @@ class Status extends React.Component {
               <Typography variant="body">
                 {`available_quota: ${aq}`}
               </Typography>
+              <FormGroup row>
+                <FormControlLabel
+                  control={<Switch checked={autoShow} color="primary" onChange={this.changeAutoShow}/>}
+                  label="AutoShowChart"
+                />
+              </FormGroup>
               {
                 (env === 'prod' || env === 'paper') &&
                 <Button onClick={this.flattenAll}>FLATTEN ALL</Button>
@@ -230,7 +254,7 @@ class Status extends React.Component {
             </Box>
           </Paper>
         </Grid>
-        <Grid item xs={12} md={12} lg={12}>
+        <Grid item xs={12} md={12} lg={12} ref={el => this.chartEl = el}>
           <LiveChart setRef={this.setLiveChart} />
         </Grid>
         <Grid item xs={12} md={12} lg={12}>

@@ -1,6 +1,5 @@
 import React from 'react';
 import compose from 'recompose/compose';
-import clsx from 'clsx';
 import { withStyles } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Drawer from '@material-ui/core/Drawer';
@@ -13,7 +12,6 @@ import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
 import Container from '@material-ui/core/Container';
 import MenuIcon from '@material-ui/icons/Menu';
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Box from '@material-ui/core/Box';
 import Trend from '../trend/Trend';
@@ -42,62 +40,17 @@ import Status from '../status/Status';
 import TestPanel from './TestPanel';
 import StatusBar from './StatusBar';
 
-const drawerWidth = 320;
-
 const styles = theme => ({
   root: {
     display: 'flex',
   },
-  appBar: {
-    transition: theme.transitions.create(['margin', 'width'], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-  },
-  appBarShift: {
-    width: `calc(100% - ${drawerWidth}px)`,
-    marginLeft: drawerWidth,
-    transition: theme.transitions.create(['margin', 'width'], {
-      easing: theme.transitions.easing.easeOut,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-  },
-  menuButton: {
-    marginRight: theme.spacing(2),
-  },
-  hide: {
-    display: 'none',
-  },
   drawer: {
-    width: drawerWidth,
-    flexShrink: 0,
-  },
-  drawerPaper: {
-    width: drawerWidth,
-  },
-  drawerHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: theme.spacing(0, 1),
-    // necessary for content to be below app bar
-    ...theme.mixins.toolbar,
-    justifyContent: 'flex-end',
+    width: 240,
   },
   content: {
     flexGrow: 1,
-    padding: theme.spacing(3),
-    transition: theme.transitions.create('margin', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-    marginLeft: -drawerWidth,
-  },
-  contentShift: {
-    transition: theme.transitions.create('margin', {
-      easing: theme.transitions.easing.easeOut,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-    marginLeft: 0,
+    paddingTop: theme.spacing(10),
+    paddingBottom: theme.spacing(3),
   },
 });
 
@@ -127,14 +80,13 @@ class Dashboard extends React.Component {
     return (
       <div className={classes.root}>
         <CssBaseline />
-        <AppBar position="fixed" className={clsx(classes.appBar, open && classes.appBarShift)}>
-          <Toolbar className={classes.toolbar}>
+        <AppBar>
+          <Toolbar>
             <IconButton
               edge="start"
               color="inherit"
               aria-label="open drawer"
               onClick={this.handleDrawerOpen}
-              className={clsx(classes.menuButton, open && classes.hide)}
             >
               <MenuIcon />
             </IconButton>
@@ -143,21 +95,15 @@ class Dashboard extends React.Component {
           </Toolbar>
         </AppBar>
         <Drawer
-          variant="persistent"
           anchor="left"
-          className={classes.drawer}
-          classes={{
-            paper: clsx(classes.drawerPaper),
-          }}
           open={open}
+          onClose={this.handleDrawerOpen}
         >
-          <div className={classes.drawerHeader}>
-            <IconButton onClick={this.handleDrawerOpen}>
-              <ChevronLeftIcon />
-            </IconButton>
-          </div>
-          <Divider />
-          <List>
+          <List
+            className={classes.drawer}
+            onClick={this.handleDrawerOpen}
+            onKeyDown={this.handleDrawerOpen}
+          >
             <Link to="/status">
               <ListItem button>
                 <ListItemText primary="Status" />
@@ -222,10 +168,7 @@ class Dashboard extends React.Component {
           <Divider />
           <SideChart />
         </Drawer>
-        <main className={clsx(classes.content, {
-          [classes.contentShift]: open,
-        })}>
-          <div className={classes.drawerHeader} />
+        <main className={classes.content}>
           {
             loading ?
             <Box display="flex" flexDirection="column" justifyContent="space-around" alignItems="center" height="100%">

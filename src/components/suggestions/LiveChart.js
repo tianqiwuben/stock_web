@@ -92,7 +92,7 @@ const plotOptions = {
         stroke: '#aaa',
         dash: [1, 8],
       },
-      incrs: [60],
+      incrs: [1, 60],
     },
     {
       scale: 'v',
@@ -115,13 +115,6 @@ const plotOptions = {
         show: false,
       },
     }
-  ],
-  plugins: [
-    {
-      hooks: {
-        drawClear: drawV,
-      },
-    },
   ],
 }
 
@@ -165,13 +158,39 @@ class LiveChart extends React.Component {
     return(idx);
   }
 
+  drawHighlight = (u) => {
+    if (this.highlightIdx) {
+      const centerX = u.valToPos(this.highlightIdx, 'x', true);
+      const c = u.data[2][this.highlightIdx];
+      const centerY = u.valToPos(c, '$', true);
+      u.ctx.beginPath();
+      u.ctx.strokeStyle = "red";
+      u.ctx.arc(centerX, centerY, 4, 0, 2 * Math.PI);
+      u.ctx.fillStyle = "white";
+      u.ctx.fill();
+      u.ctx.stroke();
+    }
+  }
+
   componentDidMount() {
     const opt = {
       ...plotOptions,
       cursor: {
         move: this.onCursorMove,
         dataIdx: this.onCursorIdx,
-      }
+      },
+      plugins: [
+        {
+          hooks: {
+            drawClear: drawV,
+          },
+        },
+        {
+          hooks: {
+            draw: this.drawHighlight,
+          },
+        },
+      ],
     }
     this.u = new uPlot(opt, this.bars, this.chartEl);
     const {setRef} = this.props;
@@ -222,6 +241,7 @@ class LiveChart extends React.Component {
           loading: false,
         });
         this.bars = resp.data.payload.data;
+        this.highlightIdx = resp.data.payload.highlight_idx;
         if (this.u) {
           this.u.setData(this.bars);
         }
@@ -265,6 +285,12 @@ class LiveChart extends React.Component {
       this.bars[0].push(bar.ts);
       this.bars[1].push(bar.v);
       this.bars[2].push(bar.c);
+      if (this.highlightIdx) {
+        this.highlightIdx -= 1;
+        if (this.highlightIdx < 0) {
+          this.highlightIdx = null;
+        }
+      }
       if (this.u) {
         this.u.setData(this.bars);
       }
@@ -289,7 +315,9 @@ class LiveChart extends React.Component {
     return (
       <Paper className={classes.container}>
         <Box className={classes.title} display="flex" flexDirection="row" alignItems="flex-start" justifyContent="space-between">
-          <Typography variant="h6" style={{flexGrow: 1}}>{`${sym} $${latestC} delay ${timeDelay}ms`}</Typography>
+          <Button onClick={this.onPrev15}>{'<<'}</Button>
+          <Button onClick={() => this.onFetchChart()}>{'NOW'}</Button>
+          <Button onClick={this.onNext15}>{'>>'}</Button>
           <TextField
             type="datetime-local"
             value={startTime}
@@ -299,9 +327,8 @@ class LiveChart extends React.Component {
             onChange={e => this.handleChange('startTime', e)}
             onBlur={e => this.onTimeChange()}
           />
-          <Button onClick={this.onPrev15}>{'<<'}</Button>
-          <Button onClick={() => this.onFetchChart()}>{'NOW'}</Button>
-          <Button onClick={this.onNext15}>{'>>'}</Button>
+          <Typography variant="h6" style={{flexGrow: 1}} align="center">{`${sym} delay ${timeDelay}ms`}</Typography>
+          <Typography variant="h6">{`$${latestC}`}</Typography>
         </Box>
         <div className={classes.oneChart} ref={el => this.chartEl = el} />
         <div className={classes.toolTip} ref={el => this.toolTip = el}>
