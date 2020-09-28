@@ -43,13 +43,17 @@ class WSocket extends React.Component {
       }
     }
     const msg = {type: 'listen', syms: [...new Set(syms)]};
-    this.ws.send(JSON.stringify(msg));
+    if (this.ws) {
+      this.ws.send(JSON.stringify(msg));
+    }
   }
 
   subscribePrices = list => {
     const msg = {type: 'subPrices', list};
     this.subPrices = list;
-    this.ws.send(JSON.stringify(msg));
+    if (this.ws) {
+      this.ws.send(JSON.stringify(msg));
+    }
   }
 
   connectWs = () => {
@@ -61,6 +65,7 @@ class WSocket extends React.Component {
       }
       this.ws.onclose = (e) => {
         this.interval = setInterval(this.connectWs, 10000);
+        this.ws = null;
       }
       this.sendSubscribeStock();
       if (this.subPrices) {

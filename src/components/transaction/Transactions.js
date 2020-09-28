@@ -111,7 +111,7 @@ class Transactions extends React.Component {
     return (
       <div>
         <Paper>
-            <LiveChart setRef={el => this.liveChart = el}/>
+            <LiveChart setRef={el => this.liveChart = el} env={trade_env}/>
         </Paper>
         <Grid container spacing={3} style={{overflow: 'auto', maxHeight: '47vh', marginTop: 12}}>
           <Grid item xs={12} md={12} lg={12}>
@@ -121,6 +121,12 @@ class Transactions extends React.Component {
                     label="Symbol"
                     value={sym}
                     onChange={e => this.handleChange('sym', e)}
+                    onKeyPress={(ev) => {
+                      if (ev.key === 'Enter') {
+                        this.onFetch();
+                        ev.preventDefault();
+                      }
+                    }}
                   />
                 </FormControl>
                 <FormControl className={classes.formControl}>
@@ -217,7 +223,9 @@ class Transactions extends React.Component {
                   {records.map((row) => (
                     <TableRow key={row.id} selected={row.overwrite}>
                       <TableCell>
-                        {row.sym}
+                        <Link to={`/configs/${row.sym}`} target="_blank">
+                          {row.sym}
+                        </Link>
                       </TableCell>
                       <TableCell>
                         <span style={{color: getStrategyColor(row.strategy)}}>

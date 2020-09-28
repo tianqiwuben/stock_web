@@ -10,6 +10,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import List from '@material-ui/core/List';
 import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
+import Button from '@material-ui/core/Button';
 import Container from '@material-ui/core/Container';
 import MenuIcon from '@material-ui/icons/Menu';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -36,6 +37,7 @@ import Manual from '../manual/Manual';
 import Status from '../status/Status';
 import TestPanel from './TestPanel';
 import StatusBar from './StatusBar';
+import {getComponent} from '../common/Constants';
 
 const styles = theme => ({
   root: {
@@ -71,6 +73,16 @@ class Dashboard extends React.Component {
     this.setState({open: !this.state.open});
   }
 
+  onOpenTestPanel = () => {
+    const tp = getComponent('testPanel');
+    if (tp) {
+      tp.popWithOptions({
+        sym: 'ALL_SYMS',
+        mode: 'simulate',
+      })
+    }
+  }
+
   render() {
     const {classes} = this.props;
     const {open, loading} = this.state;
@@ -88,6 +100,8 @@ class Dashboard extends React.Component {
               <MenuIcon />
             </IconButton>
             <StatusBar />
+            <Button onClick={this.onOpenTestPanel}>TEST</Button>
+            <div style={{flex: 1}} />
             <MsgBar />
           </Toolbar>
         </AppBar>

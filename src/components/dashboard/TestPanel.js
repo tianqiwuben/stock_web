@@ -5,6 +5,7 @@ import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import Select from '@material-ui/core/Select';
 import {connect} from 'react-redux';
+import moment from 'moment';
 
 import FormControl from '@material-ui/core/FormControl';
 import {registerComponent, StrategyDB} from '../common/Constants';
@@ -21,15 +22,19 @@ import { withSnackbar } from 'notistack';
 
 const styles = theme => ({
   content: {
-    maxWidth: 600,
+    maxWidth: 620,
   },
   formControl: {
     margin: theme.spacing(1),
-    width: 160,
+    width: 170,
   },
   longForm: {
     margin: theme.spacing(1),
-    width: 250,
+    width: 220,
+  },
+  secondForm: {
+    margin: theme.spacing(1),
+    width: 70,
   },
   row: {
     '& > *': {
@@ -48,7 +53,7 @@ class TestPanel extends React.Component {
       strategy: 'all',
       startTime: '',
       endTime: '',
-      mode: 'simulate',
+      second: '',
     }
   }
 
@@ -58,6 +63,7 @@ class TestPanel extends React.Component {
 
   componentDidMount(){
     registerComponent('testPanel', this);
+    this.onToday();
   }
 
   componentWillUnmount(){
@@ -76,29 +82,39 @@ class TestPanel extends React.Component {
     const {
       sym,
       strategy,
-      mode,
       startTime,
       endTime,
+      second,
     } = this.state;
     const {
       enqueueSnackbar,
       dispatchUpdateProgress,
     } = this.props
     const payload = {
-      strategy: strategy,
-      activity: mode,
+      strategy,
       startTime,
       endTime,
-      sym,
+      second,
+      syms: sym,
     }
     apiTestConfig(payload).then(resp => {
       if(resp.data && resp.data.success) {
-        enqueueSnackbar(`${sym} Test Start`);
+        enqueueSnackbar(`${sym.substring(0,14)} Test Start`);
       } else {
         enqueueSnackbar(resp.data.error, {variant: 'error'});
       }
       dispatchUpdateProgress(`test_${sym}_${strategy}`, null);
     })
+  }
+
+  onToday = () => {
+    const now = moment();
+    now.set('hour', 6);
+    now.set('minute', 20);
+    const st = now.format('YYYY-MM-DDTHH:mm');
+    now.set('hour', 13).set('minute', 5);
+    const ed = now.format('YYYY-MM-DDTHH:mm');
+    this.setState({startTime: st, endTime: ed});
   }
 
   render() {
@@ -109,13 +125,13 @@ class TestPanel extends React.Component {
       open,
       startTime,
       endTime,
-      mode,
+      second,
     } = this.state;
     if (!open) {
       return null;
     }
     return (
-      <Dialog open onClose={this.onClose}>
+      <Dialog open onClose={this.onClose} maxWidth="md">
         <DialogContent className={classes.content}>
           <DialogContentText>Config Test/Simulation</DialogContentText>
           <FormControl className={classes.formControl}>
@@ -133,16 +149,6 @@ class TestPanel extends React.Component {
                   <MenuItem key={key} value={key}>{key}</MenuItem>
                 ))
               }
-            </Select>
-          </FormControl>
-          <FormControl className={classes.formControl}>
-            <InputLabel>Mode</InputLabel>
-            <Select
-              value={mode}
-              onChange={e => this.handleChange('mode', e)}
-            >
-              <MenuItem value={'simulate'}>Simulate</MenuItem>
-              <MenuItem value={'test'}>Test</MenuItem>
             </Select>
           </FormControl>
           <FormControl className={classes.longForm}>
@@ -167,9 +173,19 @@ class TestPanel extends React.Component {
               onChange={e => this.handleChange('endTime', e)}
             />
           </FormControl>
+          <FormControl className={classes.secondForm}>
+            <TextField
+              label="Second"
+              value={second}
+              onChange={e => this.handleChange('second', e)}
+            />
+          </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={this.onClose} color="primary">
+          <Button onClick={this.onToday}>
+            Today
+          </Button>
+          <Button onClick={this.onClose} color="secondary">
             Cancel
           </Button>
           <Button onClick={this.onStart} color="primary">

@@ -35,7 +35,7 @@ class Manual extends React.Component {
     super(props);
     this.state = {
       text: '',
-      env: 'prod',
+      env: 'paper',
       prevText: '',
       lastSym: '',
       positions: [],
@@ -82,16 +82,17 @@ class Manual extends React.Component {
     })
   }
 
-  onSave = () => {
+  onSave = (sym = null) => {
     const {
       text,
       prevText,
       env,
     } = this.state;
-    if (text && text.length > 0) {
-      if (text !== prevText) {
-        const payload = {text, env};
-        this.setState({prevText: text});
+    const newTxt = sym || text;
+    if (newTxt && newTxt.length > 0) {
+      if (newTxt !== prevText) {
+        const payload = {text: newTxt, env};
+        this.setState({prevText: newTxt});
         apiPostManual(payload).then(resp => {
           const {enqueueSnackbar} = this.props;
           if (!resp.data.success) {
@@ -140,7 +141,7 @@ class Manual extends React.Component {
                   }}
                 />
               </FormControl>
-              <Button color="primary" onClick={this.onSave}>
+              <Button color="primary" onClick={() => this.onSave()}>
                 SUBMIT
               </Button>
               <ToggleButtonGroup
@@ -181,6 +182,7 @@ class Manual extends React.Component {
                   <ListItem>
                     <ListItemText>
                       <Button color="secondary" onClick={() => this.onDeletePos(pos['sym'])}>DELETE</Button>
+                      <Button onClick={() => this.onSave(pos['sym'])}>FLATTEN</Button>
                     </ListItemText>
                   </ListItem>
                 </List>

@@ -14,9 +14,6 @@ import {registerComponent} from '../common/Constants';
 
 
 const styles = theme => ({
-  container: {
-    flexGrow: 1,
-  }
 });
 
 const status2color = {
@@ -29,6 +26,7 @@ const subsysInstances = [
   'account_streaming',
   'aggs_bar',
   'second_bar_streaming', 
+//  'option_streaming',
   'sidekiq_transaction_worker',
   'strategy_resolver_prod',
   'strategy_resolver_paper',
@@ -87,7 +85,6 @@ class StatusBar extends React.Component {
   }
 
   render() {
-    const {classes} = this.props;
     const {
       dropDownOpen,
       anchorEl,
@@ -96,7 +93,7 @@ class StatusBar extends React.Component {
       checkTs,
     } = this.state;
     return (
-      <div className={classes.container}>
+      <div>
         <Button onClick={this.onClickIcon}
           startIcon={<FiberManualRecordIcon color={status2color[status]}/>}
         >

@@ -12,7 +12,7 @@ import FormControl from '@material-ui/core/FormControl';
 import Grid from '@material-ui/core/Grid';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
-import {apiGetList, apiUpdateList} from '../../utils/ApiFetch';
+import {apiGetList, apiUpdateList, apiStreamingListAction} from '../../utils/ApiFetch';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import { withSnackbar } from 'notistack';
 import IconButton from '@material-ui/core/IconButton';
@@ -74,6 +74,20 @@ class StreamList extends React.Component {
     })
   }
 
+  saveToRedis = () => {
+    const payload = {
+      perform_action: 'save_to_redis',
+    };
+    apiStreamingListAction(payload).then(resp => {
+      const {enqueueSnackbar} = this.props;
+      if (resp.data.success) {
+        enqueueSnackbar(`save_to_redis Success`, {variant: 'success'});
+      } else {
+        enqueueSnackbar(`ERROR: ${resp.data.error}`, {variant: 'error'});
+      }
+    })
+  }
+
   render() {
     const {classes, list_name} = this.props;
     const {
@@ -121,6 +135,9 @@ class StreamList extends React.Component {
             }
             <ListItem>
               <ListItemText primary={`Total ${matchCount}`} />
+              <ListItemSecondaryAction>
+                <Button onClick={this.saveToRedis}>SAVE REDIS</Button>
+              </ListItemSecondaryAction>
             </ListItem>
           </List>
         </Paper>

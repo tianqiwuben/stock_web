@@ -90,6 +90,8 @@ export const apiGetList = query => callAPI('/watch_list', 'get', query);
 
 export const apiUpdateList = payload => callAPI('/watch_list', 'post', payload);
 
+export const apiStreamingListAction = (payload) => callAPI('/watch_list/streaming_watch_list', 'post', payload);
+
 export const apiGetSuggestions = query => callAPI('/suggestions', 'get', query);
 
 export const apiPostManual = query => callAPI('/follower/manual', 'post', query);

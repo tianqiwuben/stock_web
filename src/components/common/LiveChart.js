@@ -10,6 +10,9 @@ import Box from '@material-ui/core/Box';
 import moment from 'moment';
 import {apiLiveBars} from '../../utils/ApiFetch';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
 
 import "../../../node_modules/uplot/dist/uPlot.min.css";
 import { withSnackbar } from 'notistack';
@@ -35,6 +38,9 @@ const styles = theme => ({
     padding: theme.spacing(1),
     background: '#222',
     pointerEvents: 'none',
+  },
+  acceptFeeding: {
+    marginLeft: theme.spacing(2),
   },
 });
 
@@ -131,6 +137,7 @@ class LiveChart extends React.Component {
       prevMin: '15',
       nextMin: '15',
       loading: false,
+      acceptFeeding: true,
     }
     let now = Math.floor(new Date() / 1e3);
     this.bars = [
@@ -165,15 +172,27 @@ class LiveChart extends React.Component {
 
   drawHighlight = (u) => {
     if (this.highlightIdx) {
-      const centerX = u.valToPos(this.highlightIdx, 'x', true);
-      const c = u.data[2][this.highlightIdx];
-      const centerY = u.valToPos(c, '$', true);
-      u.ctx.beginPath();
-      u.ctx.strokeStyle = "red";
-      u.ctx.arc(centerX, centerY, 4, 0, 2 * Math.PI);
-      u.ctx.fillStyle = "white";
-      u.ctx.fill();
-      u.ctx.stroke();
+      this.highlightIdx.forEach(hl => {
+        if (hl[0] >= 0) {
+          const centerX = u.valToPos(hl[0], 'x', true);
+          const c = u.data[2][hl[0]];
+          const centerY = u.valToPos(c, '$', true);
+          u.ctx.beginPath();
+          if (hl[1]) {
+            u.ctx.moveTo(centerX, centerY);
+            u.ctx.lineTo(centerX - 10, centerY + 12);
+            u.ctx.lineTo(centerX + 10, centerY + 12);
+            u.ctx.fillStyle = "#05f29b";
+            u.ctx.fill();
+          } else {
+            u.ctx.moveTo(centerX, centerY);
+            u.ctx.lineTo(centerX - 10, centerY - 12);
+            u.ctx.lineTo(centerX + 10, centerY - 12);
+            u.ctx.fillStyle = "#ff7777";
+            u.ctx.fill();
+          }
+        }
+      })
     }
   }
 
@@ -227,13 +246,14 @@ class LiveChart extends React.Component {
     const {
       sym,
     } = this.state;
-    const {enqueueSnackbar} = this.props;
+    const {enqueueSnackbar, env} = this.props;
     this.setState({
       loading: true,
     })
     const s = newSym || sym;
     const query = {
       sym: s,
+      env,
     }
     if (ts_lte) {
       query['ts_lte'] = ts_lte;
@@ -285,9 +305,14 @@ class LiveChart extends React.Component {
     this.onFetchChart(null, null, t);
   }
 
+  changeAcceptFeed = () => {
+    const {acceptFeeding} = this.state;
+    this.setState({acceptFeeding: !acceptFeeding});
+  }
+
   onFeedBar = (bar) => {
-    const {sym} = this.state;
-    if (bar.sym === sym) {
+    const {sym, acceptFeeding} = this.state;
+    if (acceptFeeding && bar.sym === sym) {
       this.bars[0].shift();
       this.bars[1].shift();
       this.bars[2].shift();
@@ -295,10 +320,9 @@ class LiveChart extends React.Component {
       this.bars[1].push(bar.v);
       this.bars[2].push(bar.c);
       if (this.highlightIdx) {
-        this.highlightIdx -= 1;
-        if (this.highlightIdx < 0) {
-          this.highlightIdx = null;
-        }
+        this.highlightIdx.forEach(hl => {
+          hl[0] -= 1;
+        });
       }
       if (this.u) {
         this.u.setData(this.bars);
@@ -323,6 +347,7 @@ class LiveChart extends React.Component {
       loading,
       prevMin,
       nextMin,
+      acceptFeeding,
     } = this.state;
     return (
       <Paper className={classes.container} ref={el => this.container = el}>
@@ -346,6 +371,12 @@ class LiveChart extends React.Component {
             onChange={e => this.handleChange('startTime', e)}
             onBlur={e => this.onTimeChange()}
           />
+          <FormGroup row className={classes.acceptFeeding}>
+            <FormControlLabel
+              control={<Switch checked={acceptFeeding} color="primary" onChange={this.changeAcceptFeed}/>}
+              label="Accept Feeding"
+            />
+          </FormGroup>
           {loading && <CircularProgress style={{marginLeft: 16}} size={20}/>}
           <Typography variant="h6" style={{flexGrow: 1}} align="right">{`${sym} delay ${timeDelay}ms $${latestC}`}</Typography>
         </Box>

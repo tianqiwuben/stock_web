@@ -16,9 +16,13 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
 import SymStatus from './SymStatus';
-import Box from '@material-ui/core/Box';
+import TextField from '@material-ui/core/TextField';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+import Divider from '@material-ui/core/Divider';
 import {registerComponent, getComponent} from '../common/Constants';
 import HighlightOffIcon from '@material-ui/icons/HighlightOff';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -32,6 +36,20 @@ import Switch from '@material-ui/core/Switch';
 import {
   Link,
 } from "react-router-dom";
+
+const secName = [
+  'Technology',
+  'Consumer',
+  'Industrials',
+  'Financial',
+  'Health',
+  'Materials',
+  'Communication',
+  'Energy',
+  'Utilities',
+  'R_Estate',
+  'Defensive',
+]
 
 const styles = theme => ({
   formControl: {
@@ -59,7 +77,8 @@ class Status extends React.Component {
       pm: [],
       pl: '',
       pl_pct: '',
-      autoShow: false,
+      autoShow: true,
+      sector: '0',
     }
     this.prices = {};
     this.chartSym = null;
@@ -131,7 +150,6 @@ class Status extends React.Component {
   }
 
   onSelectSym = (pos) => {
-    console.log('onSelectSym', pos);
     if (this.symStatus) {
       this.symStatus.onSelectSym(pos.sym, pos.trade_price);
     }
@@ -180,7 +198,8 @@ class Status extends React.Component {
     const payload = {
       env,
       command: {
-        cmd: 'flatten',
+        cmd: 'manual_action',
+        action_type: 'flatten',
         sym: pos.sym,
         strategy: pos.strategy,
         sym_quota: isHalf ? Math.floor(pos.sym_quota / 2) : pos.sym_quota,
@@ -191,6 +210,12 @@ class Status extends React.Component {
         enqueueSnackbar(resp.data.error, {variant: 'error'})
       }
     })
+  }
+
+  handleChange = (field, e) => {
+    this.setState({
+      [field]: e.target.value,
+    });
   }
 
   changeAutoShow = () => {
@@ -208,121 +233,176 @@ class Status extends React.Component {
       pl,
       pl_pct,
       autoShow,
+      sector,
     } = this.state;
+    let secB = 'SHOW ';
+    if (parseInt(sector) <= 10) {
+      secB += secName[parseInt(sector)];
+    } else {
+      secB += 'SEC';
+    }
     return (
       <Grid container spacing={2}>
-        <Grid item xs={12} md={12} lg={12}>
-          <Paper>
-            <Box display="flex" flexDirection="row" alignItems="center" justifyContent="space-between">
-              <ToggleButtonGroup
-                size="small"
-                value={env}
-                exclusive
-                onChange={this.changeEnv}
-              >
-                <ToggleButton value="prod">
-                  PROD
-                </ToggleButton>
-                <ToggleButton value="paper">
-                  PAPER
-                </ToggleButton>
-                <ToggleButton value="test">
-                  TEST
-                </ToggleButton>
-              </ToggleButtonGroup>
-              <Typography variant="body">
-                {`Profit: $${pl} (${pl_pct}%)`}
-              </Typography>
-              <Typography variant="body">
-                {`buying_power: $${bp.toFixed(2)}`}
-              </Typography>
-              <Typography variant="body">
-                {`available_quota: ${aq}`}
-              </Typography>
-              <Button onClick={() => this.liveChartSetSym('SPY')}>SHOW SPY</Button>
-              <FormGroup row>
-                <FormControlLabel
-                  control={<Switch checked={autoShow} color="primary" onChange={this.changeAutoShow}/>}
-                  label="AutoShowChart"
+        <Grid container spacing={2} item xs={10}>
+          <Grid item xs={12} md={12} lg={12} ref={el => this.chartEl = el}>
+            <LiveChart setRef={this.setLiveChart} env={env}/>
+          </Grid>
+          <Grid item xs={12} md={12} lg={12}>
+            <TableContainer component={Paper}>
+              <Table className={classes.table} size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Sym</TableCell>
+                    <TableCell>Strategy</TableCell>
+                    <TableCell>Acc / Sym / Shares</TableCell>
+                    <TableCell>Entry Ts</TableCell>
+                    <TableCell>Cost / Now</TableCell>
+                    <TableCell>PL</TableCell>
+                    <TableCell width="15%">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {
+                    pm.map(pos => {
+                      const mm = moment.utc(Date.now() - pos.action_ts * 1000).format('mm:ss');
+                      const priceDiff = this.prices[pos.sym] && (this.prices[pos.sym] - pos.trade_price) * (pos.action_str === 'buy_short' ? -1 : 1);
+                      return(
+                        <TableRow key={`${pos.sym}${pos.strategy}`} onClick={() => this.onSelectSym(pos)}>
+                          <TableCell>{pos.sym}</TableCell>
+                          <TableCell>{pos.strategy}</TableCell>
+                          <TableCell>{`${pos.acc_quota} / ${pos.sym_quota} / ${pos.shares} (${pos.action_str === 'buy_short' ? '-' : '+'})`}</TableCell>
+                          <TableCell>{`${pos.action_ts_str} (${mm})`}</TableCell>
+                          <TableCell>
+                            {`${pos.trade_price} / ${this.prices[pos.sym] || ''}`}
+                          </TableCell>
+                          <TableCell>
+                            {
+                              this.prices[pos.sym] &&
+                              `${(priceDiff / pos.trade_price * 100).toFixed(3)}% $${(priceDiff * pos.shares).toFixed(2)}`
+                            }
+                          </TableCell>
+                          <TableCell>
+                            <Link className={classes.actionIcon} to={`/configs/${pos.sym}`} target="_blank">
+                              <SettingsIcon />
+                            </Link>
+                            <Tooltip title="Flatten">
+                              <span className={classes.actionIcon} onClick={(e) => {
+                                this.onFlatten(pos);
+                                e.stopPropagation();
+                              }}>
+                                <HighlightOffIcon />
+                              </span>
+                            </Tooltip>
+                            <Tooltip title="Flatten Half">
+                              <span className={classes.actionIcon} onClick={(e) => {
+                                this.onFlatten(pos, true)
+                                e.stopPropagation();
+                              }}>
+                                <RemoveCircleOutlineIcon />
+                              </span>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })
+                  }
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Grid>
+          <SymStatus env={env} setRef={this.setSymStatusRef} liveChartSetSym={this.liveChartSetSym}/>
+        </Grid>
+        <Grid item xs={2}>
+          <List component={Paper}>
+            <ListItem>
+              <ListItemText>
+                <ToggleButtonGroup
+                  size="small"
+                  value={env}
+                  exclusive
+                  onChange={this.changeEnv}
+                >
+                  <ToggleButton value="prod">
+                    PROD
+                  </ToggleButton>
+                  <ToggleButton value="paper">
+                    PAPER
+                  </ToggleButton>
+                  <ToggleButton value="test">
+                    TEST
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </ListItemText>
+            </ListItem>
+            <ListItem>
+              <ListItemText>
+                {`$${pl} (${pl_pct}%)`}
+              </ListItemText>
+              <ListItemSecondaryAction>Profit</ListItemSecondaryAction>
+            </ListItem>
+            <ListItem>
+              <ListItemText>
+                {`$${bp.toFixed(2)}`}
+              </ListItemText>
+              <ListItemSecondaryAction>buying_power</ListItemSecondaryAction>
+            </ListItem>
+            <ListItem>
+              <ListItemText>
+                {aq}
+              </ListItemText>
+              <ListItemSecondaryAction>available_quota</ListItemSecondaryAction>
+            </ListItem>
+            <ListItem>
+              <ListItemText>
+                <FormGroup row>
+                  <FormControlLabel
+                    control={<Switch checked={autoShow} color="primary" onChange={this.changeAutoShow}/>}
+                    labelPlacement="start"
+                    label="AutoShowChart"
+                  />
+                </FormGroup>
+              </ListItemText>
+            </ListItem>
+            <Divider />
+            <ListItem>
+              <ListItemText>
+                <Button onClick={() => this.liveChartSetSym('SPY')}>SHOW SPY</Button>
+                <Button onClick={() => this.liveChartSetSym('QQQ')}>SHOW QQQ</Button>
+              </ListItemText>
+            </ListItem>
+            <ListItem>
+              <ListItemText>
+                <Button onClick={() => this.liveChartSetSym(`SEC_${sector}`)}>{secB}</Button>
+              </ListItemText>
+              <ListItemSecondaryAction>
+                <TextField
+                  value={sector}
+                  onChange={e => this.handleChange('sector', e)}
+                  inputProps={{
+                    style: { textAlign: "right" }
+                  }}
+                  style = {{width: 80}}
+                  onKeyPress={(ev) => {
+                    if (ev.key === 'Enter') {
+                      this.liveChartSetSym(`SEC_${sector}`)
+                      ev.preventDefault();
+                    }
+                  }}
                 />
-              </FormGroup>
-              {
-                (env === 'prod' || env === 'paper') &&
-                <Button onClick={this.flattenAll}>FLATTEN ALL</Button>
-              }
-              {
-                (env === 'prod' || env === 'paper') &&
-                <Button onClick={this.flattenExist}>FLATTEN PREVS</Button>
-              }
-            </Box>
-          </Paper>
+              </ListItemSecondaryAction>
+            </ListItem>
+            {
+              (env === 'prod' || env === 'paper') &&
+              <ListItem>
+                <ListItemText>
+                  <Button onClick={this.flattenAll}>FLAT ALL</Button>
+                  <Button onClick={this.flattenExist}>FLAT PREVS</Button>
+                </ListItemText>
+              </ListItem>
+            }
+            <Divider />
+          </List>
         </Grid>
-        <Grid item xs={12} md={12} lg={12} ref={el => this.chartEl = el}>
-          <LiveChart setRef={this.setLiveChart} />
-        </Grid>
-        <Grid item xs={12} md={12} lg={12}>
-          <TableContainer component={Paper}>
-            <Table className={classes.table} size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Sym</TableCell>
-                  <TableCell>Strategy</TableCell>
-                  <TableCell>Acc / Sym / Shares</TableCell>
-                  <TableCell>Entry Ts</TableCell>
-                  <TableCell>Cost / Now</TableCell>
-                  <TableCell>PL</TableCell>
-                  <TableCell width="15%">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {
-                  pm.map(pos => {
-                    const mm = moment.utc(Date.now() - pos.action_ts * 1000).format('mm:ss');
-                    return(
-                      <TableRow key={`${pos.sym}${pos.strategy}`} onClick={() => this.onSelectSym(pos)}>
-                        <TableCell>{pos.sym}</TableCell>
-                        <TableCell>{pos.strategy}</TableCell>
-                        <TableCell>{`${pos.acc_quota} / ${pos.sym_quota} / ${pos.shares} (${pos.action_str === 'buy_short' ? '-' : '+'})`}</TableCell>
-                        <TableCell>{`${pos.action_ts_str} (${mm})`}</TableCell>
-                        <TableCell>
-                          {`${pos.trade_price} / ${this.prices[pos.sym] || ''}`}
-                        </TableCell>
-                        <TableCell>
-                          {
-                            this.prices[pos.sym] &&
-                            `${((this.prices[pos.sym] - pos.trade_price) / pos.trade_price * 100).toFixed(3) * (pos.action_str === 'buy_short' ? -1 : 1)}%`
-                          }
-                        </TableCell>
-                        <TableCell>
-                          <Link className={classes.actionIcon} to={`/configs/${pos.sym}`} target="_blank">
-                            <SettingsIcon />
-                          </Link>
-                          <Tooltip title="Flatten">
-                            <span className={classes.actionIcon} onClick={(e) => {
-                              this.onFlatten(pos);
-                              e.stopPropagation();
-                            }}>
-                              <HighlightOffIcon />
-                            </span>
-                          </Tooltip>
-                          <Tooltip title="Flatten Half">
-                            <span className={classes.actionIcon} onClick={(e) => {
-                              this.onFlatten(pos, true)
-                              e.stopPropagation();
-                            }}>
-                              <RemoveCircleOutlineIcon />
-                            </span>
-                          </Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })
-                }
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Grid>
-        <SymStatus env={env} setRef={this.setSymStatusRef} liveChartSetSym={this.liveChartSetSym}/>
       </Grid>
     );
   }
