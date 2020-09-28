@@ -90,6 +90,9 @@ class SymStatus extends React.Component {
     const {sym} = this.state;
     if (env === payload.env && sym === payload.sym) {
       this.setState(payload);
+      if (this.trendChart) {
+        this.trendChart.drawTrend(payload.trend);
+      }
     }
   }
 
@@ -98,11 +101,10 @@ class SymStatus extends React.Component {
       sym,
       strategies,
       trend,
-      tradePrice,
     } = this.state;
     return (
       <React.Fragment>
-        <TrendChart data={trend} tradePrice={tradePrice}/>
+        <TrendChart setRef={ref => this.trendChart = ref}/>
         <Grid item xs={12} md={4} lg={4}>
           <Paper>
             <List>
@@ -128,6 +130,29 @@ class SymStatus extends React.Component {
                   />
                 </ListItemSecondaryAction>
               </ListItem>
+              {
+                trend &&
+                <React.Fragment>
+                  <ListItem>
+                    <ListItemText>open_c</ListItemText>
+                    <ListItemSecondaryAction>
+                      {trend.open_c}
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText>delta_open</ListItemText>
+                    <ListItemSecondaryAction>
+                      {`${(trend.delta_open * 100).toFixed(2)}%`}
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText>Current Trend</ListItemText>
+                    <ListItemSecondaryAction>
+                      {`Large: ${trend.large.current_trend} Small: ${trend.small.current_trend}`}
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                </React.Fragment>
+              }
             </List>
           </Paper>
         </Grid>

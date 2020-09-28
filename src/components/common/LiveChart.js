@@ -51,13 +51,13 @@ const drawV = (u) => {
     let vol = u.data[1][i];
     let timeAsX = u.valToPos(i,  "x", true);
     let columnWidth  = u.bbox.width / (iMax - iMin);
-    let bodyX = timeAsX - (columnWidth / 2);
+    let bodyX = i === iMin ? timeAsX : timeAsX - (columnWidth / 2);
     let volAsY = u.valToPos(vol, "v", true);
     u.ctx.fillStyle = "#eee"
     u.ctx.fillRect(
       Math.round(bodyX),
       Math.round(volAsY),
-      Math.round(columnWidth),
+      Math.round(i === iMax ? columnWidth / 2 : columnWidth),
       Math.round(vol0AsY - volAsY),
     );
   }
@@ -72,6 +72,9 @@ const plotOptions = {
   scales: {
     x: {
       distr: 2,
+    },
+    v: {
+      range: (up, imin, imax, sk) => [imin, imax * 2],
     },
   },
   series: [

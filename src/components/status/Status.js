@@ -104,7 +104,7 @@ class Status extends React.Component {
       if (env !== 'test' && autoShow && payload.pm.length > 0) {
         const lastPos = payload.pm[payload.pm.length - 1];
         if (this.chartSym !== lastPos.sym) {
-          this.onSelectSym(lastPos);
+          this.onSelectPos(lastPos);
         }
       }
     }
@@ -149,13 +149,24 @@ class Status extends React.Component {
     }
   }
 
-  onSelectSym = (pos) => {
+  onSelectPos = (pos) => {
     if (this.symStatus) {
       this.symStatus.onSelectSym(pos.sym, pos.trade_price);
     }
     if (this.liveChart) {
       this.liveChart.onFetchChart(pos.sym, pos.action_ts)
       this.chartSym = pos.sym;
+    }
+  }
+
+
+  onSelectSym = (sym) => {
+    if (this.symStatus) {
+      this.symStatus.onSelectSym(sym);
+    }
+    if (this.liveChart) {
+      this.liveChart.onFetchChart(sym)
+      this.chartSym = sym;
     }
   }
 
@@ -267,7 +278,7 @@ class Status extends React.Component {
                       const mm = moment.utc(Date.now() - pos.action_ts * 1000).format('mm:ss');
                       const priceDiff = this.prices[pos.sym] && (this.prices[pos.sym] - pos.trade_price) * (pos.action_str === 'buy_short' ? -1 : 1);
                       return(
-                        <TableRow key={`${pos.sym}${pos.strategy}`} onClick={() => this.onSelectSym(pos)}>
+                        <TableRow key={`${pos.sym}${pos.strategy}`} onClick={() => this.onSelectPos(pos)}>
                           <TableCell>{pos.sym}</TableCell>
                           <TableCell>{pos.strategy}</TableCell>
                           <TableCell>{`${pos.acc_quota} / ${pos.sym_quota} / ${pos.shares} (${pos.action_str === 'buy_short' ? '-' : '+'})`}</TableCell>
@@ -366,13 +377,13 @@ class Status extends React.Component {
             <Divider />
             <ListItem>
               <ListItemText>
-                <Button onClick={() => this.liveChartSetSym('SPY')}>SHOW SPY</Button>
-                <Button onClick={() => this.liveChartSetSym('QQQ')}>SHOW QQQ</Button>
+                <Button onClick={() => this.onSelectSym('SPY')}>SHOW SPY</Button>
+                <Button onClick={() => this.onSelectSym('QQQ')}>SHOW QQQ</Button>
               </ListItemText>
             </ListItem>
             <ListItem>
               <ListItemText>
-                <Button onClick={() => this.liveChartSetSym(`SEC_${sector}`)}>{secB}</Button>
+                <Button onClick={() => this.onSelectSym(`SEC_${sector}`)}>{secB}</Button>
               </ListItemText>
               <ListItemSecondaryAction>
                 <TextField
@@ -384,7 +395,7 @@ class Status extends React.Component {
                   style = {{width: 80}}
                   onKeyPress={(ev) => {
                     if (ev.key === 'Enter') {
-                      this.liveChartSetSym(`SEC_${sector}`)
+                      this.onSelectSym(`SEC_${sector}`)
                       ev.preventDefault();
                     }
                   }}
