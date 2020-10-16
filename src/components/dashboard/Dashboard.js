@@ -77,7 +77,6 @@ class Dashboard extends React.Component {
     const tp = getComponent('testPanel');
     if (tp) {
       tp.popWithOptions({
-        sym: 'ALL_SYMS',
         mode: 'simulate',
       })
     }

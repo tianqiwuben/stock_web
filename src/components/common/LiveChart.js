@@ -13,6 +13,9 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
+
 
 import "../../../node_modules/uplot/dist/uPlot.min.css";
 import { withSnackbar } from 'notistack';
@@ -74,7 +77,7 @@ const plotOptions = {
       distr: 2,
     },
     v: {
-      range: (up, imin, imax, sk) => [imin, imax * 2],
+      range: (up, imin, imax, sk) => [0, imax * 2],
     },
   },
   series: [
@@ -140,7 +143,8 @@ class LiveChart extends React.Component {
       prevMin: '15',
       nextMin: '15',
       loading: false,
-      acceptFeeding: true,
+      acceptFeeding: props.page === 'transactions' ? false : true,
+      frame: 'minute',
     }
     let now = Math.floor(new Date() / 1e3);
     this.bars = [
@@ -149,6 +153,7 @@ class LiveChart extends React.Component {
       [0,0],
     ]
     this.prevTipIdx = 0;
+    this.srLevels = [];
   }
 
   onCursorMove = (u, l, t) => {
@@ -197,6 +202,20 @@ class LiveChart extends React.Component {
         }
       })
     }
+    if (this.srLevels.length > 0) {
+      let [iMin, iMax] = u.series[0].idxs;
+      const x0 = u.valToPos(iMin, 'x', true);
+      const x1 = u.valToPos(iMax, 'x', true);
+      this.srLevels.forEach(level => {
+        u.ctx.beginPath();
+        const y = u.valToPos(level, '$', true);
+        u.ctx.moveTo(x0, y);
+        u.ctx.lineTo(x1, y);
+        u.ctx.strokeStyle = "orange";
+        u.ctx.lineWidth = 1;
+        u.ctx.stroke();
+      })
+    } 
   }
 
   componentDidMount() {
@@ -245,9 +264,10 @@ class LiveChart extends React.Component {
     }
   }
 
-  onFetchChart = (newSym = null, ts_lte = null, ts_start = null) => {
+  onFetchChart = (newSym = null, ts_lte = null, ts_start = null, strategy = null) => {
     const {
       sym,
+      frame,
     } = this.state;
     const {enqueueSnackbar, env} = this.props;
     this.setState({
@@ -257,12 +277,17 @@ class LiveChart extends React.Component {
     const query = {
       sym: s,
       env,
+      frame,
     }
+    console.log('onFetchChart', ts_lte);
     if (ts_lte) {
       query['ts_lte'] = ts_lte;
     }
     if (ts_start) {
       query['ts_start'] = ts_start;
+    }
+    if (strategy) {
+      query.strategy = strategy;
     }
     apiLiveBars(query).then(resp => {
       if (resp && resp.data.success && resp.data.payload) {
@@ -272,6 +297,7 @@ class LiveChart extends React.Component {
         });
         this.bars = resp.data.payload.data;
         this.highlightIdx = resp.data.payload.highlight_idx;
+        this.srLevels = resp.data.payload.sr_levels;
         if (this.u) {
           this.u.setData(this.bars);
         }
@@ -300,6 +326,12 @@ class LiveChart extends React.Component {
 
   handleChange = (field, e) => {
     this.setState({[field]: e.target.value});
+  }
+
+  changeFrame = (e, frame) => {
+    if (frame) {
+      this.setState({frame}, this.onFetchChart);
+    }
   }
 
   onTimeChange = () => {
@@ -351,6 +383,7 @@ class LiveChart extends React.Component {
       prevMin,
       nextMin,
       acceptFeeding,
+      frame,
     } = this.state;
     return (
       <Paper className={classes.container} ref={el => this.container = el}>
@@ -380,6 +413,20 @@ class LiveChart extends React.Component {
               label="Accept Feeding"
             />
           </FormGroup>
+
+          <ToggleButtonGroup
+            size="small"
+            value={frame}
+            exclusive
+            onChange={this.changeFrame}
+          >
+            <ToggleButton value="second">
+              SECOND
+            </ToggleButton>
+            <ToggleButton value="minute">
+              MINUTE
+            </ToggleButton>
+          </ToggleButtonGroup>
           {loading && <CircularProgress style={{marginLeft: 16}} size={20}/>}
           <Typography variant="h6" style={{flexGrow: 1}} align="right">{`${sym} delay ${timeDelay}ms $${latestC}`}</Typography>
         </Box>

@@ -32,6 +32,9 @@ import { withSnackbar } from 'notistack';
 import LiveChart from '../common/LiveChart';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import TableFooter from '@material-ui/core/TableFooter';
+import TablePagination from '@material-ui/core/TablePagination';
+
 import Switch from '@material-ui/core/Switch';
 import {
   Link,
@@ -79,6 +82,12 @@ class Status extends React.Component {
       pl_pct: '',
       autoShow: true,
       sector: '0',
+      disable_trading: false,
+      do_prints: false,
+      do_save: false,
+      push_status: false,
+      floating_conf: {},
+      page: 0,
     }
     this.prices = {};
     this.chartSym = null;
@@ -110,6 +119,26 @@ class Status extends React.Component {
     }
   }
 
+  onDbStatusPush = (data_env, payload) => {
+    const {env} = this.state;
+    if (data_env === env) {
+      this.setState(payload);
+    }
+  }
+
+  onChangeDBConfig = (field, value) => {
+    const command = {
+      cmd: 'update_db_config',
+      field,
+      value,
+    }
+    this.onSendCmd(command);
+  }
+
+  handleChangePage = (e, page) => {
+    this.setState({page})
+  }
+
   onFetch = () => {
     const {enqueueSnackbar} = this.props;
     const {env} = this.state;
@@ -122,6 +151,7 @@ class Status extends React.Component {
         enqueueSnackbar(resp.data.error, {variant: 'error'})
       }
     })
+    this.onSendCmd({cmd: 'db_status'});
   }
 
   refreshPrices = () => {
@@ -154,6 +184,7 @@ class Status extends React.Component {
       this.symStatus.onSelectSym(pos.sym, pos.trade_price);
     }
     if (this.liveChart) {
+      console.log('pos', pos);
       this.liveChart.onFetchChart(pos.sym, pos.action_ts)
       this.chartSym = pos.sym;
     }
@@ -204,17 +235,22 @@ class Status extends React.Component {
   }
 
   onFlatten = (pos, isHalf = false) => {
+    const command = {
+      cmd: 'manual_action',
+      action_type: 'flatten',
+      sym: pos.sym,
+      strategy: pos.strategy,
+      sym_quota: isHalf ? Math.floor(pos.sym_quota / 2) : pos.sym_quota,
+    }
+    this.onSendCmd(command);
+  }
+
+  onSendCmd = (command) => {
     const {enqueueSnackbar} = this.props;
     const {env} = this.state;
     const payload = {
       env,
-      command: {
-        cmd: 'manual_action',
-        action_type: 'flatten',
-        sym: pos.sym,
-        strategy: pos.strategy,
-        sym_quota: isHalf ? Math.floor(pos.sym_quota / 2) : pos.sym_quota,
-      }
+      command,
     }
     apiResolverCommand(payload).then(resp => {
       if (!resp.data.success) {
@@ -245,6 +281,12 @@ class Status extends React.Component {
       pl_pct,
       autoShow,
       sector,
+      disable_trading,
+      do_prints,
+      do_save,
+      floating_conf,
+      push_status,
+      page,
     } = this.state;
     let secB = 'SHOW ';
     if (parseInt(sector) <= 10) {
@@ -274,9 +316,9 @@ class Status extends React.Component {
                 </TableHead>
                 <TableBody>
                   {
-                    pm.map(pos => {
+                    pm.slice(page * 20, (page + 1) * 20).map(pos => {
                       const mm = moment.utc(Date.now() - pos.action_ts * 1000).format('mm:ss');
-                      const priceDiff = this.prices[pos.sym] && (this.prices[pos.sym] - pos.trade_price) * (pos.action_str === 'buy_short' ? -1 : 1);
+                      const priceDiff = (this.prices[pos.sym] && pos.trade_price) ? (this.prices[pos.sym] - pos.trade_price) * (pos.action_str === 'buy_short' ? -1 : 1) : 0;
                       return(
                         <TableRow key={`${pos.sym}${pos.strategy}`} onClick={() => this.onSelectPos(pos)}>
                           <TableCell>{pos.sym}</TableCell>
@@ -288,7 +330,7 @@ class Status extends React.Component {
                           </TableCell>
                           <TableCell>
                             {
-                              this.prices[pos.sym] &&
+                              this.prices[pos.sym] && pos.trade_price &&
                               `${(priceDiff / pos.trade_price * 100).toFixed(3)}% $${(priceDiff * pos.shares).toFixed(2)}`
                             }
                           </TableCell>
@@ -317,6 +359,19 @@ class Status extends React.Component {
                       )
                     })
                   }
+
+                  <TableFooter>
+                    <TableRow>
+                      <TablePagination
+                        rowsPerPageOptions={[20]}
+                        colSpan={7}
+                        count={pm.length}
+                        rowsPerPage={20}
+                        page={page}
+                        onChangePage={this.handleChangePage}
+                      />
+                    </TableRow>
+                  </TableFooter>
                 </TableBody>
               </Table>
             </TableContainer>
@@ -372,6 +427,62 @@ class Status extends React.Component {
                     label="AutoShowChart"
                   />
                 </FormGroup>
+                <FormGroup row>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={disable_trading}
+                        color="secondary"
+                        onChange={() => {
+                          this.onChangeDBConfig('disable_trading', !disable_trading);
+                        }}
+                      />}
+                    labelPlacement="start"
+                    label="disable_trading"
+                  />
+                </FormGroup>
+                <FormGroup row>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={do_prints}
+                        color="primary"
+                        onChange={() => {
+                          this.onChangeDBConfig('do_prints', !do_prints);
+                        }}
+                      />}
+                    labelPlacement="start"
+                    label="do_prints"
+                  />
+                </FormGroup>
+                <FormGroup row>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={do_save}
+                        color="primary"
+                        onChange={() => {
+                          this.onChangeDBConfig('do_save', !do_save);
+                        }}
+                      />}
+                    labelPlacement="start"
+                    label="do_save"
+                  />
+                </FormGroup>
+                <FormGroup row>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={push_status}
+                        color="primary"
+                        onChange={() => {
+                          this.onChangeDBConfig('push_status', !push_status);
+                        }}
+                      />}
+                    labelPlacement="start"
+                    label="push_status"
+                  />
+                </FormGroup>
               </ListItemText>
             </ListItem>
             <Divider />
@@ -412,6 +523,15 @@ class Status extends React.Component {
               </ListItem>
             }
             <Divider />
+            <ListItem>
+              <ListItemText>
+                <Button onClick={() => this.onSendCmd({cmd: 'day_end_save_trend'})}>Save Trend</Button>
+                <Button onClick={() => this.onSendCmd({cmd: 'print_pl'})}>Print PL</Button>
+              </ListItemText>
+            </ListItem>
+            <ListItem>
+              <ListItemText>{JSON.stringify(floating_conf)}</ListItemText>
+            </ListItem>
           </List>
         </Grid>
       </Grid>

@@ -126,6 +126,18 @@ class SymProp extends React.Component {
               </ListItemSecondaryAction>
             </ListItem>
             <ListItem>
+              <ListItemText primary="sector" />
+              <ListItemSecondaryAction>
+                {record.sector}
+              </ListItemSecondaryAction>
+            </ListItem>
+            <ListItem>
+              <ListItemText primary="sector_weight" />
+              <ListItemSecondaryAction>
+                {record.sector_weight}
+              </ListItemSecondaryAction>
+            </ListItem>
+            <ListItem>
               <ListItemText>
                 {`Quota ${quota / 100}%`}
               </ListItemText>

@@ -52,16 +52,17 @@ class Triggers extends React.Component {
     super(props);
     this.state = {
       ma_v_data: [],
-      c_diff_data: [],
+      //c_diff_data: [],
       sym: 'SPY',
-      aggs_seconds: 5,
+      aggs_seconds: 1,
       updated_at: '',
       generate: false,
-      c_dis_count: 0,
+      //c_dis_count: 0,
       v_dis_count: 0,
       start_time: '',
       end_time: '',
       loading: false,
+      minute: false,
     };
   }
 
@@ -86,10 +87,12 @@ class Triggers extends React.Component {
       sym,
       aggs_seconds,
       generate,
+      minute,
     } = this.state;
     const query = {
       aggs_seconds,
       generate: generate ? 1 : 0,
+      minute: minute ? 1 : 0,
     };
     this.setState({
       loading: true,
@@ -97,10 +100,10 @@ class Triggers extends React.Component {
     apiGetTriggers(sym, query).then(resp => {
       if (resp && resp.data.success) {
         this.setState({
-          c_diff_data: resp.data.payload.c_diff_data,
+          //c_diff_data: resp.data.payload.c_diff_data,
           ma_v_data: resp.data.payload.ma_v_data,
           updated_at: resp.data.payload.updated_at,
-          c_dis_count: resp.data.payload.c_dis_count,
+          //c_dis_count: resp.data.payload.c_dis_count,
           v_dis_count: resp.data.payload.v_dis_count,
           start_time: resp.data.payload.start_time,
           end_time: resp.data.payload.end_time,
@@ -117,19 +120,27 @@ class Triggers extends React.Component {
     })
   }
 
+
+  onChangeMinute = () => {
+    this.setState({
+      minute: !this.state.minute,
+    })
+  }
+
   render() {
     const {
-      c_diff_data,
+      //c_diff_data,
       ma_v_data,
       sym,
       aggs_seconds,
       generate,
       updated_at,
-      c_dis_count,
+      //c_dis_count,
       v_dis_count,
       start_time,
       end_time,
       loading,
+      minute,
     } = this.state;
     const {classes} = this.props;
     return (
@@ -157,6 +168,14 @@ class Triggers extends React.Component {
               label="Generate"
             />
           </FormControl>
+          <FormControl className={classes.formControl}>
+            <FormControlLabel
+              control={
+                <Checkbox checked={minute} onChange={this.onChangeMinute} />
+              }
+              label="Minute"
+            />
+          </FormControl>
           <Button variant="contained" color="primary" onClick={this.onFetch}>
             Fetch
           </Button>
@@ -173,26 +192,30 @@ class Triggers extends React.Component {
             >
               <XAxis dataKey="p" />
               <YAxis yAxisId="l" domain={['dataMin', 'dataMax']} scale="log" />
-              <Tooltip />
-              <Line yAxisId="l" isAnimationActive={false} type="linear" stroke="blue" dataKey="d" dot={false} />
+              <Tooltip contentStyle={{background: '#222'}}/>
+              <Line yAxisId="l" isAnimationActive={false} type="linear" stroke="#eee" dataKey="d" dot={false} />
               {ma_v_data.length > 0 && <Brush dataKey="p" startIndex={0}/>}
             </ComposedChart>
           </ResponsiveContainer>
         </div>
-        <div className={classes.oneChart}>
-          <Typography variant="subtitle1" align="center">{`Price Diff Distribution ${c_dis_count}`}</Typography>
-          <ResponsiveContainer>
-            <ComposedChart
-              data={c_diff_data}
-            >
-              <XAxis dataKey="p" />
-              <YAxis yAxisId="l" domain={['dataMin', 'dataMax']} />
-              <Tooltip />
-              <Line yAxisId="l" isAnimationActive={false} type="linear" stroke="blue" dataKey="d" dot={false} />
-              {c_diff_data.length > 0 && <Brush dataKey="p" startIndex={0}/>}
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
+        {
+          /*
+          <div className={classes.oneChart}>
+            <Typography variant="subtitle1" align="center">{`Price Diff Distribution ${c_dis_count}`}</Typography>
+            <ResponsiveContainer>
+              <ComposedChart
+                data={c_diff_data}
+              >
+                <XAxis dataKey="p" />
+                <YAxis yAxisId="l" domain={['dataMin', 'dataMax']} />
+                <Tooltip />
+                <Line yAxisId="l" isAnimationActive={false} type="linear" stroke="blue" dataKey="d" dot={false} />
+                {c_diff_data.length > 0 && <Brush dataKey="p" startIndex={0}/>}
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+          */
+        }
       </Paper>
     );
   }

@@ -146,6 +146,13 @@ class WSocket extends React.Component {
           }
           break;
         }
+        case 'db_status': {
+          const cp = getComponent('status');
+          if (cp) {
+            cp.onDbStatusPush(msg.env, msg.data);
+          }
+          break;
+        }
         case 'subSysStatus': {
           const cp = getComponent('statusBar');
           if (cp) {

@@ -19,6 +19,8 @@ import querystring from 'querystring';
 import FormControl from '@material-ui/core/FormControl';
 import {connect} from 'react-redux';
 import LiveChart from '../common/LiveChart';
+import TableFooter from '@material-ui/core/TableFooter';
+import TablePagination from '@material-ui/core/TablePagination';
 
 import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -52,6 +54,7 @@ class Transactions extends React.Component {
       startTime: '',
       summary: [],
       records: [],
+      page: 0,
     }
   }
 
@@ -60,24 +63,26 @@ class Transactions extends React.Component {
     if (location && location.search) {
       const query = querystring.decode(location.search.substring(1));
       if (query.sym) {
-        this.setState(query, this.onFetch)
+        this.setState(query, () => this.onFetch(0))
       }
     }
   }
 
-  onFetch = () => {
+  onFetch = (page = null) => {
     const {sym, strategy, trade_env, startTime} = this.state;
     const query = {
       sym,
       strategy,
       trade_env,
       startTime,
+      page,
     }
     apiGetTransactions(query).then(resp => {
       if (resp.data.success) {
         this.setState({
           summary: resp.data.payload.summary,
           records: resp.data.payload.records,
+          page,
         })
       } else {
         const {enqueueSnackbar} = this.props;
@@ -94,8 +99,12 @@ class Transactions extends React.Component {
 
   onShowChart = (row) => {
     if (this.liveChart) {
-      this.liveChart.onFetchChart(row.sym, row.action_ts_i);
+      this.liveChart.onFetchChart(row.sym, row.action_ts_i, null, row.strategy);
     }
+  }
+
+  handleChangePage = (e, page) => {
+    this.onFetch(page)
   }
 
   render() {
@@ -107,11 +116,12 @@ class Transactions extends React.Component {
       sym,
       strategy,
       startTime,
+      page,
     } = this.state;
     return (
       <div>
         <Paper>
-            <LiveChart setRef={el => this.liveChart = el} env={trade_env}/>
+            <LiveChart setRef={el => this.liveChart = el} env={trade_env} page="transactions"/>
         </Paper>
         <Grid container spacing={3} style={{overflow: 'auto', maxHeight: '47vh', marginTop: 12}}>
           <Grid item xs={12} md={12} lg={12}>
@@ -123,7 +133,7 @@ class Transactions extends React.Component {
                     onChange={e => this.handleChange('sym', e)}
                     onKeyPress={(ev) => {
                       if (ev.key === 'Enter') {
-                        this.onFetch();
+                        this.onFetch(0);
                         ev.preventDefault();
                       }
                     }}
@@ -165,7 +175,7 @@ class Transactions extends React.Component {
                   }}
                   onChange={e => this.handleChange('startTime', e)}
                 />
-                <Button variant="contained" color="primary" onClick={this.onFetch}>
+                <Button variant="contained" color="primary" onClick={() => this.onFetch(0)}>
                   Fetch
                 </Button>
             </Paper>
@@ -190,7 +200,7 @@ class Transactions extends React.Component {
                         </Link>
                       </TableCell>
                       <TableCell>
-                        {`${row.pl.toFixed(3)} (${(row.pl / row.count).toFixed(3)})`}
+                        {`${row.pl.toFixed(3)} (${(row.pl / row.count).toFixed(3)}) $${row.pl_amount.toFixed(2)}`}
                       </TableCell>
                       <TableCell>
                         {`${(row.hold_seconds / 60).toFixed(1)} (${(row.hold_seconds / row.count / 60).toFixed(1)})`}
@@ -212,7 +222,7 @@ class Transactions extends React.Component {
                     <TableCell>Strategy</TableCell>
                     <TableCell>Action</TableCell>
                     <TableCell>Price</TableCell>
-                    <TableCell>Quota</TableCell>
+                    <TableCell>Acc / Sym / Shares</TableCell>
                     <TableCell>Action Time</TableCell>
                     <TableCell>P/L (Agg)%</TableCell>
                     <TableCell>Hold Min</TableCell>
@@ -221,7 +231,7 @@ class Transactions extends React.Component {
                 </TableHead>
                 <TableBody>
                   {records.map((row) => (
-                    <TableRow key={row.id} selected={row.overwrite}>
+                    <TableRow key={row.id}>
                       <TableCell>
                         <Link to={`/configs/${row.sym}`} target="_blank">
                           {row.sym}
@@ -241,7 +251,7 @@ class Transactions extends React.Component {
                           (typeof row.profit_percent == 'number' && row.profit_percent !== 0) &&
                           <span>
                             <span style={{color: row.profit_percent > 0 ? 'green' : (row.profit_percent < 0 ? 'red' : 'inherit')}}>
-                              {`${row.profit_percent.toFixed(3)}`}
+                              {`${row.profit_percent.toFixed(3)} $${row.profit}`}
                             </span>
                             <br />
                             {`(${row.agg_pl.toFixed(3)}, ${row.agg_all.toFixed(3)})`}
@@ -258,6 +268,18 @@ class Transactions extends React.Component {
                       </TableCell>
                     </TableRow>
                   ))}
+                  <TableFooter>
+                    <TableRow>
+                      <TablePagination
+                        rowsPerPageOptions={[50]}
+                        colSpan={9}
+                        count={-1}
+                        rowsPerPage={50}
+                        page={page}
+                        onChangePage={this.handleChangePage}
+                      />
+                    </TableRow>
+                  </TableFooter>
                 </TableBody>
               </Table>
             </TableContainer>

@@ -101,7 +101,7 @@ class Configs extends React.Component {
 
   onFetch = () => {
     const {sym} = this.state;
-    const {dispatchSetConfigs, dispatchResetConfigs, strategy} = this.props;
+    const {dispatchSetConfigs, dispatchResetConfigs, strategy, enqueueSnackbar} = this.props;
     apiGetConfig(sym).then(rest => {
       if (rest.data.success) {
         dispatchResetConfigs();
@@ -113,6 +113,8 @@ class Configs extends React.Component {
         if(this.symProp) {
           this.symProp.updateRecord(rest.data.payload.sym_prop);
         }
+      } else {
+        enqueueSnackbar(`GetRemarks Error: ${rest.data.error}`, {variant: 'error'});
       }
     })
   }

@@ -48,12 +48,13 @@ class TestPanel extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      sym: 'ALL_SYMBOLS',
+      sym: 'ALL_SYMS',
       open: false,
       strategy: 'all',
       startTime: '',
       endTime: '',
       second: '',
+      mode: 'simulate',
     }
   }
 
@@ -85,6 +86,7 @@ class TestPanel extends React.Component {
       startTime,
       endTime,
       second,
+      mode,
     } = this.state;
     const {
       enqueueSnackbar,
@@ -96,6 +98,7 @@ class TestPanel extends React.Component {
       endTime,
       second,
       syms: sym,
+      mode,
     }
     apiTestConfig(payload).then(resp => {
       if(resp.data && resp.data.success) {
@@ -126,6 +129,7 @@ class TestPanel extends React.Component {
       startTime,
       endTime,
       second,
+      mode,
     } = this.state;
     if (!open) {
       return null;
@@ -149,6 +153,16 @@ class TestPanel extends React.Component {
                   <MenuItem key={key} value={key}>{key}</MenuItem>
                 ))
               }
+            </Select>
+          </FormControl>
+          <FormControl className={classes.formControl}>
+            <InputLabel>Mode</InputLabel>
+            <Select
+              value={mode}
+              onChange={e => this.handleChange('mode', e)}
+            >
+              <MenuItem value="simulate">Simulate</MenuItem>
+              <MenuItem value="test">Test</MenuItem>
             </Select>
           </FormControl>
           <FormControl className={classes.longForm}>

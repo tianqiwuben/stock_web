@@ -102,6 +102,7 @@ class SymStatus extends React.Component {
       strategies,
       trend,
     } = this.state;
+    const showRank = sym.substring(0, 4) === 'SEC_';
     return (
       <React.Fragment>
         <TrendChart setRef={ref => this.trendChart = ref}/>
@@ -134,21 +135,43 @@ class SymStatus extends React.Component {
                 trend &&
                 <React.Fragment>
                   <ListItem>
+                    <ListItemText>Current Trend</ListItemText>
+                    <ListItemSecondaryAction>
+                      {`Large: ${trend.large.current_trend} Small: ${trend.small.current_trend}`}
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                  <ListItem>
                     <ListItemText>open_c</ListItemText>
                     <ListItemSecondaryAction>
                       {trend.open_c}
                     </ListItemSecondaryAction>
                   </ListItem>
                   <ListItem>
-                    <ListItemText>delta_open</ListItemText>
+                    <ListItemText>open strength</ListItemText>
                     <ListItemSecondaryAction>
-                      {`${(trend.delta_open * 100).toFixed(2)}%`}
+                      {`${trend.strength.open && (trend.strength.open * 100).toFixed(2)}%`}
+                      {showRank && ` / #${trend.strength.rank_open}`}
                     </ListItemSecondaryAction>
                   </ListItem>
                   <ListItem>
-                    <ListItemText>Current Trend</ListItemText>
+                    <ListItemText>large strength</ListItemText>
                     <ListItemSecondaryAction>
-                      {`Large: ${trend.large.current_trend} Small: ${trend.small.current_trend}`}
+                      {`${trend.strength.large && (trend.strength.large * 100).toFixed(2)}% / ${trend.strength.large_mtc}`}
+                      {showRank && ` / #${trend.strength.rank_large}`}
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText>small strength</ListItemText>
+                    <ListItemSecondaryAction>
+                      {`${trend.strength.small && (trend.strength.small * 100).toFixed(2)}% / ${trend.strength.small_mtc}`}
+                      {showRank && ` / #${trend.strength.rank_small}`}
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText>last_5 strength</ListItemText>
+                    <ListItemSecondaryAction>
+                      {`${trend.strength.last_5 && (trend.strength.last_5 * 100).toFixed(2)}%`}
+                      {showRank && ` / #${trend.strength.rank_last_5}`}
                     </ListItemSecondaryAction>
                   </ListItem>
                 </React.Fragment>
@@ -168,9 +191,9 @@ class SymStatus extends React.Component {
                     </ListItemSecondaryAction>
                   </ListItem>
                   <ListItem>
-                    <ListItemText>Status</ListItemText>
+                    <ListItemText>Stage</ListItemText>
                     <ListItemSecondaryAction>
-                      {stra.status}
+                      {stra.stage}
                     </ListItemSecondaryAction>
                   </ListItem>
                   <ListItem>
