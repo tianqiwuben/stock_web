@@ -8,6 +8,7 @@ export const initialState = {
   isPercent: false,
   displayEnv: 'prod',
   sym_prop: {},
+  support_resist: {},
 };
 
 export default (state = initialState, action) => {

@@ -141,9 +141,15 @@ class SymStatus extends React.Component {
                     </ListItemSecondaryAction>
                   </ListItem>
                   <ListItem>
-                    <ListItemText>open_c</ListItemText>
+                    <ListItemText>vwap_c</ListItemText>
                     <ListItemSecondaryAction>
-                      {trend.open_c}
+                      {trend.vwap.c && trend.vwap.c.toFixed(3)}
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText>RSI</ListItemText>
+                    <ListItemSecondaryAction>
+                      {trend.rsi.value ? trend.rsi.value.toFixed(2) : 'null'}
                     </ListItemSecondaryAction>
                   </ListItem>
                   <ListItem>

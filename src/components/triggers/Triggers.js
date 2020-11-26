@@ -90,6 +90,7 @@ class Triggers extends React.Component {
       minute,
     } = this.state;
     const query = {
+      sym,
       aggs_seconds,
       generate: generate ? 1 : 0,
       minute: minute ? 1 : 0,
@@ -97,7 +98,7 @@ class Triggers extends React.Component {
     this.setState({
       loading: true,
     })
-    apiGetTriggers(sym, query).then(resp => {
+    apiGetTriggers(query).then(resp => {
       if (resp && resp.data.success) {
         this.setState({
           //c_diff_data: resp.data.payload.c_diff_data,

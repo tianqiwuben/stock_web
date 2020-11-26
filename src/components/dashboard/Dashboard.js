@@ -37,6 +37,7 @@ import Manual from '../manual/Manual';
 import Status from '../status/Status';
 import TestPanel from './TestPanel';
 import StatusBar from './StatusBar';
+import Backtest from '../backtest/Backtest';
 import {getComponent} from '../common/Constants';
 
 const styles = theme => ({
@@ -164,6 +165,11 @@ class Dashboard extends React.Component {
                 <ListItemText primary="Manual" />
               </ListItem>
             </Link>
+            <Link to="/backtest">
+              <ListItem button>
+                <ListItemText primary="Backtest" />
+              </ListItem>
+            </Link>
           </List>
           <Divider />
         </Drawer>
@@ -175,7 +181,7 @@ class Dashboard extends React.Component {
               <div></div>
             </Box>
             :
-            <Container maxWidth="100%" className={classes.container}>
+            <Container maxWidth="xl" className={classes.container}>
               <Switch>
                 <Route path="/status" component={Status} />
                 <Route path="/configs/:id?" component={Configs} />
@@ -188,6 +194,7 @@ class Dashboard extends React.Component {
                 <Route path="/messages" component={Messages} />
                 <Route path="/watch_list" component={WatchList} />
                 <Route path="/manual" component={Manual} />
+                <Route path="/backtest" component={Backtest} />
                 <Route component={Status} />
               </Switch>
             </Container>

@@ -234,11 +234,11 @@ class TrendChart extends React.Component {
         <Paper className={classes.container} ref={el => this.container = el}>
           <div className={classes.oneChart} ref={el => this.chartEl = el} />
           <div className={classes.toolTip} ref={el => this.toolTip = el}>
-            <Typography variant="body" style={{color: 'orange'}} ref={el => this.tpTs = el}>
+            <Typography style={{color: 'orange'}} ref={el => this.tpTs = el}>
               MM/DD HH:MM:SS
             </Typography>
             <br />
-            <Typography variant="body" style={{color: 'orange'}} ref={el => this.tpCV = el}>
+            <Typography style={{color: 'orange'}} ref={el => this.tpCV = el}>
               $ccc.cc vvvv
             </Typography>
           </div>

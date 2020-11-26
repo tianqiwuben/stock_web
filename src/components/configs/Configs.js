@@ -293,7 +293,8 @@ class Configs extends React.Component {
           </Grid>
           <SymProp
             setRef={el => this.symProp = el}
-            record={allConfigs.sym_prop}
+            sym_prop={allConfigs.sym_prop}
+            support_resist={allConfigs.support_resist}
             last_c={last_c}
           />
           {

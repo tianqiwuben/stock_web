@@ -42,8 +42,6 @@ export const apiGetTrend = query => callAPI('/bar_trend', 'get', query);
 
 export const apiUpdateSymProp = (query) => callAPI(`/sym_prop`, 'post', query);
 
-export const apiRecalcSymProp = (sym) => callAPI(`/sym_prop/${sym}`, 'get');
-
 export const apiGetDistribution = query => callAPI('/aggs/distribution', 'get', query);
 
 export const apiPostDistribution = query => callAPI('/aggs/distribution', 'post', query);
@@ -58,7 +56,7 @@ export const apiOptimizationProcessAction = payload => callAPI(`/optimization_pr
 
 export const apiOptimizationProcessCancelAll = () => callAPI(`/optimization_process/cancel_all`, 'post');
 
-export const apiGetTriggers = (sym, query) => callAPI(`/triggers/${sym}`, 'get', query);
+export const apiGetTriggers = (query) => callAPI(`/triggers`, 'get', query);
 
 export const apiOptimizationApply = (id, query) => callAPI(`/optimization_result_apply/${id}`, 'post', query);
 
@@ -100,7 +98,14 @@ export const apiDeleteManual = sym => callAPI(`/follower/delete_position/${sym}`
 
 export const apiGetManual = () => callAPI('/follower/current_positions', 'get');
 
+export const apiPostOrder = payload => callAPI('/status/order', 'post', payload);
+
 export const apiResolverStatus = query => callAPI('/status/resolver', 'get', query);
 
 export const apiResolverCommand = payload => callAPI('/status/command', 'post', payload);
 
+export const apiGetBacktestCase = query => callAPI('/test/bars', 'get', query);
+
+export const apiPostBacktestCase = query => callAPI('/test/backtest', 'post', query);
+
+export const apiBacktestCmd = query => callAPI('/test/backtest_cmd', 'post', query);

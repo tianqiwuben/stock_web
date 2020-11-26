@@ -144,7 +144,7 @@ class LiveChart extends React.Component {
       nextMin: '15',
       loading: false,
       acceptFeeding: props.page === 'transactions' ? false : true,
-      frame: 'minute',
+      frame: 'second',
     }
     let now = Math.floor(new Date() / 1e3);
     this.bars = [
@@ -279,7 +279,6 @@ class LiveChart extends React.Component {
       env,
       frame,
     }
-    console.log('onFetchChart', ts_lte);
     if (ts_lte) {
       query['ts_lte'] = ts_lte;
     }
@@ -432,11 +431,11 @@ class LiveChart extends React.Component {
         </Box>
         <div className={classes.oneChart} ref={el => this.chartEl = el} />
         <div className={classes.toolTip} ref={el => this.toolTip = el}>
-          <Typography variant="body" style={{color: 'orange'}} ref={el => this.tpTs = el}>
+          <Typography style={{color: 'orange'}} ref={el => this.tpTs = el}>
             MM/DD HH:MM:SS
           </Typography>
           <br />
-          <Typography variant="body" style={{color: 'orange'}} ref={el => this.tpCV = el}>
+          <Typography style={{color: 'orange'}} ref={el => this.tpCV = el}>
             $ccc.cc vvvv
           </Typography>
         </div>

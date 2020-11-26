@@ -157,10 +157,10 @@ class Manual extends React.Component {
                   PAPER
                 </ToggleButton>
               </ToggleButtonGroup>
-              <Typography className={classes.text} variant="body">Last Sym: {lastSym}</Typography>
-              <Typography className={classes.text} variant="body">AAPL 500;</Typography>
-              <Typography className={classes.text} variant="body">100.1 99.5;</Typography>
-              <Typography className={classes.text} variant="body">AAPL 99;</Typography>
+              <Typography className={classes.text} variant="body1">Last Sym: {lastSym}</Typography>
+              <Typography className={classes.text} variant="body1">AAPL 500;</Typography>
+              <Typography className={classes.text} variant="body1">100.1 99.5;</Typography>
+              <Typography className={classes.text} variant="body1">AAPL 99;</Typography>
             </Box>
           </Paper>
         </Grid>

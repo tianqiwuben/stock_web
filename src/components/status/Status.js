@@ -26,7 +26,6 @@ import Divider from '@material-ui/core/Divider';
 import {registerComponent, getComponent} from '../common/Constants';
 import HighlightOffIcon from '@material-ui/icons/HighlightOff';
 import Tooltip from '@material-ui/core/Tooltip';
-import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
 import {apiResolverStatus, apiResolverCommand} from '../../utils/ApiFetch';
 import { withSnackbar } from 'notistack';
 import LiveChart from '../common/LiveChart';
@@ -36,6 +35,8 @@ import TableFooter from '@material-ui/core/TableFooter';
 import TablePagination from '@material-ui/core/TablePagination';
 
 import Switch from '@material-ui/core/Switch';
+import ManualOrder from './ManualOrder';
+
 import {
   Link,
 } from "react-router-dom";
@@ -78,16 +79,20 @@ class Status extends React.Component {
       bp: 0,
       aq: 0,
       pm: [],
-      pl: '',
-      pl_pct: '',
+      pl: 0,
+      pl_pct: 0,
       autoShow: true,
       sector: '0',
       disable_trading: false,
       do_prints: false,
       do_save: false,
       push_status: false,
+      disable_circuit_break: false,
       floating_conf: {},
       page: 0,
+      wk: null,
+      float_pl: 0,
+      float_pl_pct: 0,
     }
     this.prices = {};
     this.chartSym = null;
@@ -116,6 +121,13 @@ class Status extends React.Component {
           this.onSelectPos(lastPos);
         }
       }
+    }
+  }
+
+  onFloatPlPush = (data_env, payload) => {
+    const {env} = this.state;
+    if (data_env === env) {
+      this.setState(payload);
     }
   }
 
@@ -218,10 +230,10 @@ class Status extends React.Component {
     }
   }
 
-  flattenExist = () => {
+  flattenManual = () => {
     const {pm} = this.state;
     pm.forEach(pos => {
-      if (pos.strategy === 'prev_exist') {
+      if (pos.strategy === 'manual') {
         this.onFlatten(pos);
       }
     })
@@ -234,13 +246,11 @@ class Status extends React.Component {
     })
   }
 
-  onFlatten = (pos, isHalf = false) => {
+  onFlatten = (pos) => {
     const command = {
-      cmd: 'manual_action',
-      action_type: 'flatten',
+      cmd: 'flatten',
       sym: pos.sym,
       strategy: pos.strategy,
-      sym_quota: isHalf ? Math.floor(pos.sym_quota / 2) : pos.sym_quota,
     }
     this.onSendCmd(command);
   }
@@ -284,9 +294,13 @@ class Status extends React.Component {
       disable_trading,
       do_prints,
       do_save,
+      disable_circuit_break,
       floating_conf,
       push_status,
       page,
+      float_pl,
+      float_pl_pct,
+      wk,
     } = this.state;
     let secB = 'SHOW ';
     if (parseInt(sector) <= 10) {
@@ -346,14 +360,6 @@ class Status extends React.Component {
                                 <HighlightOffIcon />
                               </span>
                             </Tooltip>
-                            <Tooltip title="Flatten Half">
-                              <span className={classes.actionIcon} onClick={(e) => {
-                                this.onFlatten(pos, true)
-                                e.stopPropagation();
-                              }}>
-                                <RemoveCircleOutlineIcon />
-                              </span>
-                            </Tooltip>
                           </TableCell>
                         </TableRow>
                       )
@@ -404,7 +410,7 @@ class Status extends React.Component {
               <ListItemText>
                 {`$${pl} (${pl_pct}%)`}
               </ListItemText>
-              <ListItemSecondaryAction>Profit</ListItemSecondaryAction>
+              <ListItemSecondaryAction>{`$${float_pl} (${float_pl_pct}%)`}</ListItemSecondaryAction>
             </ListItem>
             <ListItem>
               <ListItemText>
@@ -418,6 +424,7 @@ class Status extends React.Component {
               </ListItemText>
               <ListItemSecondaryAction>available_quota</ListItemSecondaryAction>
             </ListItem>
+            <ManualOrder env={env} workingOrders={wk}/>
             <ListItem>
               <ListItemText>
                 <FormGroup row>
@@ -483,6 +490,20 @@ class Status extends React.Component {
                     label="push_status"
                   />
                 </FormGroup>
+                <FormGroup row>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={disable_circuit_break}
+                        color="secondary"
+                        onChange={() => {
+                          this.onChangeDBConfig('disable_circuit_break', !disable_circuit_break);
+                        }}
+                      />}
+                    labelPlacement="start"
+                    label="disable_circuit_break"
+                  />
+                </FormGroup>
               </ListItemText>
             </ListItem>
             <Divider />
@@ -518,7 +539,7 @@ class Status extends React.Component {
               <ListItem>
                 <ListItemText>
                   <Button onClick={this.flattenAll}>FLAT ALL</Button>
-                  <Button onClick={this.flattenExist}>FLAT PREVS</Button>
+                  <Button onClick={this.flattenManual}>FLAT MANUAL</Button>
                 </ListItemText>
               </ListItem>
             }

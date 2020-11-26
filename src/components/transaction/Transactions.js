@@ -226,6 +226,7 @@ class Transactions extends React.Component {
                     <TableCell>Action Time</TableCell>
                     <TableCell>P/L (Agg)%</TableCell>
                     <TableCell>Hold Min</TableCell>
+                    <TableCell>Tags</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -260,6 +261,9 @@ class Transactions extends React.Component {
                       </TableCell>
                       <TableCell>
                         {row.hold_seconds > 0 ? (row.hold_seconds / 60).toFixed(1) : null}
+                      </TableCell>
+                      <TableCell>
+                        {row.tags}
                       </TableCell>
                       <TableCell>
                       <IconButton color="primary" onClick={() => this.onShowChart(row)}>

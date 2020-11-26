@@ -11,7 +11,7 @@ import FormControl from '@material-ui/core/FormControl';
 import Grid from '@material-ui/core/Grid';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
-import {apiUpdateSymProp, apiRecalcSymProp} from '../../utils/ApiFetch';
+import {apiUpdateSymProp} from '../../utils/ApiFetch';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import { withSnackbar } from 'notistack';
 
@@ -29,21 +29,17 @@ const styles = theme => ({
 class SymProp extends React.Component {
   constructor(props) {
     super(props);
-    const r = props.record;
+    const sp = props.sym_prop;
     this.state = {
-      trend_amp_large: r.trend_amp_large ? r.trend_amp_large * 100 : '',
-      trend_amp_small: r.trend_amp_small ? r.trend_amp_small * 100 : '',
-      quota: r.quota,
-      priority: r.priority,
+      quota: sp.quota,
+      priority: sp.priority,
     }
   }
 
-  updateRecord = r => {
+  updateRecord = (sp) => {
     this.setState({
-      trend_amp_large: r.trend_amp_large ? r.trend_amp_large * 100 : '',
-      trend_amp_small: r.trend_amp_small ? r.trend_amp_small * 100 : '',
-      quota: r.quota,
-      priority: r.priority,
+      quota: sp.quota,
+      priority: sp.priority,
     })
   }
 
@@ -67,11 +63,9 @@ class SymProp extends React.Component {
     const {
       quota,
       priority,
-      trend_amp_large,
-      trend_amp_small,
     } = this.state;
-    const {record} = this.props;
-    const payload = {sym: record.sym, quota, priority, trend_amp_large, trend_amp_small};
+    const {sym_prop} = this.props;
+    const payload = {sym: sym_prop.sym, quota, priority};
     const resp = await apiUpdateSymProp(payload);
     const {enqueueSnackbar} = this.props;
     if (resp.data.success) {
@@ -81,60 +75,60 @@ class SymProp extends React.Component {
     }
   }
 
-  onRecalc = () => {
-    const {record, enqueueSnackbar, dispatchSetConfigs} = this.props;
-    apiRecalcSymProp(record.sym).then(resp => {
-      if (resp.data.success) {
-        dispatchSetConfigs({sym_prop: resp.data.payload});
-        this.updateRecord(resp.data.payload);
-        enqueueSnackbar(`Save Success`, {variant: 'success'});
-      } else {
-        enqueueSnackbar(`ERROR: ${resp.data.error}`, {variant: 'error'});
-      }
-    })
-
-  }
-
   render() {
-    const {classes, last_c, record} = this.props;
+    const {classes, last_c, support_resist, sym_prop} = this.props;
     const {
-      trend_amp_large,
-      trend_amp_small,
       quota,
       priority,
     } = this.state;
     return (
       <Grid item xs={12} md={6} lg={3}>
         <Paper>
-          <List subheader={<ListSubheader>Sym Prop</ListSubheader>}>
+          <List subheader={<ListSubheader>{`Support Resist & Sym Prop (${support_resist.date})`}</ListSubheader>}>
             <ListItem>
               <ListItemText primary="second_bar_density" />
               <ListItemSecondaryAction>
-                {record.second_bar_density}%
+                {support_resist.second_bar_density}%
               </ListItemSecondaryAction>
             </ListItem>
             <ListItem>
               <ListItemText primary="Average True Range" />
               <ListItemSecondaryAction>
-                {record.ema_true_range ? (record.ema_true_range * 100).toFixed(2) : '-'}%
+                {support_resist.ema_true_range ? (support_resist.ema_true_range * 100).toFixed(2) : '-'}%
+              </ListItemSecondaryAction>
+            </ListItem>
+            <ListItem>
+              <ListItemText>
+                {`Trend Small % $${(last_c * support_resist.trend_amp_small).toFixed(2)}`}
+              </ListItemText>
+              <ListItemSecondaryAction>
+                {support_resist.trend_amp_small ? `${(support_resist.trend_amp_small * 100).toFixed(2)}%` : ''}
+              </ListItemSecondaryAction>
+            </ListItem>
+            <ListItem>
+              <ListItemText>
+                {`Trend Large % $${(last_c * support_resist.trend_amp_large).toFixed(2)}`}
+              </ListItemText>
+              <ListItemSecondaryAction>
+              {support_resist.trend_amp_large ? `${(support_resist.trend_amp_large * 100).toFixed(2)}%` : ''}
               </ListItemSecondaryAction>
             </ListItem>
             <ListItem>
               <ListItemText primary="ema_daily_price_vol" />
               <ListItemSecondaryAction>
-                ${record.ema_daily_price_vol_human}
+                ${support_resist.ema_daily_price_vol_human}
               </ListItemSecondaryAction>
             </ListItem>
             <ListItem>
               <ListItemText primary="sector" />
               <ListItemSecondaryAction>
-                {record.sector}
+                {sym_prop.sector}
               </ListItemSecondaryAction>
             </ListItem>
             <ListItem>
               <ListItemText primary="sector_weight" />
               <ListItemSecondaryAction>
-                {record.sector_weight}
+                {sym_prop.sector_weight}
               </ListItemSecondaryAction>
             </ListItem>
             <ListItem>
@@ -170,52 +164,15 @@ class SymProp extends React.Component {
               </ListItemSecondaryAction>
             </ListItem>
             <ListItem>
-              <ListItemText>
-                {`Trend Small % $${(last_c * trend_amp_small / 100).toFixed(2)}`}
-              </ListItemText>
-              <ListItemSecondaryAction>
-                <FormControl className={classes.formControl}>
-                  <TextField
-                    value={trend_amp_small}
-                    onChange={e => this.handleChange('trend_amp_small', e)}
-                    inputProps={{
-                      style: { textAlign: "right" }
-                    }}
-                    style = {{width: 120}}
-                  />
-                </FormControl>
-              </ListItemSecondaryAction>
-            </ListItem>
-            <ListItem>
-              <ListItemText>
-                {`Trend Large % $${(last_c * trend_amp_large / 100).toFixed(2)}`}
-              </ListItemText>
-              <ListItemSecondaryAction>
-                <FormControl className={classes.formControl}>
-                  <TextField
-                    value={trend_amp_large}
-                    onChange={e => this.handleChange('trend_amp_large', e)}
-                    inputProps={{
-                      style: { textAlign: "right" }
-                    }}
-                    style = {{width: 120}}
-                  />
-                </FormControl>
-              </ListItemSecondaryAction>
-            </ListItem>
-            <ListItem>
               <ListItemText primary="Last Updated" />
               <ListItemSecondaryAction>
-                {record.updated_at_str}
+                {sym_prop.updated_at_str}
               </ListItemSecondaryAction>
             </ListItem>
             <ListItem>
               <ListItemText>
                 <Button color="primary" onClick={this.onSave}>
                   SAVE
-                </Button>
-                <Button onClick={this.onRecalc}>
-                  RECALC
                 </Button>
               </ListItemText>
             </ListItem>

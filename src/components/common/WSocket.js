@@ -146,6 +146,13 @@ class WSocket extends React.Component {
           }
           break;
         }
+        case 'float_pl': {
+          const cp = getComponent('status');
+          if (cp) {
+            cp.onFloatPlPush(msg.env, msg.data);
+          }
+          break;
+        }
         case 'db_status': {
           const cp = getComponent('status');
           if (cp) {
