@@ -309,7 +309,7 @@ const plotOptions = {
       },
     },
     {
-      scale: 'spy',
+      scale: '$',
       label: 'SPY',
       stroke: 'yellow',
       side: 0,
@@ -343,7 +343,7 @@ const plotOptions = {
       ticks: {
         show: false,
       },
-    }
+    },
   ],
 }
 
@@ -445,22 +445,24 @@ class Backtest extends React.Component {
   }
 
   onCursorIdx = (u, sId, idx) => {
+    const {bars} = this.state;
+    const bar = bars[idx];
     if (idx !== this.prevTipIdx) {
       this.prevTipIdx = idx;
       const ts = moment.unix(this.bars[0][idx]);
       let innerHtml = [
         ts.format('MM/DD LTS'),
-        `O: ${this.bars[2][idx]}`,
-        `H: ${this.bars[3][idx]}`,
-        `L: ${this.bars[4][idx]}`,
-        `C: ${this.bars[5][idx]}`,
-        `V: ${this.bars[1][idx]}`,
-        `VWAP: ${this.bars[6][idx].toFixed(3)}`,
-        `EMA: ${this.bars[7][idx].toFixed(3)}`,
-        `MACD_DIFF: ${this.macdData[3][idx].toFixed(5)}`,
-        `MACD: ${this.macdData[1][idx].toFixed(5)}`,
-        `MACD_EMA9: ${this.macdData[2][idx].toFixed(5)}`,
-        `SPY: ${this.bars[8][idx]}`,
+        `O: ${bar.o}`,
+        `H: ${bar.h}`,
+        `L: ${bar.l}`,
+        `C: ${bar.c}`,
+        `V: ${bar.v}`,
+        `VWAP: ${bar.vwap.toFixed(3)}`,
+        `EMA: ${bar.ema.toFixed(3)}`,
+        `MACD_DIFF: ${bar.macd_diff.toFixed(5)}`,
+        `MACD: ${bar.macd.toFixed(5)}`,
+        `MACD_EMA9: ${bar.macd_ema.toFixed(5)}`,
+        `SPY: ${bar.spy}`,
       ].join('</span><span>');
       this.legendEl.innerHTML = '<span>' + innerHtml + '</span>';
     }
@@ -481,6 +483,7 @@ class Backtest extends React.Component {
     } = this.state;
     if (entry_idx) {
       const centerX = u.valToPos(entry_idx, 'x', true);
+      /*
       u.ctx.strokeStyle = "orange";
       u.ctx.lineWidth = 2;
       u.ctx.beginPath();
@@ -504,7 +507,7 @@ class Backtest extends React.Component {
       u.ctx.moveTo(centerX, ampY);
       u.ctx.lineTo(centerX - 100, ampY);
       u.ctx.stroke();
-
+*/
       u.ctx.fillStyle = "#eee"
       if (showExit) {
         let exitX = u.valToPos(exit_idx, 'x', true);
@@ -583,11 +586,12 @@ class Backtest extends React.Component {
       [], //ema_9
       [], //diff
     ]
+    let minL = null;
+    let maxH = null;
+    let spyL = null;
+    let spyH = null;
     for(let idx in bars) {
       if (!showExit && idx >= entry_idx) {
-        break;
-      }
-      if (idx > exit_idx + 60) {
         break;
       }
       const bar = bars[idx];
@@ -599,18 +603,41 @@ class Backtest extends React.Component {
       this.bars[5].push(bar.c);
       this.bars[6].push(bar.vwap);
       this.bars[7].push(bar.ema);
-      this.bars[8].push(bar.spy);
       this.macdData[0].push(bar.ts);
       this.macdData[1].push(bar.macd);
       this.macdData[2].push(bar.macd_ema);
       this.macdData[3].push(bar.macd_diff);
-    };
+      if (idx < entry_idx) {
+        if (minL === null || minL > bar.l) {
+          minL = bar.l;
+        }
+        if (maxH === null || maxH < bar.h) {
+          maxH = bar.h;
+        }
+        if (spyL === null || spyL > bar.spy) {
+          spyL = bar.spy;
+        }
+        if (spyH === null || spyH < bar.spy) {
+          spyH = bar.spy;
+        }
+      }
+    }
+    for(let idx in bars) {
+      if (!showExit && idx >= entry_idx) {
+        break;
+      }
+      const bar = bars[idx];
+      let spyV = (bar.spy - spyL) / (spyH - spyL) * (maxH - minL) + minL;
+      this.bars[8].push(spyV);
+    }
+
     if (this.u) {
       this.u.setData(this.bars);
     }
     if (this.macdU) {
       this.macdU.setData(this.macdData);
     }
+    this.legendEl.innerHTML = '-';
   }
 
   handleChange = (field, e) => {
@@ -690,6 +717,7 @@ class Backtest extends React.Component {
       attrs,
       init_c,
       trend_amp_small,
+      sector,
     } = this.state;
     return (
       <Grid container spacing={3}>
@@ -796,6 +824,14 @@ class Backtest extends React.Component {
               </ListItemText>
               <ListItemSecondaryAction>
                 {trend_amp_small}%
+              </ListItemSecondaryAction>
+            </ListItem>
+            <ListItem>
+              <ListItemText>
+                sector
+              </ListItemText>
+              <ListItemSecondaryAction>
+                {sector}
               </ListItemSecondaryAction>
             </ListItem>
           </List>
