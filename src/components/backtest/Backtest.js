@@ -13,14 +13,13 @@ import moment from 'moment';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import { withSnackbar } from 'notistack';
-import FormControl from '@material-ui/core/FormControl';
 import {connect} from 'react-redux';
 import Select from '@material-ui/core/Select';
-import InputLabel from '@material-ui/core/InputLabel';
+import {StrategyDB} from '../common/Constants';
 import MenuItem from '@material-ui/core/MenuItem';
 import {
   apiGetBacktestCase,
-  apiPostBacktestCase,
+  apiTestConfig,
   apiBacktestCmd,
 } from '../../utils/ApiFetch';
 
@@ -61,6 +60,11 @@ const styles = theme => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  srLabel: {
+    position: 'absolute',
+    bottom: 32,
+    right: 12,
+  }
 });
 
 const drawMacdDiff = u => {
@@ -311,7 +315,7 @@ const plotOptions = {
     {
       scale: '$',
       label: 'SPY',
-      stroke: 'yellow',
+      stroke: '#eee',
       side: 0,
       size: 32,
       ticks: {
@@ -354,7 +358,7 @@ class Backtest extends React.Component {
     this.state = {
       lineNum: 0,
       showExit: true,
-      strategy: 'long_break',
+      strategy: 'macd_vwap',
       sym: 'SPY',
     }
     this.bars = null;
@@ -414,6 +418,10 @@ class Backtest extends React.Component {
       this.u.destroy();
       this.u = null;
     }
+    if (this.macdU) {
+      this.macdU.destroy();
+      this.macdU = null;
+    }
   }
 
   onMacdCursorMove = (u, l, t) => {
@@ -438,6 +446,19 @@ class Backtest extends React.Component {
       this.priceTag.style.visibility = 'visible';
       const val = u.posToVal(t, '$');
       this.priceTagValue.innerHTML = val.toFixed(2);
+      const {support_resists} = this.state;
+      if (support_resists && Object.keys(support_resists).length > 0) {
+        let pickedName = null;
+        let minDiff = null;
+        for(let sr in support_resists) {
+          const diff  = Math.abs(support_resists[sr] - val);
+          if (minDiff === null || diff < minDiff) {
+            minDiff = diff;
+            pickedName = sr;
+          }
+        }
+        this.srLevelEl.innerHTML = `${pickedName} ${support_resists[pickedName]}`;
+      }
     } else {
       this.priceTag.style.visibility = 'hidden';
     }
@@ -478,8 +499,7 @@ class Backtest extends React.Component {
       stop_price,
       target_price,
       showExit,
-      trend_amp_small,
-      entry_vwap,
+      support_resists,
     } = this.state;
     if (entry_idx) {
       const centerX = u.valToPos(entry_idx, 'x', true);
@@ -508,9 +528,23 @@ class Backtest extends React.Component {
       u.ctx.lineTo(centerX - 100, ampY);
       u.ctx.stroke();
 */
+      if (support_resists && Object.keys(support_resists).length > 0) {
+        u.ctx.strokeStyle = "orange"
+        u.ctx.beginPath();
+        const [iMin, iMax] = u.series[0].idxs;
+        const leftX = u.valToPos(iMin, 'x', true);
+        const rightX = u.valToPos(iMax, 'x', true);
+        for (let levelName in support_resists) {
+          const yPos = u.valToPos(support_resists[levelName], '$', true);
+          u.ctx.moveTo(leftX, yPos);
+          u.ctx.lineTo(rightX, yPos);
+          u.ctx.stroke();
+        }
+      }
+
       u.ctx.fillStyle = "#eee"
       if (showExit) {
-        let exitX = u.valToPos(exit_idx, 'x', true);
+        let exitX = u.valToPos(exit_idx + 1, 'x', true);
         const targetY = u.valToPos(target_price, '$', true);
         const evenY = u.valToPos(break_even_price, '$', true);
         const centerY = u.valToPos(init_c, '$', true);
@@ -562,12 +596,26 @@ class Backtest extends React.Component {
     })
   }
 
+  onSymPrev = () => {
+    const {lineNum} = this.state;
+    this.setState({
+      lineNum: lineNum - 1,
+    }, () => this.fetch());
+  }
+
+  onSymNext = () => {
+    const {lineNum} = this.state;
+    this.setState({
+      lineNum: lineNum + 1,
+    }, () => this.fetch());
+  }
+
   assignBars = () => {
     const {
       bars,
       showExit,
       entry_idx,
-      exit_idx,
+      strategy,
     } = this.state;
     this.bars = [
       [],  //ts
@@ -607,7 +655,7 @@ class Backtest extends React.Component {
       this.macdData[1].push(bar.macd);
       this.macdData[2].push(bar.macd_ema);
       this.macdData[3].push(bar.macd_diff);
-      if (idx < entry_idx) {
+      if (idx < entry_idx || strategy === 'open_breakout') {
         if (minL === null || minL > bar.l) {
           minL = bar.l;
         }
@@ -646,25 +694,6 @@ class Backtest extends React.Component {
     });
   }
 
-  onAction = (trade) => {
-    const {enqueueSnackbar} = this.props;
-    const {lineNum, strategy, pl} = this.state;
-    const payload = {
-      lineNum,
-      strategy,
-      trade,
-      pl,
-    }
-    apiPostBacktestCase(payload).then(resp => {
-      if (!resp.data.success) {
-        enqueueSnackbar(resp.data.error, {variant: 'error'})
-      }
-    })
-    this.setState({
-      showExit: true,
-    }, this.assignBars)
-  }
-
   onHide = () => {
     this.setState({
       showExit: false,
@@ -688,19 +717,24 @@ class Backtest extends React.Component {
     })
   }
 
-  onShuffle = () => {
+  onTest = () => {
+    const {sym, strategy, exit_idx} = this.state;
     const {enqueueSnackbar} = this.props;
-    const {strategy} = this.state;
+    const startTime = moment.unix(this.bars[0][0]);
+    const endTime = moment.unix(this.bars[0][exit_idx + 1]);
     const payload = {
       strategy,
-      cmd: 'shuffle',
+      syms: sym,
+      mode: 'simulate',
+      startTime: startTime.format('YYYY-MM-DDTHH:mm'),
+      endTime: endTime.format('YYYY-MM-DDTHH:mm'),
     }
-    apiBacktestCmd(payload).then(resp => {
-      if (resp.data.success) {
-        this.setState({lineNum: 0});
-        enqueueSnackbar(`Shuffle done count: ${resp.data.payload.matching_count}`, {variant: 'success'})
+    console.log(payload);
+    apiTestConfig(payload).then(resp => {
+      if(resp.data && resp.data.success) {
+        enqueueSnackbar(`${sym.substring(0,14)} Test Start`);
       } else {
-        enqueueSnackbar(resp.data.error, {variant: 'error'})
+        enqueueSnackbar(resp.data.error, {variant: 'error'});
       }
     })
   }
@@ -718,6 +752,7 @@ class Backtest extends React.Component {
       init_c,
       trend_amp_small,
       sector,
+      strategy,
     } = this.state;
     return (
       <Grid container spacing={3}>
@@ -727,6 +762,9 @@ class Backtest extends React.Component {
             <div className={classes.macdChart} ref={el => this.macdEl = el} />
             <Typography variant="body2" className={classes.legendLabel} ref={el => this.legendEl = el}>
                 MM/DD HH:MM:SS O: oo.oo H: hh.hh L: ll.ll C: cc.cc V: vvvvvv VWAP: cc.cc EMA cc.cc MACD_DIFF: cc.cc MACD_EMA9: cc.cc MACD: cc.cc
+            </Typography>
+            <Typography variant="body2" className={classes.srLabel} ref={el => this.srLevelEl = el}>
+              sr_level
             </Typography>
             <div className={classes.priceTag} ref={el => this.priceTag = el}>
               <Typography style={{color: 'orange'}} ref={el => this.priceTagValue = el}>
@@ -787,8 +825,26 @@ class Backtest extends React.Component {
             <ListItem>
               <ListItemText>
                 <Button onClick={this.onResetNum}>RESTET NUM</Button>
-                <Button onClick={this.onShuffle}>SHUFFLE</Button>
+                <Button onClick={this.onSymPrev}>{'< PREV'}</Button>
+                <Button onClick={this.onSymNext}>{'NEXT >'}</Button>
               </ListItemText>
+            </ListItem>
+            <ListItem>
+              <ListItemText>Strategy</ListItemText>
+              <ListItemSecondaryAction>
+              <Select
+                  value={strategy}
+                  onChange={e => this.handleChange('strategy', e)}
+                  autoWidth
+                >
+                  <MenuItem value="all">All</MenuItem>
+                  {
+                    Object.keys(StrategyDB).map(key => (
+                      <MenuItem key={key} value={key}>{key}</MenuItem>
+                    ))
+                  }
+                </Select>
+              </ListItemSecondaryAction>
             </ListItem>
           </List>
         </Grid>
@@ -823,7 +879,7 @@ class Backtest extends React.Component {
                 trend_amp_small
               </ListItemText>
               <ListItemSecondaryAction>
-                {trend_amp_small}%
+                {trend_amp_small}% {init_c && (init_c * trend_amp_small * 0.00618).toFixed(2)}
               </ListItemSecondaryAction>
             </ListItem>
             <ListItem>
@@ -845,7 +901,7 @@ class Backtest extends React.Component {
                     {k}
                   </ListItemText>
                   <ListItemSecondaryAction>
-                    {attrs[k]}
+                    {`${attrs[k]}`}
                   </ListItemSecondaryAction>
                 </ListItem>
               ))
@@ -858,8 +914,7 @@ class Backtest extends React.Component {
               <ListItemText>
                 <Button onClick={() => this.fetch(-1)}>PREV</Button>
                 <Button onClick={() => this.fetch(1)}>NEXT</Button>
-                <Button onClick={() => this.onAction(true)} color="primary">TRADE</Button>
-                <Button onClick={() => this.onAction(false)}>SKIP</Button>
+                <Button onClick={this.onTest} color="primary">TEST</Button>
                 <Button onClick={this.onHide}>HIDE</Button>
               </ListItemText>
             </ListItem>
@@ -868,10 +923,10 @@ class Backtest extends React.Component {
               <React.Fragment>
                 <ListItem>
                   <ListItemText>
-                    PL
+                    Unit PL
                   </ListItemText>
                   <ListItemSecondaryAction>
-                    {pl}%
+                    {pl}
                   </ListItemSecondaryAction>
                 </ListItem>
                 <ListItem>

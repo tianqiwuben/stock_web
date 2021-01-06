@@ -39,6 +39,7 @@ import TestPanel from './TestPanel';
 import StatusBar from './StatusBar';
 import Backtest from '../backtest/Backtest';
 import {getComponent} from '../common/Constants';
+import TuneConfig from '../strategy/TuneConfig';
 
 const styles = theme => ({
   root: {
@@ -170,6 +171,11 @@ class Dashboard extends React.Component {
                 <ListItemText primary="Backtest" />
               </ListItem>
             </Link>
+            <Link to="/tuneconfig">
+              <ListItem button>
+                <ListItemText primary="Tune Strategy" />
+              </ListItem>
+            </Link>
           </List>
           <Divider />
         </Drawer>
@@ -195,6 +201,7 @@ class Dashboard extends React.Component {
                 <Route path="/watch_list" component={WatchList} />
                 <Route path="/manual" component={Manual} />
                 <Route path="/backtest" component={Backtest} />
+                <Route path="/tuneconfig" component={TuneConfig} />
                 <Route component={Status} />
               </Switch>
             </Container>

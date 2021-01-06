@@ -23,11 +23,11 @@ const status2color = {
 }
 
 const subsysInstances = [
-  'account_streaming',
+  'account_streaming_prod',
+  'account_streaming_paper',
   'aggs_bar',
   'second_bar_streaming', 
 //  'option_streaming',
-  'sidekiq_transaction_worker',
   'strategy_resolver_prod',
   'strategy_resolver_paper',
   'strategy_resolver_test',

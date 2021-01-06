@@ -34,6 +34,7 @@ class BulkInitStrategy extends React.Component {
       new_only: true,
       update_count: null,
       is_prod: false,
+      cap_size: null,
     })
   }
 
@@ -42,8 +43,8 @@ class BulkInitStrategy extends React.Component {
   }
 
   onStart = () => {
-    const {list, strategy, priority, enabled, is_prod, new_only} = this.state;
-    const payload = {list, strategy, new_only, priority, enabled, is_prod};
+    const {list, strategy, priority, enabled, is_prod, new_only, cap_size} = this.state;
+    const payload = {list, strategy, new_only, priority, enabled, is_prod, cap_size};
     this.setState({update_count: null});
     apiBulkInitStrategy(payload).then(resp => {
       const {enqueueSnackbar} = this.props;
@@ -66,6 +67,7 @@ class BulkInitStrategy extends React.Component {
       is_prod,
       priority,
       enabled,
+      cap_size,
     } = this.state;
     return (
       <Grid item sm={12} md={6} lg={4}>
@@ -150,6 +152,22 @@ class BulkInitStrategy extends React.Component {
                 >
                   <MenuItem value={true}>YES</MenuItem>
                   <MenuItem value={false}>NO</MenuItem>
+                </Select>
+              </ListItemSecondaryAction>
+            </ListItem>
+            <ListItem>
+              <ListItemText>
+                CAP size
+              </ListItemText>
+              <ListItemSecondaryAction>
+                <Select
+                  value={cap_size}
+                  onChange={e => this.handleChange('cap_size', e)}
+                  autoWidth
+                >
+                  <MenuItem value={'large'}>LARGE</MenuItem>
+                  <MenuItem value={'mid'}>MID</MenuItem>
+                  <MenuItem value={'small'}>SMALL</MenuItem>
                 </Select>
               </ListItemSecondaryAction>
             </ListItem>

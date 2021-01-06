@@ -20,11 +20,11 @@ function callAPI(path, method, payload = null) {
     headers,
     baseURL: API_PREFIX,
     params: method === 'get' ? payload : null,
-    transformRequest: (data) => {
-      if (typeof data === 'object') {
-        return JSON.stringify(data);
+    transformRequest: (dt) => {
+      if (typeof dt === 'object') {
+        return JSON.stringify(dt);
       } else {
-        return data;
+        return dt;
       }
     }
   }).catch(error => {
@@ -106,6 +106,10 @@ export const apiResolverCommand = payload => callAPI('/status/command', 'post', 
 
 export const apiGetBacktestCase = query => callAPI('/test/bars', 'get', query);
 
-export const apiPostBacktestCase = query => callAPI('/test/backtest', 'post', query);
-
 export const apiBacktestCmd = query => callAPI('/test/backtest_cmd', 'post', query);
+
+export const apiGetStrategy = (strategy, query) => callAPI(`/strategy_config/${strategy}`, 'get', query);
+
+export const apiSaveStrategy = (payload) => callAPI(`/save_strategy_config`, 'post', payload);
+
+export const apiGenerateStrategy= (payload) => callAPI(`/strategy_config`, 'POST', payload);

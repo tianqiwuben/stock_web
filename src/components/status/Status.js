@@ -33,6 +33,7 @@ import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import TableFooter from '@material-ui/core/TableFooter';
 import TablePagination from '@material-ui/core/TablePagination';
+import {StrategyDB} from '../common/Constants';
 
 import Switch from '@material-ui/core/Switch';
 import ManualOrder from './ManualOrder';
@@ -79,11 +80,11 @@ class Status extends React.Component {
       bp: 0,
       aq: 0,
       pm: [],
-      pl: 0,
-      pl_pct: 0,
-      autoShow: true,
+      dpl: 0,
+      upl: 0,
+      autoShow: false,
       sector: '0',
-      disable_trading: false,
+      disable_trading: {},
       do_prints: false,
       do_save: false,
       push_status: false,
@@ -91,8 +92,6 @@ class Status extends React.Component {
       floating_conf: {},
       page: 0,
       wk: null,
-      float_pl: 0,
-      float_pl_pct: 0,
     }
     this.prices = {};
     this.chartSym = null;
@@ -114,7 +113,34 @@ class Status extends React.Component {
   onStatusPush = (data_env, payload) => {
     const {env, autoShow} = this.state;
     if (data_env === env) {
-      this.setState(payload, this.subscribePrice);
+      const newState = {
+        aq: payload.aq,
+        bp: payload.bp,
+      }
+      if (payload.pm) {
+        newState.pm = payload.pm;
+      }
+      if (payload.pm_update) {
+        const {pm} = this.state;
+        newState.pm = [];
+        let newSymInserted = false;
+        pm.forEach(pos => {
+          if (pos.sym === payload.pm_update.sym) {
+            newSymInserted = true;
+            payload.pm_update.pos.forEach(symPos => {
+              newState.pm.push(symPos);
+            })
+          } else {
+            newState.pm.push(pos);
+          }
+        })
+        if (!newSymInserted) {
+          payload.pm_update.pos.forEach(symPos => {
+            newState.pm.push(symPos);
+          })
+        }
+      }
+      this.setState(newState, this.subscribePrice);
       if (env !== 'test' && autoShow && payload.pm.length > 0) {
         const lastPos = payload.pm[payload.pm.length - 1];
         if (this.chartSym !== lastPos.sym) {
@@ -143,6 +169,16 @@ class Status extends React.Component {
       cmd: 'update_db_config',
       field,
       value,
+    }
+    this.onSendCmd(command);
+  }
+
+  onChangDisableTrading = (field, value) => {
+    const {disable_trading} = this.state;
+    const command = {
+      cmd: 'update_db_config',
+      field: 'disable_trading',
+      value: {...disable_trading, [field]: value},
     }
     this.onSendCmd(command);
   }
@@ -232,9 +268,13 @@ class Status extends React.Component {
 
   flattenManual = () => {
     const {pm} = this.state;
+    let cc = 0;
     pm.forEach(pos => {
       if (pos.strategy === 'manual') {
-        this.onFlatten(pos);
+        cc += 1;
+        if (cc <= 10) {
+          this.onFlatten(pos);
+        }
       }
     })
   }
@@ -251,6 +291,13 @@ class Status extends React.Component {
       cmd: 'flatten',
       sym: pos.sym,
       strategy: pos.strategy,
+    }
+    this.onSendCmd(command);
+  }
+
+  doTest = () => {
+    const command = {
+      cmd: 'testFeature',
     }
     this.onSendCmd(command);
   }
@@ -287,8 +334,8 @@ class Status extends React.Component {
       bp,
       aq,
       pm,
-      pl,
-      pl_pct,
+      dpl,
+      upl,
       autoShow,
       sector,
       disable_trading,
@@ -298,8 +345,6 @@ class Status extends React.Component {
       floating_conf,
       push_status,
       page,
-      float_pl,
-      float_pl_pct,
       wk,
     } = this.state;
     let secB = 'SHOW ';
@@ -408,9 +453,9 @@ class Status extends React.Component {
             </ListItem>
             <ListItem>
               <ListItemText>
-                {`$${pl} (${pl_pct}%)`}
+                {`$${dpl}`}
               </ListItemText>
-              <ListItemSecondaryAction>{`$${float_pl} (${float_pl_pct}%)`}</ListItemSecondaryAction>
+              <ListItemSecondaryAction>{`$${upl}`}</ListItemSecondaryAction>
             </ListItem>
             <ListItem>
               <ListItemText>
@@ -438,16 +483,34 @@ class Status extends React.Component {
                   <FormControlLabel
                     control={
                       <Switch
-                        checked={disable_trading}
+                        checked={disable_trading.all || false}
                         color="secondary"
                         onChange={() => {
-                          this.onChangeDBConfig('disable_trading', !disable_trading);
+                          this.onChangDisableTrading('all', !disable_trading.all);
                         }}
                       />}
                     labelPlacement="start"
-                    label="disable_trading"
+                    label="disable_all"
                   />
                 </FormGroup>
+                {
+                    Object.keys(StrategyDB).map(key => (
+                      <FormGroup row key={key}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={disable_trading[key] || false}
+                              color="secondary"
+                              onChange={() => {
+                                this.onChangDisableTrading(key, !disable_trading[key]);
+                              }}
+                            />}
+                          labelPlacement="start"
+                          label={`disable_${key}`}
+                        />
+                      </FormGroup>
+                    ))
+                  }
                 <FormGroup row>
                   <FormControlLabel
                     control={
@@ -494,7 +557,7 @@ class Status extends React.Component {
                   <FormControlLabel
                     control={
                       <Switch
-                        checked={disable_circuit_break}
+                        checked={disable_circuit_break || false}
                         color="secondary"
                         onChange={() => {
                           this.onChangeDBConfig('disable_circuit_break', !disable_circuit_break);
@@ -540,6 +603,7 @@ class Status extends React.Component {
                 <ListItemText>
                   <Button onClick={this.flattenAll}>FLAT ALL</Button>
                   <Button onClick={this.flattenManual}>FLAT MANUAL</Button>
+                  <Button color="secondary" onClick={this.doTest}>TEST</Button>
                 </ListItemText>
               </ListItem>
             }

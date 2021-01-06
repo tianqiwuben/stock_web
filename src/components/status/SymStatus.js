@@ -102,7 +102,6 @@ class SymStatus extends React.Component {
       strategies,
       trend,
     } = this.state;
-    const showRank = sym.substring(0, 4) === 'SEC_';
     return (
       <React.Fragment>
         <TrendChart setRef={ref => this.trendChart = ref}/>
@@ -141,43 +140,21 @@ class SymStatus extends React.Component {
                     </ListItemSecondaryAction>
                   </ListItem>
                   <ListItem>
-                    <ListItemText>vwap_c</ListItemText>
+                    <ListItemText>VWAP</ListItemText>
                     <ListItemSecondaryAction>
-                      {trend.vwap.c && trend.vwap.c.toFixed(3)}
+                      {trend.vwap && trend.vwap.value.toFixed(3)}
                     </ListItemSecondaryAction>
                   </ListItem>
                   <ListItem>
-                    <ListItemText>RSI</ListItemText>
+                    <ListItemText>MACD</ListItemText>
                     <ListItemSecondaryAction>
-                      {trend.rsi.value ? trend.rsi.value.toFixed(2) : 'null'}
+                      {`${trend.macd && trend.macd.macd.toFixed(6)} - ${trend.macd && trend.macd.ema_9.toFixed(6)} = ${trend.macd && trend.macd.diff.toFixed(6)}`}
                     </ListItemSecondaryAction>
                   </ListItem>
                   <ListItem>
-                    <ListItemText>open strength</ListItemText>
+                    <ListItemText>EMA 200</ListItemText>
                     <ListItemSecondaryAction>
-                      {`${trend.strength.open && (trend.strength.open * 100).toFixed(2)}%`}
-                      {showRank && ` / #${trend.strength.rank_open}`}
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText>large strength</ListItemText>
-                    <ListItemSecondaryAction>
-                      {`${trend.strength.large && (trend.strength.large * 100).toFixed(2)}% / ${trend.strength.large_mtc}`}
-                      {showRank && ` / #${trend.strength.rank_large}`}
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText>small strength</ListItemText>
-                    <ListItemSecondaryAction>
-                      {`${trend.strength.small && (trend.strength.small * 100).toFixed(2)}% / ${trend.strength.small_mtc}`}
-                      {showRank && ` / #${trend.strength.rank_small}`}
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText>last_5 strength</ListItemText>
-                    <ListItemSecondaryAction>
-                      {`${trend.strength.last_5 && (trend.strength.last_5 * 100).toFixed(2)}%`}
-                      {showRank && ` / #${trend.strength.rank_last_5}`}
+                      {trend.ema_200 && trend.ema_200.toFixed(3)}
                     </ListItemSecondaryAction>
                   </ListItem>
                 </React.Fragment>
