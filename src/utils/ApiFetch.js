@@ -102,6 +102,8 @@ export const apiPostOrder = payload => callAPI('/status/order', 'post', payload)
 
 export const apiResolverStatus = query => callAPI('/status/resolver', 'get', query);
 
+export const apiIbkrStatus = () => callAPI('/status/ibkr_status', 'get');
+
 export const apiResolverCommand = payload => callAPI('/status/command', 'post', payload);
 
 export const apiGetBacktestCase = query => callAPI('/test/bars', 'get', query);
@@ -113,3 +115,5 @@ export const apiGetStrategy = (strategy, query) => callAPI(`/strategy_config/${s
 export const apiSaveStrategy = (payload) => callAPI(`/save_strategy_config`, 'post', payload);
 
 export const apiGenerateStrategy= (payload) => callAPI(`/strategy_config`, 'POST', payload);
+
+export const apiCopyStrategy2Prod = (payload) => callAPI(`/strategy_config_copy_2_prod`, 'POST', payload);

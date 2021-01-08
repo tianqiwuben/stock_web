@@ -11,6 +11,9 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 
 import {registerComponent} from '../common/Constants';
+import {
+  apiIbkrStatus,
+} from '../../utils/ApiFetch';
 
 
 const styles = theme => ({
@@ -77,7 +80,13 @@ class StatusBar extends React.Component {
   }
 
   onClickIcon = (e) => {
-    this.setState({dropDownOpen: true, anchorEl: e.currentTarget})
+    this.setState({dropDownOpen: true, anchorEl: e.currentTarget, accountPaper: 'loading', accountProd: 'loading'});
+    apiIbkrStatus().then(resp => {
+      this.setState({
+        accountPaper: resp.data.payload.paper,
+        accountProd: resp.data.payload.prod,
+      })
+    })
   }
 
   handleClose = () => {
@@ -91,6 +100,8 @@ class StatusBar extends React.Component {
       subsys,
       status,
       checkTs,
+      accountPaper,
+      accountProd,
     } = this.state;
     return (
       <div>
@@ -123,6 +134,12 @@ class StatusBar extends React.Component {
               if (row && row.status !== 'ok' && row.seqId) {
                 const ts = moment.unix(row.seqId / 1000);
                 secondTxt = `Last check: ${ts.format('L LTS')}`;
+              }
+              if (instName === 'account_streaming_paper') {
+                secondTxt = accountPaper;
+              }
+              if (instName === 'account_streaming_prod') {
+                secondTxt = accountProd;
               }
               return (
                 <MenuItem key={instName}>

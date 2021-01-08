@@ -29,6 +29,7 @@ import {
   apiGetStrategy,
   apiGenerateStrategy,
   apiSaveStrategy,
+  apiCopyStrategy2Prod,
 } from '../../utils/ApiFetch';
 
 import uPlot from "uplot";
@@ -160,6 +161,7 @@ class TuneConfig extends React.Component {
     }
     this.data = null;
     this.resultList = [];
+    this.booleanTable = {};
   }
 
   componentDidMount() {
@@ -227,6 +229,24 @@ class TuneConfig extends React.Component {
     })
   }
 
+  copy2prod = () => {
+    const {enqueueSnackbar} = this.props;
+    const {
+      strategy,
+    } = this.state;
+    const payload = {
+      strategy,
+    }
+    apiCopyStrategy2Prod(payload).then(resp => {
+      if (resp.data.success) {
+        enqueueSnackbar('Copy success', {variant: 'success'})
+      } else {
+        enqueueSnackbar(resp.data.error, {variant: 'error'})
+      }
+    })
+    
+  }
+
   assignData = () => {
     const {list, header, configs, fields, doFilter} = this.state;
     this.resultList = [];
@@ -268,9 +288,21 @@ class TuneConfig extends React.Component {
       enqueueSnackbar('No records found', {variant: 'error'});
       return;
     }
-    const {selectedField, header} = this.state;
+    const {selectedField, header, fields} = this.state;
     const column = header.indexOf(selectedField);
     this.resultList.sort((a,b) => (a[column] - b[column]));
+    if (fields[selectedField].type === 'boolean') {
+      this.booleanTable = {};
+      fields[selectedField].options.forEach(option => {
+        this.booleanTable[option] = {
+          w: 0,
+          l: 0,
+          pl: 0,
+          avgPl: 0,
+          wRate: 0,
+        }
+      })
+    }
     this.data = [[],[],[],[],[]]
     let idx = 0;
     let aggPl = 0;
@@ -283,15 +315,27 @@ class TuneConfig extends React.Component {
     let rid = 0;
     this.resultList.forEach(row => {
       this.data[0].push(idx);
+      const pl = row[row.length - 1];
       idx += 1;
       this.data[1].push(row[column]);
-      aggPl += row[row.length - 1];
+      aggPl += pl;
       this.data[2].push(aggPl);
       this.data[3].push(aggPl / idx);
-      if (row[row.length - 1] > 0) {
+      if (pl > 0) {
         win += 1;
       } else {
         loss += 1;
+      }
+      if (fields[selectedField].type === 'boolean') {
+        const tbl = this.booleanTable[row[column]];
+        if (tbl) {
+          if (pl > 0) {
+            tbl.w += 1;
+          } else {
+            tbl.l += 1;
+          }
+          tbl.pl += pl;
+        }
       }
       if (minPl === null || minPl > aggPl) {
         minPl = aggPl;
@@ -303,6 +347,15 @@ class TuneConfig extends React.Component {
       }
       rid += 1;
     })
+    if (fields[selectedField].type === 'boolean') {
+      fields[selectedField].options.forEach(option => {
+        if (this.booleanTable[option].w + this.booleanTable[option].l > 0) {
+          this.booleanTable[option].avgPl = (this.booleanTable[option].pl / (this.booleanTable[option].w + this.booleanTable[option].l)).toFixed(2);
+          this.booleanTable[option].wRate = (this.booleanTable[option].w / (this.booleanTable[option].w + this.booleanTable[option].l) * 100).toFixed(2);
+          this.booleanTable[option].pl = this.booleanTable[option].pl.toFixed(2);
+        }
+      })
+    }
     let rightAgg = 0;
     for(let i = idx - 1; i >= 0 ; i --) {
       const row = this.resultList[i];
@@ -363,6 +416,9 @@ class TuneConfig extends React.Component {
   onChangeBoolean = (field, key) => {
     const {configs} = this.state;
     const newConfig = {...configs};
+    if (!newConfig[field]) {
+      newConfig[field] = [];
+    }
     const index = newConfig[field].indexOf(key);
     if (index === -1) {
       newConfig[field].push(key);
@@ -370,6 +426,9 @@ class TuneConfig extends React.Component {
       newConfig[field].splice(index, 1);
     }
     newConfig[field].sort();
+    if (newConfig[field].length === 0) {
+      delete newConfig[field];
+    }
     this.setState({configs: newConfig}, this.assignData);
   }
 
@@ -403,8 +462,8 @@ class TuneConfig extends React.Component {
   }
 
   onAutoAll = () => {
-    const {fields, header} = this.state;
-    const newConfigs = {};
+    const {fields, configs, header} = this.state;
+    const newConfigs = {...configs};
     let doAuto = true;
     let loopCount = 0;
     while(doAuto) {
@@ -597,41 +656,41 @@ class TuneConfig extends React.Component {
             </Grid>
             {
               fieldConfig && fieldConfig.type === 'boolean' &&
-                <Grid item xs={4} md={4} lg={4}>
-                  <List component={Paper}>
-                    <ListItem>
-                      <ListItemText>
-                        {selectedField}
-                      </ListItemText>
-                      <ListItemSecondaryAction>
-                        <ToggleButtonGroup
-                          value={viewSelection[selectedField]}
-                          exclusive
-                          onChange={(e, v) => this.handleViewSelection(selectedField, v)}
-                        >
-                          {
-                            fieldConfig.options.map(key => (
-                              <ToggleButton key={key} value={key}>{key}</ToggleButton>
-                            ))
-                          }
-                        </ToggleButtonGroup>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                    <ListItem>
-                      <ListItemText>
-                        Enabled
-                      </ListItemText>
-                      <ListItemSecondaryAction>
-                        <Switch
-                          checked={this.getBooleanValue(selectedField, viewSelection[selectedField])}
-                          color="primary"
-                          onChange={() => {
-                            this.onChangeBoolean(selectedField, viewSelection[selectedField]);
-                          }}
-                        />
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                  </List>
+                <Grid item xs={6} md={6} lg={6}>
+                  <TableContainer component={Paper}>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>{selectedField}</TableCell>
+                          <TableCell>PL</TableCell>
+                          <TableCell>AvgPl</TableCell>
+                          <TableCell>W/L</TableCell>
+                          <TableCell>W rate</TableCell>
+                          <TableCell>Action</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {fieldConfig.options.map(key => (
+                          <TableRow key={key}>
+                            <TableCell>{key}</TableCell>
+                            <TableCell>{this.booleanTable[key] && this.booleanTable[key].pl}</TableCell>
+                            <TableCell>{this.booleanTable[key] && this.booleanTable[key].avgPl}</TableCell>
+                            <TableCell>{this.booleanTable[key] && `${this.booleanTable[key].w}/${this.booleanTable[key].l}`}</TableCell>
+                            <TableCell>{this.booleanTable[key] && this.booleanTable[key].wRate}%</TableCell>
+                            <TableCell>
+                              <Switch
+                                checked={this.getBooleanValue(selectedField, key)}
+                                color="primary"
+                                onChange={() => {
+                                  this.onChangeBoolean(selectedField, key);
+                                }}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
                 </Grid>
             }
             {
@@ -736,6 +795,9 @@ class TuneConfig extends React.Component {
                   <ListItemText>
                     <Button color="primary" onClick={() => this.onSave(false)}>SAVE</Button>
                   </ListItemText>
+                  <ListItemSecondaryAction>
+                    <Button color="primary" onClick={this.copy2prod}>COPY 2 PROD</Button>
+                  </ListItemSecondaryAction>
                 </ListItem>
               </List>
             </Grid>
