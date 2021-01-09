@@ -16,6 +16,7 @@ import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
+import Dialog from '@material-ui/core/Dialog';
 
 import Divider from '@material-ui/core/Divider';
 import Paper from '@material-ui/core/Paper';
@@ -30,6 +31,8 @@ import {
   apiGenerateStrategy,
   apiSaveStrategy,
   apiCopyStrategy2Prod,
+  apiGetStrategyHis,
+  apiGetHisRecord,
 } from '../../utils/ApiFetch';
 
 import uPlot from "uplot";
@@ -158,6 +161,9 @@ class TuneConfig extends React.Component {
       stats: {},
       minAttr: '',
       maxAttr: '',
+      backup: '',
+      backupList: [],
+      showBackup: false,
     }
     this.data = null;
     this.resultList = [];
@@ -202,7 +208,7 @@ class TuneConfig extends React.Component {
     })
   }
 
-  onSave = (backup = false) => {
+  onSave = (backup = null) => {
     const {enqueueSnackbar} = this.props;
     const {
       strategy,
@@ -567,6 +573,42 @@ class TuneConfig extends React.Component {
     this.setState({doFilter: v}, this.assignData);
   }
 
+  onSelectBackup = (id) => {
+    const {enqueueSnackbar} = this.props;
+    const {
+      strategy,
+      viewSelection,
+      env,
+    } = this.state;
+    const payload = {env, strategy, id};
+    if (strategy === 'open_breakout') {
+      payload.spy_category = viewSelection.spy_category || '0';
+      payload.sym_category = viewSelection.sym_category || '0';
+    }
+    apiGetHisRecord(payload).then(resp => {
+      if (resp.data.success) {
+        this.setState({showBackup: false, ...resp.data.payload}, this.assignData);
+      } else {
+        enqueueSnackbar(resp.data.error, {variant: 'error'})
+      }
+    })
+  }
+
+  onLoadBackup = () => {
+    const {enqueueSnackbar} = this.props;
+    const {
+      strategy,
+    } = this.state;
+    const payload = {strategy};
+    apiGetStrategyHis(payload).then(resp => {
+      if (resp.data.success) {
+        this.setState({backupList: resp.data.payload, showBackup: true});
+      } else {
+        enqueueSnackbar(resp.data.error, {variant: 'error'})
+      }
+    })
+  }
+
   render() {
     const {classes} = this.props;
     const {
@@ -581,6 +623,9 @@ class TuneConfig extends React.Component {
       stats,
       minAttr,
       maxAttr,
+      backup,
+      showBackup,
+      backupList,
     } = this.state;
     const fieldConfig = fields[selectedField];
     return (
@@ -641,6 +686,7 @@ class TuneConfig extends React.Component {
                   </ListItemText>
                   <ListItemSecondaryAction>
                     {configs[field] && JSON.stringify(configs[field]).substring(0,16)}
+                    {viewSelection[field]}
                   </ListItemSecondaryAction>
                 </ListItem>
               ))
@@ -723,8 +769,19 @@ class TuneConfig extends React.Component {
                       <ListItemSecondaryAction>
                         <Button onClick={this.onResetAll}>RESET</Button>
                         <Button onClick={this.onAutoAll}>AUTO</Button>
-                        <Button onClick={() => this.onSave(true)}>BACKUP</Button>
                       </ListItemSecondaryAction>
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText>
+                        <Button onClick={this.onLoadBackup}>LOAD</Button>
+                        <Button onClick={() => this.onSave(backup)}>BACKUP</Button>
+                        <ListItemSecondaryAction>
+                          <TextField
+                            value={backup}
+                            onChange={(e) => this.handleChange('backup', e)}
+                          />
+                        </ListItemSecondaryAction>
+                      </ListItemText>
                     </ListItem>
                   </List>
                 </Grid>
@@ -793,7 +850,7 @@ class TuneConfig extends React.Component {
                 </ListItem>
                 <ListItem>
                   <ListItemText>
-                    <Button color="primary" onClick={() => this.onSave(false)}>SAVE</Button>
+                    <Button color="primary" onClick={() => this.onSave()}>SAVE</Button>
                   </ListItemText>
                   <ListItemSecondaryAction>
                     <Button color="primary" onClick={this.copy2prod}>COPY 2 PROD</Button>
@@ -803,6 +860,27 @@ class TuneConfig extends React.Component {
             </Grid>
           </Grid>
         </Grid>
+
+        <Dialog open={showBackup} onClose={() => {this.setState({showBackup: false})}}>
+          <List style={{width: 600}}>
+            {
+              backupList.map((back) => (
+                <ListItem
+                  key={back.id} 
+                  button
+                  onClick={() => this.onSelectBackup(back.id)}
+                >
+                  <ListItemText>
+                    {back.memo}
+                  </ListItemText>
+                  <ListItemSecondaryAction>
+                    {back.createdAt}
+                  </ListItemSecondaryAction>
+                </ListItem>
+              ))
+            }
+          </List>
+        </Dialog>
       </Grid>
     );
   }

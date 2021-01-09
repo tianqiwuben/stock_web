@@ -114,6 +114,12 @@ export const apiGetStrategy = (strategy, query) => callAPI(`/strategy_config/${s
 
 export const apiSaveStrategy = (payload) => callAPI(`/save_strategy_config`, 'post', payload);
 
-export const apiGenerateStrategy= (payload) => callAPI(`/strategy_config`, 'POST', payload);
+export const apiGenerateStrategy= (payload) => callAPI(`/strategy_config`, 'post', payload);
 
-export const apiCopyStrategy2Prod = (payload) => callAPI(`/strategy_config_copy_2_prod`, 'POST', payload);
+export const apiCopyStrategy2Prod = (payload) => callAPI(`/strategy_config_copy_2_prod`, 'post', payload);
+
+export const apiGetStrategyHis = (payload) => callAPI(`/strategy_config_histories`, 'get', payload);
+
+export const apiGetHisRecord = (payload) => callAPI(`/strategy_config_history`, 'get', payload);
+
+
