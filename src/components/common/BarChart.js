@@ -212,6 +212,10 @@ class BarChart extends React.Component {
         );
       }
     }
+  }
+
+  drawLevels = (u) => {
+    const [iMin, iMax] = u.series[0].idxs;
     const leftX = u.valToPos(iMin, 'x', true);
     const rightX = u.valToPos(iMax, 'x', true);
     if (this.levels && this.levels.length > 0) {
@@ -226,7 +230,6 @@ class BarChart extends React.Component {
       }
     }
   }
-
 
   componentDidMount() {
     const {width, height} = this.container.getBoundingClientRect();
@@ -257,6 +260,11 @@ class BarChart extends React.Component {
         {
           hooks: {
             drawClear: drawBar,
+          },
+        },
+        {
+          hooks: {
+            drawClear: this.drawLevels,
           },
         },
       ],

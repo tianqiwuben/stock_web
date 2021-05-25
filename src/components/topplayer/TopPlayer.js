@@ -56,8 +56,11 @@ class TopPlayer extends React.Component {
       priceLabel: "",
       levels: [],
       configs: {enabled: false, srs: []},
+      preMkt: "",
+      manualSR: "",
     }
     this.currentPrice = null;
+    this.minData = {};
   }
 
   componentDidMount() {
@@ -79,6 +82,9 @@ class TopPlayer extends React.Component {
       agg: timeframe,
     }).then(resp => {
       this.minData = resp.data.payload;
+      this.setState({
+        preMkt: this.minData.prev_mkt_price_vol,
+      })
       this.assignMin();
     });
     this.currentPrice = null;
@@ -186,6 +192,16 @@ class TopPlayer extends React.Component {
     }
   }
 
+  onAddManualSR = () => {
+    const {manualSR,configs} = this.state;
+    configs.srs.push({
+      p: parseFloat(manualSR),
+    });
+    configs.srs.sort((a,b) => a.p - b.p);
+    this.postTopPlayer(configs);
+    this.setState({manualSR: ""})
+  }
+
   onRemoveSR = (sr) => {
     const {configs} = this.state;
     const index = configs.srs.indexOf(sr);
@@ -249,6 +265,8 @@ class TopPlayer extends React.Component {
       cursorType,
       priceLabel,
       configs,
+      preMkt,
+      manualSR,
     } = this.state;
     const dateInfo = allSyms[currentDateIdx];
     return (
@@ -328,23 +346,49 @@ class TopPlayer extends React.Component {
                   </ListItemSecondaryAction>
                 </ListItem>
 
+                <ListItem>
+                  <ListItemText primary="Support Resist" />
+                  <ListItemSecondaryAction>
+                    <TextField
+                      value={manualSR}
+                      onChange={e => this.setState({manualSR: e.target.value})}
+                      onKeyPress={(ev) => {
+                        if (ev.key === 'Enter') {
+                          this.onAddManualSR();
+                          ev.preventDefault();
+                        }
+                      }}
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+
               </List>
               <GridList cellHeight={48}>
                 {
                   configs.srs.map(sr => (
                     <GridListTile key={sr.p}>
-                        <Box display="flex" justifyContent="space-around" alignItems="center">
-                          <Typography variant="body1">{sr.p}</Typography>
-                          <IconButton onClick={() => this.onRemoveSR(sr)}>
-                            <CloseIcon />
-                          </IconButton>
-                        </Box>
+                      <Box display="flex" justifyContent="space-around" alignItems="center">
+                        <Typography variant="body1">{sr.p}</Typography>
+                        <IconButton onClick={() => this.onRemoveSR(sr)}>
+                          <CloseIcon />
+                        </IconButton>
+                      </Box>
                     </GridListTile>
                   ))
                 }
               </GridList>
 
             </Grid>
+          </Grid>
+          <Grid item xs={8} component={Paper}>
+            <GridList cellHeight={48} cols={4}>
+              <GridListTile>
+                <Box display="flex" justifyContent="space-around" alignItems="center" paddingTop="12px">
+                  <Typography variant="body1">PRE MKT</Typography>
+                  <Typography variant="body1">{preMkt}</Typography>
+                </Box>
+              </GridListTile>
+            </GridList>
           </Grid>
         </Grid>
         <Grid item xs={2}>
