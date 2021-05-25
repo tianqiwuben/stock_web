@@ -32,6 +32,32 @@ const styles = theme => ({
   title: {
     padding: '4px 16px 0 16px',
   },
+  priceTag: {
+    position: 'absolute',
+    right: 0,
+    top: 44,
+    visibility: 'hidden',
+    padding: "4px 4px",
+    background: '#333',
+    pointerEvents: 'none',
+  },
+  diffTag: {
+    position: 'absolute',
+    right: 0,
+    top: window.innerHeight * 0.35 + 44,
+    visibility: 'hidden',
+    padding: "4px 4px",
+    background: '#333',
+    pointerEvents: 'none',
+  },
+  diffCurrentP: {
+    position: 'absolute',
+    right: 0,
+    bottom: 16,
+    padding: "4px 4px",
+    background: '#333',
+    pointerEvents: 'none',
+  },
   toolTip: {
     position: 'absolute',
     visibility: 'hidden',
@@ -132,6 +158,53 @@ const plotOptions = {
   ],
 }
 
+const priceDiffOptions = {
+  width: 800,
+  height: window.innerHeight * 0.2,
+  legend: {
+    show: false,
+  },
+  scales: {
+    x: {
+      distr: 2,
+    },
+  },
+  series: [
+    {},
+    {
+      stroke: '#eee',
+      width: 2,
+      scale: '$',
+      points: {
+        show: false,
+      },
+    },
+  ],
+  axes: [
+    {
+      stroke: '#eee',
+      grid: {
+        stroke: '#aaa',
+        dash: [1, 8],
+      },
+      incrs: [1, 60],
+    },
+    {
+      scale: '$',
+      side: 1,
+      stroke: '#eee',
+      grid: {
+        stroke: '#aaa',
+        dash: [1, 8],
+      },
+      size: 32,
+      ticks: {
+        show: false,
+      },
+    }
+  ],
+}
+
 class LiveChart extends React.Component {
   constructor(props) {
     super(props);
@@ -143,7 +216,7 @@ class LiveChart extends React.Component {
       prevMin: '15',
       nextMin: '15',
       loading: false,
-      acceptFeeding: props.page === 'transactions' ? false : true,
+      acceptFeeding: props.page === 'status',
       frame: 'second',
     }
     let now = Math.floor(new Date() / 1e3);
@@ -154,18 +227,53 @@ class LiveChart extends React.Component {
     ]
     this.prevTipIdx = 0;
     this.srLevels = [];
+
+    this.priceDiffData = [
+      [now, now + 60],
+      [0,0],
+    ]
   }
 
   onCursorMove = (u, l, t) => {
     if (this.toolTip) {
       this.toolTip.style.transform = `translate(${l}px, ${t}px)`;
     }
+    if (this.priceTag) {
+      this.priceTag.style.transform = `translate(0px, ${t}px)`;
+    }
     if (l > 0 && t > 0) {
       this.toolTip.style.visibility = 'visible';
+      this.priceTag.style.visibility = 'visible';
+      const val = u.posToVal(t, '$');
+      this.priceTagValue.innerHTML = val.toFixed(2);
     } else {
       this.toolTip.style.visibility = 'hidden';
+      this.priceTag.style.visibility = 'hidden';
     }
     return [l,t];
+  }
+
+
+  onPriceDiffMove = (u, l, t) => {
+    if (this.diffTag) {
+      this.diffTag.style.transform = `translate(0px, ${t}px)`;
+    }
+    if (l > 0 && t > 0) {
+      this.diffTag.style.visibility = 'visible';
+      const val = u.posToVal(t, '$');
+      this.diffTagValue.innerHTML = val.toFixed(2);
+    } else {
+      this.diffTag.style.visibility = 'hidden';
+    }
+    return [l,t];
+  }
+
+  onPriceDiffCursorIdx = (u, sId, idx) => {
+    if (idx !== this.prevDiffIdx) {
+      this.prevDiffIdx = idx;
+      this.diffCurrentPValue.innerHTML = this.priceDiffData[1][idx].toFixed(2);
+    }
+    return(idx);
   }
 
   onCursorIdx = (u, sId, idx) => {
@@ -226,6 +334,7 @@ class LiveChart extends React.Component {
       cursor: {
         move: this.onCursorMove,
         dataIdx: this.onCursorIdx,
+        sync: {key: 'foo'},
       },
       plugins: [
         {
@@ -241,6 +350,19 @@ class LiveChart extends React.Component {
       ],
     }
     this.u = new uPlot(opt, this.bars, this.chartEl);
+    const priceDiffopt = {
+      ...priceDiffOptions,
+      width: width - 32,
+      cursor: {
+        move: this.onPriceDiffMove,
+        dataIdx: this.onPriceDiffCursorIdx,
+        sync: {key: 'foo'},
+      },
+      plugins: [
+      ],
+    }
+    this.priceDiffU = new uPlot(priceDiffopt, this.priceDiffData, this.priceChartEl);
+
     const {setRef} = this.props;
     setRef && setRef(this);
     const ws = getComponent('websocket');
@@ -251,6 +373,10 @@ class LiveChart extends React.Component {
     if (this.u) {
       this.u.destroy();
       this.u = null;
+    }
+    if (this.priceDiffU) {
+      this.priceDiffU.destroy();
+      this.priceDiffU = null;
     }
     const {setRef} = this.props;
     setRef(null);
@@ -295,10 +421,14 @@ class LiveChart extends React.Component {
           loading: false,
         });
         this.bars = resp.data.payload.data;
+        this.priceDiffData = resp.data.payload.priceDiffData;
         this.highlightIdx = resp.data.payload.highlight_idx;
         this.srLevels = resp.data.payload.sr_levels;
         if (this.u) {
           this.u.setData(this.bars);
+        }
+        if (this.priceDiffU) {
+          this.priceDiffU.setData(this.priceDiffData);
         }
         const ws = getComponent('websocket');
         if (ws) {
@@ -372,6 +502,7 @@ class LiveChart extends React.Component {
   render() {
     const {
       classes,
+      page,
     } = this.props;
     const {
       sym,
@@ -430,12 +561,27 @@ class LiveChart extends React.Component {
           <Typography variant="h6" style={{flexGrow: 1}} align="right">{`${sym} delay ${timeDelay}ms $${latestC}`}</Typography>
         </Box>
         <div className={classes.oneChart} ref={el => this.chartEl = el} />
+        <div style={{display: page === 'second_pull_back' ? 'block' : 'none'}} className={classes.priceDiffChart} ref={el => this.priceChartEl = el} />
+        <div className={classes.priceTag} ref={el => this.priceTag = el}>
+          <Typography style={{color: 'orange'}} ref={el => this.priceTagValue = el}>
+            cc.cc
+          </Typography>
+        </div>
+        <div className={classes.diffCurrentP} ref={el => this.diffCurrentP = el}>
+          <Typography style={{color: '#eee'}} ref={el => this.diffCurrentPValue = el}>
+            cc.cc
+          </Typography>
+        </div>
+        <div className={classes.diffTag} ref={el => this.diffTag = el}>
+          <Typography style={{color: 'orange'}} ref={el => this.diffTagValue = el}>
+            cc.cc
+          </Typography>
+        </div>
         <div className={classes.toolTip} ref={el => this.toolTip = el}>
           <Typography style={{color: 'orange'}} ref={el => this.tpTs = el}>
             MM/DD HH:MM:SS
           </Typography>
-          <br />
-          <Typography style={{color: 'orange'}} ref={el => this.tpCV = el}>
+          <Typography style={{color: 'orange', marginTop: 8}} ref={el => this.tpCV = el}>
             $ccc.cc vvvv
           </Typography>
         </div>

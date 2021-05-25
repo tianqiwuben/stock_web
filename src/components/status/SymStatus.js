@@ -142,13 +142,13 @@ class SymStatus extends React.Component {
                   <ListItem>
                     <ListItemText>VWAP</ListItemText>
                     <ListItemSecondaryAction>
-                      {trend.vwap && trend.vwap.value.toFixed(3)}
+                      {trend.vwap.value && trend.vwap.value.toFixed(3)}
                     </ListItemSecondaryAction>
                   </ListItem>
                   <ListItem>
                     <ListItemText>MACD</ListItemText>
                     <ListItemSecondaryAction>
-                      {`${trend.macd && trend.macd.macd.toFixed(6)} - ${trend.macd && trend.macd.ema_9.toFixed(6)} = ${trend.macd && trend.macd.diff.toFixed(6)}`}
+                      {`${trend.macd.macd && trend.macd.macd.toFixed(6)} - ${trend.macd && trend.macd.ema_9.toFixed(6)} = ${trend.macd && trend.macd.diff.toFixed(6)}`}
                     </ListItemSecondaryAction>
                   </ListItem>
                   <ListItem>

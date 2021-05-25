@@ -122,4 +122,11 @@ export const apiGetStrategyHis = (payload) => callAPI(`/strategy_config_historie
 
 export const apiGetHisRecord = (payload) => callAPI(`/strategy_config_history`, 'get', payload);
 
+export const apiFetchTopPlayers = () => callAPI('top_players', 'get');
+
+export const apiTopPlayerBars = (query) => callAPI(`top_players/bars`, 'get', query);
+
+export const apiGetTopPlayerSR = (query) => callAPI(`top_players/support_resist`, 'get', query);
+
+export const apiPostTopPlayer = (query) => callAPI(`top_players`, 'post', query);
 

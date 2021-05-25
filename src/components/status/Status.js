@@ -43,17 +43,17 @@ import {
 } from "react-router-dom";
 
 const secName = [
-  'Technology',
-  'Consumer',
-  'Industrials',
-  'Financial',
-  'Health',
-  'Materials',
-  'Communication',
-  'Energy',
-  'Utilities',
-  'R_Estate',
-  'Defensive',
+  ['XLK', 'Technology'],
+  ['XLY', 'Consumer'],
+  ['XLI', 'Industrials'],
+  ['XLF', 'Financial'],
+  ['XLV', 'Health'],
+  ['XLB', 'Materials'],
+  ['XLC', 'Communication'],
+  ['XLE', 'Energy'],
+  ['XLU', 'Utilities'],
+  ['XLRE', 'R_Estate'],
+  ['XLP', 'Defensive'],
 ]
 
 const styles = theme => ({
@@ -80,8 +80,10 @@ class Status extends React.Component {
       bp: 0,
       aq: 0,
       pm: [],
-      dpl: 0,
-      upl: 0,
+      total_pl: 0,
+      total_pl_pct: 0,
+      float_pl: 0,
+      float_pl_pct: 0,
       autoShow: false,
       sector: '0',
       disable_trading: {},
@@ -188,17 +190,6 @@ class Status extends React.Component {
   }
 
   onFetch = () => {
-    const {enqueueSnackbar} = this.props;
-    const {env} = this.state;
-    apiResolverStatus({env}).then(resp => {
-      if (resp.data.success) {
-        if (resp.data.payload) {
-          this.setState(resp.data.payload, this.subscribePrice);
-        }
-      } else {
-        enqueueSnackbar(resp.data.error, {variant: 'error'})
-      }
-    })
     this.onSendCmd({cmd: 'db_status'});
   }
 
@@ -232,7 +223,6 @@ class Status extends React.Component {
       this.symStatus.onSelectSym(pos.sym, pos.trade_price);
     }
     if (this.liveChart) {
-      console.log('pos', pos);
       this.liveChart.onFetchChart(pos.sym, pos.action_ts)
       this.chartSym = pos.sym;
     }
@@ -268,13 +258,9 @@ class Status extends React.Component {
 
   flattenManual = () => {
     const {pm} = this.state;
-    let cc = 0;
     pm.forEach(pos => {
       if (pos.strategy === 'manual') {
-        cc += 1;
-        if (cc <= 10) {
-          this.onFlatten(pos);
-        }
+        this.onFlatten(pos);
       }
     })
   }
@@ -334,8 +320,10 @@ class Status extends React.Component {
       bp,
       aq,
       pm,
-      dpl,
-      upl,
+      total_pl,
+      total_pl_pct,
+      float_pl,
+      float_pl_pct,
       autoShow,
       sector,
       disable_trading,
@@ -349,7 +337,7 @@ class Status extends React.Component {
     } = this.state;
     let secB = 'SHOW ';
     if (parseInt(sector) <= 10) {
-      secB += secName[parseInt(sector)];
+      secB += secName[parseInt(sector)][1];
     } else {
       secB += 'SEC';
     }
@@ -357,7 +345,7 @@ class Status extends React.Component {
       <Grid container spacing={2}>
         <Grid container spacing={2} item xs={10}>
           <Grid item xs={12} md={12} lg={12} ref={el => this.chartEl = el}>
-            <LiveChart setRef={this.setLiveChart} env={env}/>
+            <LiveChart setRef={this.setLiveChart} env={env} page="status"/>
           </Grid>
           <Grid item xs={12} md={12} lg={12}>
             <TableContainer component={Paper}>
@@ -369,6 +357,7 @@ class Status extends React.Component {
                     <TableCell>Acc / Sym / Shares</TableCell>
                     <TableCell>Entry Ts</TableCell>
                     <TableCell>Cost / Now</TableCell>
+                    <TableCell>Stage</TableCell>
                     <TableCell>PL</TableCell>
                     <TableCell width="15%">Actions</TableCell>
                   </TableRow>
@@ -386,6 +375,9 @@ class Status extends React.Component {
                           <TableCell>{`${pos.action_ts_str} (${mm})`}</TableCell>
                           <TableCell>
                             {`${pos.trade_price} / ${this.prices[pos.sym] || ''}`}
+                          </TableCell>
+                          <TableCell>
+                            {`${pos.stage} ${pos.stage_flag}`}
                           </TableCell>
                           <TableCell>
                             {
@@ -453,9 +445,9 @@ class Status extends React.Component {
             </ListItem>
             <ListItem>
               <ListItemText>
-                {`$${dpl}`}
+                {`$${total_pl} (${total_pl_pct}%)`}
               </ListItemText>
-              <ListItemSecondaryAction>{`$${upl}`}</ListItemSecondaryAction>
+              <ListItemSecondaryAction>{`$${float_pl} (${float_pl_pct}%)`}</ListItemSecondaryAction>
             </ListItem>
             <ListItem>
               <ListItemText>
@@ -578,7 +570,7 @@ class Status extends React.Component {
             </ListItem>
             <ListItem>
               <ListItemText>
-                <Button onClick={() => this.onSelectSym(`SEC_${sector}`)}>{secB}</Button>
+                <Button onClick={() => this.onSelectSym(secName[sector][0])}>{secB}</Button>
               </ListItemText>
               <ListItemSecondaryAction>
                 <TextField

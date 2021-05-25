@@ -11,10 +11,6 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 
 import {registerComponent} from '../common/Constants';
-import {
-  apiIbkrStatus,
-} from '../../utils/ApiFetch';
-
 
 const styles = theme => ({
 });
@@ -26,8 +22,7 @@ const status2color = {
 }
 
 const subsysInstances = [
-  'account_streaming_prod',
-  'account_streaming_paper',
+  'account_streaming',
   'aggs_bar',
   'second_bar_streaming', 
 //  'option_streaming',
@@ -80,13 +75,7 @@ class StatusBar extends React.Component {
   }
 
   onClickIcon = (e) => {
-    this.setState({dropDownOpen: true, anchorEl: e.currentTarget, accountPaper: 'loading', accountProd: 'loading'});
-    apiIbkrStatus().then(resp => {
-      this.setState({
-        accountPaper: resp.data.payload.paper,
-        accountProd: resp.data.payload.prod,
-      })
-    })
+    this.setState({dropDownOpen: true, anchorEl: e.currentTarget});
   }
 
   handleClose = () => {
@@ -100,8 +89,6 @@ class StatusBar extends React.Component {
       subsys,
       status,
       checkTs,
-      accountPaper,
-      accountProd,
     } = this.state;
     return (
       <div>
@@ -134,12 +121,6 @@ class StatusBar extends React.Component {
               if (row && row.status !== 'ok' && row.seqId) {
                 const ts = moment.unix(row.seqId / 1000);
                 secondTxt = `Last check: ${ts.format('L LTS')}`;
-              }
-              if (instName === 'account_streaming_paper') {
-                secondTxt = accountPaper;
-              }
-              if (instName === 'account_streaming_prod') {
-                secondTxt = accountProd;
               }
               return (
                 <MenuItem key={instName}>

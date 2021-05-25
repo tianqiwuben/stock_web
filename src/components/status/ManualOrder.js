@@ -34,16 +34,17 @@ class ManualOrder extends React.Component {
       action_name: 'buy_long',
       action_type: 'market',
       price: '',
+      shares: '',
       replaceTransId: null,
       isNew: true,
     }
   }
 
   onPlaceOrder = () => {
-    const {sym, sym_quota, strategy, action_name, action_type, price, isNew, replaceTransId} = this.state;
+    const {sym, sym_quota, strategy, action_name, action_type, price, isNew, replaceTransId, shares} = this.state;
     const {env, enqueueSnackbar} = this.props;
     const payload = {
-      env, sym, sym_quota, strategy, action_name, action_type, price, isNew, replaceTransId
+      env, sym, sym_quota, strategy, action_name, action_type, price, isNew, replaceTransId, shares
     }
     if (!isNew) {
       if (!replaceTransId) {
@@ -102,6 +103,7 @@ class ManualOrder extends React.Component {
       price,
       isNew,
       replaceTransId,
+      shares,
     } = this.state;
     const woList = [];
     if(workingOrders && workingOrders.by_id) {
@@ -209,6 +211,21 @@ class ManualOrder extends React.Component {
             <TextField
               value={sym_quota}
               onChange={e => this.handleChange('sym_quota', e)}
+              inputProps={{
+                style: { textAlign: "right" }
+              }}
+              style = {{width: 80}}
+            />
+          </ListItemSecondaryAction>
+        </ListItem>
+        <ListItem>
+          <ListItemText>
+            Shares
+          </ListItemText>
+          <ListItemSecondaryAction>
+            <TextField
+              value={shares}
+              onChange={e => this.handleChange('shares', e)}
               inputProps={{
                 style: { textAlign: "right" }
               }}

@@ -40,6 +40,8 @@ import StatusBar from './StatusBar';
 import Backtest from '../backtest/Backtest';
 import {getComponent} from '../common/Constants';
 import TuneConfig from '../strategy/TuneConfig';
+import SecondPullBack from '../secondPullBack/SecondPullBack';
+import TopPlayer from '../topplayer/TopPlayer';
 
 const styles = theme => ({
   root: {
@@ -166,6 +168,11 @@ class Dashboard extends React.Component {
                 <ListItemText primary="Manual" />
               </ListItem>
             </Link>
+            <Link to="/second_pull_back">
+              <ListItem button>
+                <ListItemText primary="Second Pull Back" />
+              </ListItem>
+            </Link>
             <Link to="/backtest">
               <ListItem button>
                 <ListItemText primary="Backtest" />
@@ -174,6 +181,11 @@ class Dashboard extends React.Component {
             <Link to="/tuneconfig">
               <ListItem button>
                 <ListItemText primary="Tune Strategy" />
+              </ListItem>
+            </Link>
+            <Link to="/top_player">
+              <ListItem button>
+                <ListItemText primary="TopPlayer" />
               </ListItem>
             </Link>
           </List>
@@ -202,6 +214,8 @@ class Dashboard extends React.Component {
                 <Route path="/manual" component={Manual} />
                 <Route path="/backtest" component={Backtest} />
                 <Route path="/tuneconfig" component={TuneConfig} />
+                <Route path="/second_pull_back" component={SecondPullBack} />
+                <Route path="/top_player" component={TopPlayer} />
                 <Route component={Status} />
               </Switch>
             </Container>

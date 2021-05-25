@@ -198,6 +198,12 @@ class TuneConfig extends React.Component {
     if (strategy === 'open_breakout') {
       payload.spy_category = viewSelection.spy_category || '0';
       payload.sym_category = viewSelection.sym_category || '0';
+    } else if (strategy === 'vwap_reversal') {
+      payload.trade_action = viewSelection.trade_action || 'long';
+      payload.time_frame = viewSelection.time_frame || 'bg';
+    } else if (strategy === 'vwap_breakout') {
+      payload.time_frame = viewSelection.time_frame || 'bg';
+      payload.wave_trend = viewSelection.wave_trend || 'L_BRK';
     }
     apiGetStrategy(strategy, payload).then(resp => {
       if (resp.data.success) {
@@ -225,6 +231,12 @@ class TuneConfig extends React.Component {
     if (strategy === 'open_breakout') {
       payload.spy_category = viewSelection.spy_category || '0';
       payload.sym_category = viewSelection.sym_category || '0';
+    } else if (strategy === 'vwap_reversal') {
+      payload.trade_action = viewSelection.trade_action || 'long';
+      payload.time_frame = viewSelection.time_frame || 'bg';
+    } else if (strategy === 'vwap_breakout') {
+      payload.time_frame = viewSelection.time_frame || 'bg';
+      payload.wave_trend = viewSelection.wave_trend || 'L_BRK';
     }
     apiSaveStrategy(payload).then(resp => {
       if (resp.data.success) {
@@ -382,16 +394,22 @@ class TuneConfig extends React.Component {
     })
   }
 
-  onGenerate = () => {
+  onGenerate = (adjust_spread = false) => {
     const {enqueueSnackbar} = this.props;
     const {
       strategy,
       viewSelection,
     } = this.state;
-    const payload = {strategy}
+    const payload = {strategy, adjust_spread};
     if (strategy === 'open_breakout') {
       payload.spy_category = viewSelection.spy_category || '0';
       payload.sym_category = viewSelection.sym_category || '0';
+    } else if (strategy === 'vwap_reversal') {
+      payload.trade_action = viewSelection.trade_action || 'long';
+      payload.time_frame = viewSelection.time_frame || 'bg';
+    } else if (strategy === 'vwap_breakout') {
+      payload.time_frame = viewSelection.time_frame || 'bg';
+      payload.wave_trend = viewSelection.wave_trend || 'L_BRK';
     }
     apiGenerateStrategy(payload).then(resp => {
       if (resp.data.success) {
@@ -408,15 +426,33 @@ class TuneConfig extends React.Component {
   }
 
   handleChange = (field, e) => {
-    this.setState({
-      [field]: e.target.value,
-    });
+    if (field === 'strategy') {
+      this.setState({
+        strategy: e.target.value,
+      }, this.fetch);
+    } else {
+      this.setState({
+        [field]: e.target.value,
+      });
+    }
   }
 
   handleViewSelection = (field, v) => {
     const {viewSelection} = this.state;
     const newViewSelection = {...viewSelection, [field]: v};
     this.setState({viewSelection: newViewSelection});
+  }
+
+  onChangeDisable = () => {
+    const {configs} = this.state;
+    const newConfig = {...configs};
+    console.log('onchangedisable', configs.disabled);
+    if (configs.disabled) {
+      delete newConfig.disabled;
+    } else {
+      newConfig.disabled = true;
+    }
+    this.setState({configs: newConfig});
   }
 
   onChangeBoolean = (field, key) => {
@@ -584,6 +620,12 @@ class TuneConfig extends React.Component {
     if (strategy === 'open_breakout') {
       payload.spy_category = viewSelection.spy_category || '0';
       payload.sym_category = viewSelection.sym_category || '0';
+    } else if (strategy === 'vwap_reversal') {
+      payload.trade_action = viewSelection.trade_action || 'long';
+      payload.time_frame = viewSelection.time_frame || 'bg';
+    } else if (strategy === 'vwap_breakout') {
+      payload.time_frame = viewSelection.time_frame || 'bg';
+      payload.wave_trend = viewSelection.wave_trend || 'L_BRK';
     }
     apiGetHisRecord(payload).then(resp => {
       if (resp.data.success) {
@@ -741,7 +783,7 @@ class TuneConfig extends React.Component {
             }
             {
               fieldConfig && fieldConfig.type === 'category' &&
-                <Grid item xs={4} md={4} lg={4}>
+                <Grid item xs={5} md={5} lg={5}>
                   <List component={Paper}>
                     <ListItem>
                       <ListItemText>
@@ -750,6 +792,7 @@ class TuneConfig extends React.Component {
                       <ListItemSecondaryAction>
                         <ToggleButtonGroup
                           value={viewSelection[selectedField]}
+                          size="small"
                           exclusive
                           onChange={(e, v) => this.handleViewSelection(selectedField, v)}
                         >
@@ -763,8 +806,21 @@ class TuneConfig extends React.Component {
                     </ListItem>
                     <ListItem>
                       <ListItemText>
+                        Disabled
+                      </ListItemText>
+                      <ListItemSecondaryAction>
+                        <Switch
+                          checked={configs.disabled || false}
+                          color="secondary"
+                          onChange={this.onChangeDisable}
+                        />
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText>
                         <Button onClick={() => this.fetch()}>FETCH</Button>
-                        <Button onClick={this.onGenerate}>Generate</Button>
+                        <Button onClick={() => this.onGenerate(false)}>Generate</Button>
+                        <Button onClick={() => this.onGenerate(true)}>GEN_W/SPREAD</Button>
                       </ListItemText>
                       <ListItemSecondaryAction>
                         <Button onClick={this.onResetAll}>RESET</Button>
@@ -798,6 +854,7 @@ class TuneConfig extends React.Component {
                         <TextField
                           value={(configs[selectedField] && configs[selectedField].min) || ''}
                           onChange={(e) => this.onChangeRange(selectedField, 'min', e.target.value)}
+                          onBlur={this.onApplyRange}
                         />
                       </ListItemSecondaryAction>
                     </ListItem>
@@ -809,6 +866,7 @@ class TuneConfig extends React.Component {
                         <TextField
                           value={(configs[selectedField] && configs[selectedField].max) || ''}
                           onChange={(e) => this.onChangeRange(selectedField, 'max', e.target.value)}
+                          onBlur={this.onApplyRange}
                         />
                       </ListItemSecondaryAction>
                     </ListItem>
