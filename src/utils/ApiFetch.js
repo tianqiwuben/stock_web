@@ -130,3 +130,10 @@ export const apiGetTopPlayerSR = (query) => callAPI(`top_players/support_resist`
 
 export const apiPostTopPlayer = (query) => callAPI(`top_players`, 'post', query);
 
+export const apiGetTodayPlayer = (query) => callAPI(`top_players/syms`, 'get', query);
+
+export const apiTopPlayerAddSym = (query)=> callAPI(`top_players/syms`, 'post', query);
+
+export const apiTopPlayerRemoveSym = (query)=> callAPI(`top_players/syms`, 'delete', query);
+
+

@@ -9,7 +9,6 @@ import ListSubheader from '@material-ui/core/ListSubheader';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
-import Pagination from '@material-ui/lab/Pagination';
 import GridList from '@material-ui/core/GridList';
 import GridListTile from '@material-ui/core/GridListTile';
 import CloseIcon from '@material-ui/icons/Close';
@@ -19,21 +18,20 @@ import Box from '@material-ui/core/Box';
 import Typography from '@material-ui/core/Typography';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import ToggleButton from '@material-ui/lab/ToggleButton';
-import moment from 'moment';
-import querystring from 'querystring';
-
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import { withSnackbar } from 'notistack';
 import {connect} from 'react-redux';
-import Select from '@material-ui/core/Select';
-import {StrategyDB} from '../common/Constants';
-import MenuItem from '@material-ui/core/MenuItem';
 import {
   apiFetchTopPlayers,
   apiTopPlayerBars,
   apiPostTopPlayer,
   apiGetTopPlayerSR,
+  apiGetTodayPlayer,
+  apiTopPlayerAddSym,
+  apiTopPlayerRemoveSym,
 } from '../../utils/ApiFetch';
 
 import BarChart from '../common/BarChart';
@@ -58,6 +56,8 @@ class TopPlayer extends React.Component {
       configs: {enabled: false, srs: []},
       preMkt: "",
       manualSR: "",
+      customSyms: [],
+      symToAdd: "",
     }
     this.currentPrice = null;
     this.minData = {};
@@ -70,6 +70,7 @@ class TopPlayer extends React.Component {
         currentDateIdx: 0,
       }, () => {
         this.onSelectSym(resp.data.payload[0][1][0][0]);
+        this.onChangeDatePage(0);
       });
     })
   }
@@ -145,10 +146,52 @@ class TopPlayer extends React.Component {
     })
   }
 
-  onChangeDate = (e, page) => {
-    this.setState({
-      currentDateIdx: page - 1,
-    })
+  getCurrentDate = () => {
+    const {currentDateIdx, allSyms} = this.state;
+    return allSyms[currentDateIdx][0];
+  }
+
+  mergeCusSyms = (payload) => {
+    const {currentDateIdx, allSyms} = this.state;
+    const currentPage = allSyms[currentDateIdx][1];
+    const customSyms = [];
+    for (let sym of payload) {
+      let isSeen = false;
+      for (let row of currentPage) {
+        if (row[0] === sym) {
+          isSeen = true;
+          break;
+        }
+      }
+      if (!isSeen) {
+        customSyms.push(sym);
+      }
+    }
+    this.setState({customSyms});
+  }
+
+  onChangeDatePage = (page) => {
+    const {allSyms} = this.state;
+    if (page >= 0 && page < allSyms.length) {
+      this.setState({
+        currentDateIdx: page,
+      })
+      const date = allSyms[page][0];
+      apiGetTodayPlayer({date}).then(resp => {
+        this.mergeCusSyms(resp.data.payload);
+      })
+    }
+  }
+
+  onChangeDate = (e) => {
+    const {allSyms} = this.state;
+    e.preventDefault();
+    for (let page in allSyms) {
+      if (allSyms[page][0] === e.target.value) {
+        this.onChangeDatePage(parseInt(page));
+        break;
+      }
+    }
   }
 
   onChangeTimeFrame = (e,v) => {
@@ -250,7 +293,28 @@ class TopPlayer extends React.Component {
       });
       this.barChart.assignLevels(resp.data.payload.levels);
       this.dayChart.assignLevels(resp.data.payload.levels);
+    })
+  }
 
+  removeSym = (sym) => {
+    apiTopPlayerRemoveSym({sym, date: this.getCurrentDate()}).then(resp => {
+      this.mergeCusSyms(resp.data.payload);
+    })
+  }
+
+  addSym = () => {
+    const {symToAdd} = this.state;
+    apiTopPlayerAddSym({
+      sym: symToAdd,
+      date: this.getCurrentDate(),
+    }).then(resp => {
+      if (resp.data.success) {
+        this.mergeCusSyms(resp.data.payload);
+      } else {
+        const {enqueueSnackbar} = this.props;
+        enqueueSnackbar(resp.data.error, {variant: 'error'})
+      }
+      this.setState({symToAdd: ""});
     })
   }
 
@@ -267,6 +331,8 @@ class TopPlayer extends React.Component {
       configs,
       preMkt,
       manualSR,
+      customSyms,
+      symToAdd,
     } = this.state;
     const dateInfo = allSyms[currentDateIdx];
     return (
@@ -342,6 +408,7 @@ class TopPlayer extends React.Component {
                     <Switch
                       checked={configs.enabled}
                       onChange={e => this.onChangeConfig('enabled')}
+                      color="primary"
                     />
                   </ListItemSecondaryAction>
                 </ListItem>
@@ -383,7 +450,7 @@ class TopPlayer extends React.Component {
           <Grid item xs={8} component={Paper}>
             <GridList cellHeight={48} cols={4}>
               <GridListTile>
-                <Box display="flex" justifyContent="space-around" alignItems="center" paddingTop="12px">
+                <Box display="flex" justifyContent="space-around" alignItems="center" padding="12px">
                   <Typography variant="body1">PRE MKT</Typography>
                   <Typography variant="body1">{preMkt}</Typography>
                 </Box>
@@ -394,7 +461,20 @@ class TopPlayer extends React.Component {
         <Grid item xs={2}>
           <List dense component={Paper}>
             <ListSubheader>
-              {dateInfo[0]}
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <TextField
+                  type="date"
+                  value={dateInfo[0]}
+                  onChange={this.onChangeDate}
+                  fullWidth
+                />
+                <IconButton onClick={() => this.onChangeDatePage(currentDateIdx - 1)}>
+                  <ChevronLeftIcon />
+                </IconButton>
+                <IconButton onClick={() => this.onChangeDatePage(currentDateIdx + 1)}>
+                  <ChevronRightIcon />
+                </IconButton>
+              </Box>
             </ListSubheader>
             {
               dateInfo[1].map(item => (
@@ -408,12 +488,34 @@ class TopPlayer extends React.Component {
                 </ListItem>
               ))
             }
-            <Pagination
-              size="small"
-              count={allSyms.length}
-              page={currentDateIdx + 1}
-              onChange={this.onChangeDate}
-            />
+          
+            {
+              customSyms.map(sym => (
+                <ListItem
+                  key={sym}
+                  onClick={() => this.onSelectSym(sym)}
+                  selected={chartSym===sym}
+                >
+                  <ListItemText primary={sym} />
+                  <ListItemSecondaryAction>
+                    <IconButton onClick={() => this.removeSym(sym)}>
+                      <CloseIcon />
+                    </IconButton>
+                  </ListItemSecondaryAction>
+                </ListItem>
+              ))
+            }
+            <ListItem>
+              <ListItemText>
+                <TextField
+                  value={symToAdd}
+                  onChange={(e) => this.setState({symToAdd: e.target.value})}
+                />
+              </ListItemText>
+              <ListItemSecondaryAction>
+                <Button onClick={this.addSym}>ADD</Button>
+              </ListItemSecondaryAction>
+            </ListItem>
           </List>
         </Grid>
         

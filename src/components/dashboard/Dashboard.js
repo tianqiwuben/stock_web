@@ -185,7 +185,7 @@ class Dashboard extends React.Component {
             </Link>
             <Link to="/top_player">
               <ListItem button>
-                <ListItemText primary="TopPlayer" />
+                <ListItemText primary="Top Player" />
               </ListItem>
             </Link>
           </List>
